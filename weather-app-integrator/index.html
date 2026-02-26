@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeatherBridge — Aachen &amp; Hyderabad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-canvas">
+    <div class="aurora aurora-1"></div>
+    <div class="aurora aurora-2"></div>
+    <div class="aurora aurora-3"></div>
+    <canvas id="particleCanvas"></canvas>
+  </div>
+
+  <!-- App wrapper -->
+  <div class="app-wrapper">
+
+    <!-- ── HEADER ── -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3C7.58 3 4 6.58 4 11c0 4.42 3.58 8 8 8s8-3.58 8-8c0-4.42-3.58-8-8-8z" fill="url(#logoGrad)"/>
+              <path d="M12 7a4 4 0 100 8 4 4 0 000-8z" fill="white" opacity=".3"/>
+              <defs>
+                <linearGradient id="logoGrad" x1="4" y1="3" x2="20" y2="19" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#60a5fa"/>
+                  <stop offset="100%" stop-color="#a78bfa"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </span>
+          <span class="logo-text">WeatherBridge</span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="connection-pill">
+          <span class="flag">🇩🇪</span>
+          <span class="city-pill-name">Aachen</span>
+          <svg class="heart-beat" viewBox="0 0 24 24" fill="none">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="url(#heartGrad)"/>
+            <defs>
+              <linearGradient id="heartGrad" x1="2" y1="3" x2="22" y2="21" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#f43f5e"/>
+                <stop offset="100%" stop-color="#fb923c"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="city-pill-name">Hyderabad</span>
+          <span class="flag">🇮🇳</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="header-meta">
+          <span id="headerDate" class="header-date"></span>
+          <button class="refresh-btn" id="refreshBtn" title="Refresh weather">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── TIME DIFFERENCE BANNER ── -->
+    <div class="time-diff-banner">
+      <div class="time-diff-inner" id="timeDiffBanner">
+        <span class="diff-label">Time difference</span>
+        <span class="diff-value" id="timeDiffValue">—</span>
+        <span class="diff-label">· Last updated <span id="lastUpdated">—</span></span>
+      </div>
+    </div>
+
+    <!-- ── MAIN WEATHER GRID ── -->
+    <main class="weather-grid">
+
+      <!-- ── AACHEN CARD ── -->
+      <div class="weather-card card-aachen" id="cardAachen">
+        <div class="card-glow card-glow-aachen"></div>
+
+        <div class="card-header">
+          <div class="city-info">
+            <span class="city-flag">🇩🇪</span>
+            <div>
+              <h2 class="city-name">Aachen</h2>
+              <p class="city-country">North Rhine-Westphalia, Germany</p>
+            </div>
+          </div>
+          <div class="card-badge card-badge-aachen">Europe</div>
+        </div>
+
+        <!-- Clock -->
+        <div class="clock-block">
+          <div class="clock-display" id="clockAachen">
+            <span class="clock-time" id="timeAachen">--:--:--</span>
+            <span class="clock-ampm" id="ampmAachen"></span>
+          </div>
+          <div class="clock-date" id="dateAachen">—</div>
+          <div class="timezone-label">Europe/Berlin (CET/CEST)</div>
+        </div>
+
+        <!-- Main temperature -->
+        <div class="temp-showcase">
+          <div class="weather-icon-wrap" id="iconAachen">
+            <div class="weather-icon-placeholder pulse"></div>
+          </div>
+          <div class="temp-block">
+            <span class="temp-main" id="tempAachen">--</span>
+            <span class="temp-unit">°C</span>
+          </div>
+          <div class="weather-desc-block">
+            <span class="weather-desc" id="descAachen">Loading…</span>
+            <span class="feels-like" id="feelsAachen">Feels like —°C</span>
+          </div>
+        </div>
+
+        <!-- Metrics grid -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon">💧</div>
+            <div class="metric-value" id="humAachen">—</div>
+            <div class="metric-label">Humidity</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">💨</div>
+            <div class="metric-value" id="windAachen">—</div>
+            <div class="metric-label">Wind km/h</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">🌧️</div>
+            <div class="metric-value" id="rainAachen">—</div>
+            <div class="metric-label">Precip mm</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">👁️</div>
+            <div class="metric-value" id="visAachen">—</div>
+            <div class="metric-label">Visibility</div>
+          </div>
+        </div>
+
+        <!-- 7-day forecast -->
+        <div class="forecast-section">
+          <div class="forecast-title">7-Day Forecast</div>
+          <div class="forecast-scroll" id="forecastAachen">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Loading overlay -->
+        <div class="card-loader" id="loaderAachen">
+          <div class="loader-spinner"></div>
+          <span>Fetching Aachen's weather…</span>
+        </div>
+      </div>
+
+      <!-- ── CENTER DIVIDER ── -->
+      <div class="center-divider">
+        <div class="divider-line"></div>
+        <div class="divider-orb">
+          <svg class="orb-heart" viewBox="0 0 24 24" fill="none">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- ── HYDERABAD CARD ── -->
+      <div class="weather-card card-hyderabad" id="cardHyderabad">
+        <div class="card-glow card-glow-hyderabad"></div>
+
+        <div class="card-header">
+          <div class="city-info">
+            <span class="city-flag">🇮🇳</span>
+            <div>
+              <h2 class="city-name">Hyderabad</h2>
+              <p class="city-country">Telangana, India</p>
+            </div>
+          </div>
+          <div class="card-badge card-badge-hyderabad">Asia</div>
+        </div>
+
+        <!-- Clock -->
+        <div class="clock-block">
+          <div class="clock-display" id="clockHyderabad">
+            <span class="clock-time" id="timeHyderabad">--:--:--</span>
+            <span class="clock-ampm" id="ampmHyderabad"></span>
+          </div>
+          <div class="clock-date" id="dateHyderabad">—</div>
+          <div class="timezone-label">Asia/Kolkata (IST, UTC+5:30)</div>
+        </div>
+
+        <!-- Main temperature -->
+        <div class="temp-showcase">
+          <div class="weather-icon-wrap" id="iconHyderabad">
+            <div class="weather-icon-placeholder pulse"></div>
+          </div>
+          <div class="temp-block">
+            <span class="temp-main" id="tempHyderabad">--</span>
+            <span class="temp-unit">°C</span>
+          </div>
+          <div class="weather-desc-block">
+            <span class="weather-desc" id="descHyderabad">Loading…</span>
+            <span class="feels-like" id="feelsHyderabad">Feels like —°C</span>
+          </div>
+        </div>
+
+        <!-- Metrics grid -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon">💧</div>
+            <div class="metric-value" id="humHyderabad">—</div>
+            <div class="metric-label">Humidity</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">💨</div>
+            <div class="metric-value" id="windHyderabad">—</div>
+            <div class="metric-label">Wind km/h</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">🌧️</div>
+            <div class="metric-value" id="rainHyderabad">—</div>
+            <div class="metric-label">Precip mm</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">👁️</div>
+            <div class="metric-value" id="visHyderabad">—</div>
+            <div class="metric-label">Visibility</div>
+          </div>
+        </div>
+
+        <!-- 7-day forecast -->
+        <div class="forecast-section">
+          <div class="forecast-title">7-Day Forecast</div>
+          <div class="forecast-scroll" id="forecastHyderabad">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Loading overlay -->
+        <div class="card-loader" id="loaderHyderabad">
+          <div class="loader-spinner"></div>
+          <span>Fetching Hyderabad's weather…</span>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ── BOTTOM BOND STRIP ── -->
+    <footer class="bond-strip">
+      <div class="bond-inner">
+        <span class="bond-text">Made with</span>
+        <svg class="bond-heart" viewBox="0 0 24 24" fill="none">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="url(#bondHeart)"/>
+          <defs>
+            <linearGradient id="bondHeart" x1="2" y1="3" x2="22" y2="21" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#f43f5e"/>
+              <stop offset="100%" stop-color="#fb923c"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="bond-text">· Powered by <strong>Open-Meteo</strong> · Data refreshes every 10 minutes</span>
+      </div>
+    </footer>
+
+  </div><!-- /app-wrapper -->
+
+  <script src="app.js"></script>
+</body>
+</html>
