@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CYBER CLASH — Crazy Combat Game</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
@@ -21,10 +21,20 @@
     user-select: none;
   }
 
+  /* ── Scale container keeps the game centered while CSS transform scales it ── */
+  #game-scale-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    overflow: hidden;
+  }
+
   #game-wrapper {
     position: relative;
     width: 900px;
-    max-width: 100vw;
+    transform-origin: top center;
+    flex-shrink: 0;
   }
 
   #title {
@@ -207,10 +217,174 @@
 
   .hp-label { font-size: 0.6rem; color: #0ff6; letter-spacing: 1px; margin-top: 1px; font-family: 'Share Tech Mono', monospace; }
   .fighter-hud.right .hp-label { text-align: right; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MOBILE — Portrait Warning
+  ═══════════════════════════════════════════════════════════════ */
+  #portrait-warning {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 1000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #0ff;
+    font-family: 'Orbitron', monospace;
+    text-align: center;
+    padding: 30px;
+    gap: 20px;
+  }
+  #portrait-warning .p-icon {
+    font-size: 3.5rem;
+    animation: rotate-hint 2s ease-in-out infinite alternate;
+  }
+  @keyframes rotate-hint {
+    from { transform: rotate(-15deg); }
+    to   { transform: rotate(15deg); }
+  }
+  #portrait-warning .p-msg {
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    line-height: 1.9;
+    text-shadow: 0 0 12px #0ff;
+    max-width: 300px;
+  }
+  #portrait-warning .p-sub {
+    font-size: 0.6rem;
+    color: #0ff6;
+    letter-spacing: 3px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MOBILE — Touch Controls
+  ═══════════════════════════════════════════════════════════════ */
+  #touch-controls {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 136px;
+    padding: 8px 16px;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 50;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 60%, transparent 100%);
+    pointer-events: none;
+  }
+
+  #touch-left, #touch-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    pointer-events: auto;
+  }
+
+  .touch-row { display: flex; gap: 5px; }
+
+  .touch-btn {
+    width: 58px;
+    height: 52px;
+    border-radius: 12px;
+    border: 2px solid rgba(0,255,255,0.45);
+    background: rgba(0,0,0,0.55);
+    color: #0ff;
+    font-family: 'Orbitron', monospace;
+    cursor: pointer;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-shadow: 0 0 8px #0ff;
+    box-shadow: 0 0 8px rgba(0,255,255,0.18), inset 0 0 8px rgba(0,255,255,0.08);
+    transition: background 0.07s, transform 0.07s, box-shadow 0.07s;
+  }
+  .touch-btn .btn-icon { font-size: 1.15rem; line-height: 1; }
+  .touch-btn .btn-label { font-size: 0.42rem; letter-spacing: 0.8px; opacity: 0.75; font-weight: 700; }
+
+  .touch-btn.pressed {
+    background: rgba(0,255,255,0.28);
+    transform: scale(0.88);
+    box-shadow: 0 0 18px rgba(0,255,255,0.55), inset 0 0 14px rgba(0,255,255,0.22);
+  }
+
+  /* Jump spans full width of d-pad row */
+  #btn-jump { width: 121px; }
+
+  /* Kick — yellow */
+  .touch-btn.kick {
+    border-color: rgba(255,255,0,0.5);
+    color: #ff0;
+    text-shadow: 0 0 8px #ff0;
+    box-shadow: 0 0 8px rgba(255,255,0,0.15), inset 0 0 8px rgba(255,255,0,0.08);
+  }
+  .touch-btn.kick.pressed {
+    background: rgba(255,255,0,0.2);
+    box-shadow: 0 0 18px rgba(255,255,0,0.45), inset 0 0 14px rgba(255,255,0,0.18);
+  }
+
+  /* Special — orange */
+  .touch-btn.special {
+    border-color: rgba(255,136,0,0.5);
+    color: #f80;
+    text-shadow: 0 0 8px #f80;
+    box-shadow: 0 0 8px rgba(255,136,0,0.15), inset 0 0 8px rgba(255,136,0,0.08);
+  }
+  .touch-btn.special.pressed {
+    background: rgba(255,136,0,0.22);
+    box-shadow: 0 0 18px rgba(255,136,0,0.45), inset 0 0 14px rgba(255,136,0,0.18);
+  }
+
+  /* Block — grey */
+  .touch-btn.block {
+    border-color: rgba(180,180,180,0.4);
+    color: #bbb;
+    text-shadow: 0 0 8px #aaa;
+    box-shadow: 0 0 8px rgba(180,180,180,0.12), inset 0 0 8px rgba(180,180,180,0.06);
+  }
+  .touch-btn.block.pressed {
+    background: rgba(180,180,180,0.22);
+    box-shadow: 0 0 18px rgba(180,180,180,0.35), inset 0 0 14px rgba(180,180,180,0.15);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MOBILE @media — activate on touch/small screens
+  ═══════════════════════════════════════════════════════════════ */
+  @media (hover: none) and (pointer: coarse), (max-width: 959px) {
+    body { justify-content: flex-start; }
+    #controls-panel { display: none; }
+    #touch-controls { display: flex; }
+
+    /* Compact HUD so more canvas fits */
+    #title { font-size: 1.2rem; letter-spacing: 3px; margin-bottom: 4px; }
+    .hud-center { flex: 0 0 72px; }
+    #timer { font-size: 1.2rem; }
+    #round-label { font-size: 0.48rem; }
+    .fighter-name { font-size: 0.58rem; letter-spacing: 1px; }
+    .hp-label { font-size: 0.5rem; }
+    .health-track { height: 11px; }
+  }
 </style>
 </head>
 <body>
 
+<!-- ── Portrait Rotation Warning ───────────────────────────────────── -->
+<div id="portrait-warning">
+  <div class="p-icon">📱</div>
+  <div class="p-msg">Rotate your device to<br><strong style="color:#fff;text-shadow:0 0 16px #0ff">LANDSCAPE</strong><br>for the best experience</div>
+  <div class="p-sub">⟳ ROTATE TO PLAY</div>
+</div>
+
+<!-- ── Scaled game container ──────────────────────────────────────── -->
+<div id="game-scale-container">
 <div id="game-wrapper">
   <div id="title">⚡ CYBER CLASH ⚡</div>
 
@@ -258,7 +432,55 @@
     <div id="overlay-text">FIGHT!</div>
     <div id="overlay-sub">PRESS ANY KEY TO BEGIN</div>
   </div>
-</div>
+</div><!-- end #game-wrapper -->
+</div><!-- end #game-scale-container -->
+
+<!-- ── Mobile Touch Controls ──────────────────────────────────────── -->
+<div id="touch-controls">
+  <!-- Left side: D-pad -->
+  <div id="touch-left">
+    <div class="touch-row">
+      <button class="touch-btn" id="btn-jump" data-key="jump">
+        <span class="btn-icon">↑</span>
+        <span class="btn-label">JUMP</span>
+      </button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn" id="btn-left" data-key="left">
+        <span class="btn-icon">◀</span>
+        <span class="btn-label">LEFT</span>
+      </button>
+      <button class="touch-btn" id="btn-right" data-key="right">
+        <span class="btn-icon">▶</span>
+        <span class="btn-label">RIGHT</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Right side: Action buttons -->
+  <div id="touch-right">
+    <div class="touch-row">
+      <button class="touch-btn punch" id="btn-punch" data-key="punch">
+        <span class="btn-icon">👊</span>
+        <span class="btn-label">PUNCH</span>
+      </button>
+      <button class="touch-btn kick" id="btn-kick" data-key="kick">
+        <span class="btn-icon">🦵</span>
+        <span class="btn-label">KICK</span>
+      </button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn special" id="btn-special" data-key="special">
+        <span class="btn-icon">⚡</span>
+        <span class="btn-label">SPECIAL</span>
+      </button>
+      <button class="touch-btn block" id="btn-block" data-key="block">
+        <span class="btn-icon">🛡</span>
+        <span class="btn-label">BLOCK</span>
+      </button>
+    </div>
+  </div>
+</div><!-- end #touch-controls -->
 
 <script>
 const canvas = document.getElementById('gameCanvas');
@@ -1033,8 +1255,9 @@ function endRound() {
 function endGame() {
   gameState = 'gameOver';
   clearInterval(timerInterval);
+  const isTouchDevice = 'ontouchstart' in window;
   let champion = p1Wins > p2Wins ? 'NEON STRIKER' : (p2Wins > p1Wins ? 'VOLT PHANTOM' : 'BOTH');
-  showOverlay(champion + ' WINS!', 'Press SPACE to play again');
+  showOverlay(champion + ' WINS!', isTouchDevice ? 'TAP TO PLAY AGAIN' : 'Press SPACE to play again');
 }
 
 // ── AI for P2 ────────────────────────────────────────────────────────
@@ -1109,6 +1332,7 @@ document.addEventListener('keyup', e => {
 
 // Toggle 2P mode button
 const toggle2p = document.createElement('button');
+toggle2p.id = 'toggle-2p-btn';
 toggle2p.textContent = '👥 2-PLAYER MODE: OFF';
 toggle2p.style.cssText = `
   position: absolute; bottom: -44px; right: 0;
@@ -1187,8 +1411,99 @@ function loop(ts) {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────
-showOverlay('CYBER CLASH', 'PRESS ANY KEY TO START');
+const isTouchDevice = 'ontouchstart' in window;
+showOverlay('CYBER CLASH', isTouchDevice ? 'TAP TO START' : 'PRESS ANY KEY TO START');
 requestAnimationFrame(loop);
+
+// ════════════════════════════════════════════════════════════════════
+// MOBILE — Responsive Scaling
+// ════════════════════════════════════════════════════════════════════
+function scaleGame() {
+  const wrapper = document.getElementById('game-wrapper');
+  const container = document.getElementById('game-scale-container');
+
+  const GAME_W = 900;
+  // Measure actual rendered height of the wrapper (title + hud + canvas + maybe controls)
+  const GAME_H = wrapper.offsetHeight || 620;
+
+  const isMobile = window.innerWidth < 960 ||
+    window.matchMedia('(pointer: coarse)').matches;
+  const touchReserve = isMobile ? 144 : 0; // px reserved for on-screen buttons
+
+  const availW = window.innerWidth;
+  const availH = window.innerHeight - touchReserve;
+  const scale = Math.min(availW / GAME_W, availH / GAME_H, 1);
+
+  wrapper.style.transform = `scale(${scale})`;
+  // Collapse the extra space so the container height matches visual height
+  container.style.height = Math.round(GAME_H * scale) + 'px';
+}
+
+function checkOrientation() {
+  const warning = document.getElementById('portrait-warning');
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const isMobileSize = window.innerWidth < 960 || ('ontouchstart' in window);
+
+  if (isPortrait && isMobileSize) {
+    warning.style.display = 'flex';
+  } else {
+    warning.style.display = 'none';
+    scaleGame();
+  }
+}
+
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 300));
+// Run on first load (after layout is painted)
+requestAnimationFrame(() => requestAnimationFrame(checkOrientation));
+
+// ════════════════════════════════════════════════════════════════════
+// MOBILE — Touch Controls
+// ════════════════════════════════════════════════════════════════════
+function handleMobileGameStart() {
+  if (gameState === 'start') {
+    showOverlay('FIGHT!', '');
+    setTimeout(startFight, 800);
+    gameState = 'loading';
+  } else if (gameState === 'gameOver') {
+    round = 1; p1Wins = 0; p2Wins = 0;
+    resetFighters();
+    showOverlay('FIGHT!', '');
+    setTimeout(startFight, 800);
+    gameState = 'loading';
+  }
+}
+
+document.querySelectorAll('#touch-controls .touch-btn').forEach(btn => {
+  const key = btn.dataset.key;
+  if (!key) return;
+
+  const press = (e) => {
+    e.preventDefault();
+    keys1[key] = true;
+    btn.classList.add('pressed');
+    handleMobileGameStart();
+  };
+  const release = (e) => {
+    e && e.preventDefault();
+    keys1[key] = false;
+    btn.classList.remove('pressed');
+  };
+
+  btn.addEventListener('touchstart',  press,   { passive: false });
+  btn.addEventListener('touchend',    release, { passive: false });
+  btn.addEventListener('touchcancel', release, { passive: false });
+  // Also support mouse for desktop testing
+  btn.addEventListener('mousedown',  press);
+  btn.addEventListener('mouseup',    release);
+  btn.addEventListener('mouseleave', release);
+});
+
+// Tap anywhere on canvas to start when in mobile start/gameover state
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  handleMobileGameStart();
+}, { passive: false });
 </script>
 </body>
 </html>
