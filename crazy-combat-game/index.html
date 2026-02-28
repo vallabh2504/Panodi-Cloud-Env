@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CYBER CLASH — Crazy Combat Game</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00ffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('SW registered!', reg))
+        .catch(err => console.log('SW failed!', err));
+    });
+  }
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
@@ -219,45 +232,6 @@
   .fighter-hud.right .hp-label { text-align: right; }
 
   /* ═══════════════════════════════════════════════════════════════
-     MOBILE — Portrait Warning
-  ═══════════════════════════════════════════════════════════════ */
-  #portrait-warning {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: #000;
-    z-index: 1000;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #0ff;
-    font-family: 'Orbitron', monospace;
-    text-align: center;
-    padding: 30px;
-    gap: 20px;
-  }
-  #portrait-warning .p-icon {
-    font-size: 3.5rem;
-    animation: rotate-hint 2s ease-in-out infinite alternate;
-  }
-  @keyframes rotate-hint {
-    from { transform: rotate(-15deg); }
-    to   { transform: rotate(15deg); }
-  }
-  #portrait-warning .p-msg {
-    font-size: 0.9rem;
-    letter-spacing: 2px;
-    line-height: 1.9;
-    text-shadow: 0 0 12px #0ff;
-    max-width: 300px;
-  }
-  #portrait-warning .p-sub {
-    font-size: 0.6rem;
-    color: #0ff6;
-    letter-spacing: 3px;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════
      MOBILE — Touch Controls
   ═══════════════════════════════════════════════════════════════ */
   #touch-controls {
@@ -375,13 +349,6 @@
 </style>
 </head>
 <body>
-
-<!-- ── Portrait Rotation Warning ───────────────────────────────────── -->
-<div id="portrait-warning">
-  <div class="p-icon">📱</div>
-  <div class="p-msg">Rotate your device to<br><strong style="color:#fff;text-shadow:0 0 16px #0ff">LANDSCAPE</strong><br>for the best experience</div>
-  <div class="p-sub">⟳ ROTATE TO PLAY</div>
-</div>
 
 <!-- ── Scaled game container ──────────────────────────────────────── -->
 <div id="game-scale-container">
@@ -1439,23 +1406,10 @@ function scaleGame() {
   container.style.height = Math.round(GAME_H * scale) + 'px';
 }
 
-function checkOrientation() {
-  const warning = document.getElementById('portrait-warning');
-  const isPortrait = window.innerHeight > window.innerWidth;
-  const isMobileSize = window.innerWidth < 960 || ('ontouchstart' in window);
-
-  if (isPortrait && isMobileSize) {
-    warning.style.display = 'flex';
-  } else {
-    warning.style.display = 'none';
-    scaleGame();
-  }
-}
-
-window.addEventListener('resize', checkOrientation);
-window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 300));
+window.addEventListener('resize', scaleGame);
+window.addEventListener('orientationchange', () => setTimeout(scaleGame, 300));
 // Run on first load (after layout is painted)
-requestAnimationFrame(() => requestAnimationFrame(checkOrientation));
+requestAnimationFrame(() => requestAnimationFrame(scaleGame));
 
 // ════════════════════════════════════════════════════════════════════
 // MOBILE — Touch Controls
