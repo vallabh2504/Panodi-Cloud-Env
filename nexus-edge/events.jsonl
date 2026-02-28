@@ -1,0 +1,4 @@
+{"id":"ec3f560a-5fb2-4693-8abd-66ffa96fb499","name":"system.ping","payload":{"message":"ping"},"timestamp":"2026-02-28T17:49:47.068Z"}
+{"id":"d1ed51bb-690a-45b5-9a19-fda82dad0fde","name":"system.pong","payload":{"response":"pong"},"timestamp":"2026-02-28T17:49:47.110Z"}
+{"id":"59345e42-8491-404e-aa4e-023b49d0a3bd","name":"system.ping","payload":{"message":"ping"},"timestamp":"2026-02-28T18:01:07.493Z"}
+{"id":"b96dceba-68fe-4292-a6fd-d5a790a7aedd","name":"system.pong","payload":{"response":"pong"},"timestamp":"2026-02-28T18:01:07.500Z"}

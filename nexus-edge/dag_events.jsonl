@@ -1,0 +1,6 @@
+{"id":"9888ddaf-ff09-4b68-998f-59e4d52b0ce0","name":"system.start_dag","payload":{"version":"1.0.0"},"timestamp":"2026-02-28T18:01:23.183Z"}
+{"id":"8a17b51b-7a26-4673-b827-4994f43e59d1","name":"task.task_a.completed","payload":{"taskId":"task_a","status":"success","output":{"step":"A","data":"Processed by A"},"triggerEventId":"9888ddaf-ff09-4b68-998f-59e4d52b0ce0"},"timestamp":"2026-02-28T18:01:23.691Z"}
+{"id":"cb4eccd9-a5c3-4400-a493-9ebd9e63c7ab","name":"task.task_b.completed","payload":{"taskId":"task_b","status":"success","output":{"step":"B","data":"Processed by B","final":true},"triggerEventId":"8a17b51b-7a26-4673-b827-4994f43e59d1"},"timestamp":"2026-02-28T18:01:24.195Z"}
+{"id":"7264d9fa-b520-4db4-b6cf-990a38cde67f","name":"system.start_dag","payload":{"version":"1.0.0"},"timestamp":"2026-02-28T18:01:39.178Z"}
+{"id":"20baed9c-2ba7-483b-95a0-1d7a8c06c272","name":"task.task_a.completed","payload":{"taskId":"task_a","status":"success","output":{"step":"A","data":"Processed by A"},"triggerEventId":"7264d9fa-b520-4db4-b6cf-990a38cde67f"},"timestamp":"2026-02-28T18:01:39.688Z"}
+{"id":"ea294aa8-70d6-4d02-bd5b-9bf89d62c61f","name":"task.task_b.completed","payload":{"taskId":"task_b","status":"success","output":{"step":"B","data":"Processed by B","final":true},"triggerEventId":"20baed9c-2ba7-483b-95a0-1d7a8c06c272"},"timestamp":"2026-02-28T18:01:40.192Z"}
