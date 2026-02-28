@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CYBER CLASH — Crazy Combat Game</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Orbitron', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #game-wrapper {
+    position: relative;
+    width: 900px;
+    max-width: 100vw;
+  }
+
+  #title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #0ff;
+    text-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+    letter-spacing: 8px;
+    margin-bottom: 10px;
+    animation: flicker 3s infinite;
+  }
+
+  @keyframes flicker {
+    0%,95%,100% { opacity: 1; }
+    96% { opacity: 0.4; }
+    97% { opacity: 1; }
+    98% { opacity: 0.2; }
+    99% { opacity: 1; }
+  }
+
+  #hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(0,255,255,0.05);
+    border: 1px solid #0ff3;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .fighter-hud { flex: 1; }
+  .fighter-hud.right { text-align: right; }
+
+  .fighter-name {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #0ff;
+    text-shadow: 0 0 8px #0ff;
+    margin-bottom: 4px;
+  }
+  .fighter-hud.right .fighter-name { color: #f0f; text-shadow: 0 0 8px #f0f; }
+
+  .health-track {
+    width: 100%;
+    height: 14px;
+    background: #111;
+    border: 1px solid #0ff4;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .fighter-hud.right .health-track { direction: rtl; }
+
+  .health-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #0f0, #0ff);
+    transition: width 0.15s ease;
+    position: relative;
+  }
+  .health-bar::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 4px; right: 4px;
+    height: 3px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 1px;
+  }
+  .fighter-hud.right .health-bar {
+    background: linear-gradient(270deg, #f0f, #ff006e);
+  }
+
+  .special-bar-track {
+    width: 100%;
+    height: 6px;
+    background: #111;
+    border: 1px solid #ff06;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 3px;
+  }
+  .fighter-hud.right .special-bar-track { direction: rtl; }
+
+  .special-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff0, #f80);
+    transition: width 0.2s ease;
+  }
+  .fighter-hud.right .special-bar { background: linear-gradient(270deg, #ff0, #f80); }
+
+  .hud-center {
+    flex: 0 0 100px;
+    text-align: center;
+  }
+
+  #timer {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 12px #0ff;
+  }
+
+  #round-label {
+    font-size: 0.6rem;
+    color: #0ff8;
+    letter-spacing: 2px;
+  }
+
+  canvas {
+    display: block;
+    border: 2px solid #0ff4;
+    box-shadow: 0 0 30px #0ff3, inset 0 0 60px #0002;
+  }
+
+  #controls-panel {
+    background: rgba(0,255,255,0.03);
+    border: 1px solid #0ff2;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    color: #0ff8;
+  }
+
+  .ctrl-group { display: flex; gap: 12px; flex-wrap: wrap; }
+  .ctrl-item { display: flex; gap: 5px; align-items: center; }
+  .key {
+    background: #0ff1;
+    border: 1px solid #0ff5;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #0ff;
+    font-weight: bold;
+    font-size: 0.65rem;
+  }
+  .ctrl-item.right .key { border-color: #f0f5; background: #f0f1; color: #f0f; }
+
+  #overlay {
+    position: absolute;
+    top: 40px;
+    left: 0; right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  #overlay-text {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #0ff;
+    text-shadow: 0 0 20px #0ff, 0 0 60px #0ff, 0 0 100px #0ff;
+    letter-spacing: 10px;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s ease;
+  }
+
+  #overlay-text.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  #overlay-sub {
+    font-size: 0.9rem;
+    color: #fff;
+    letter-spacing: 4px;
+    margin-top: 10px;
+    opacity: 0;
+    transition: opacity 0.5s ease 0.3s;
+  }
+  #overlay-sub.show { opacity: 1; }
+
+  .hp-label { font-size: 0.6rem; color: #0ff6; letter-spacing: 1px; margin-top: 1px; font-family: 'Share Tech Mono', monospace; }
+  .fighter-hud.right .hp-label { text-align: right; }
+</style>
+</head>
+<body>
+
+<div id="game-wrapper">
+  <div id="title">⚡ CYBER CLASH ⚡</div>
+
+  <div id="hud">
+    <div class="fighter-hud left" id="hud-p1">
+      <div class="fighter-name">▶ NEON STRIKER</div>
+      <div class="health-track"><div class="health-bar" id="hp-bar-p1"></div></div>
+      <div class="hp-label" id="hp-label-p1">HP: 100 / 100</div>
+      <div class="special-bar-track"><div class="special-bar" id="sp-bar-p1"></div></div>
+    </div>
+    <div class="hud-center">
+      <div id="timer">60</div>
+      <div id="round-label">ROUND 1</div>
+    </div>
+    <div class="fighter-hud right" id="hud-p2">
+      <div class="fighter-name">VOLT PHANTOM ◀</div>
+      <div class="health-track"><div class="health-bar" id="hp-bar-p2"></div></div>
+      <div class="hp-label" id="hp-label-p2" style="text-align:right">HP: 100 / 100</div>
+      <div class="special-bar-track"><div class="special-bar" id="sp-bar-p2"></div></div>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas" width="900" height="500"></canvas>
+
+  <div id="controls-panel">
+    <div class="ctrl-group">
+      <div class="ctrl-item"><span class="key">A</span><span class="key">D</span> Move</div>
+      <div class="ctrl-item"><span class="key">W</span> Jump</div>
+      <div class="ctrl-item"><span class="key">F</span> Punch</div>
+      <div class="ctrl-item"><span class="key">G</span> Kick</div>
+      <div class="ctrl-item"><span class="key">H</span> ⚡ Special</div>
+      <div class="ctrl-item"><span class="key">S</span> Block</div>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-item right"><span class="key" style="border-color:#f0f5;background:#f0f1;color:#f0f">←</span><span class="key" style="border-color:#f0f5;background:#f0f1;color:#f0f">→</span> Move</div>
+      <div class="ctrl-item right"><span class="key" style="border-color:#f0f5;background:#f0f1;color:#f0f">↑</span> Jump</div>
+      <div class="ctrl-item right"><span class="key" style="border-color:#f0f5;background:#f0f1;color:#f0f">1</span> Punch</div>
+      <div class="ctrl-item right"><span class="key" style="border-color:#f0f5;background:#f0f1;color:#f0f">2</span> Kick</div>
+      <div class="ctrl-item right"><span class="key" style="border-color:#f0f5;background:#f0f1;color:#f0f">3</span> ⚡ Special</div>
+      <div class="ctrl-item right"><span class="key" style="border-color:#f0f5;background:#f0f1;color:#f0f">↓</span> Block</div>
+    </div>
+  </div>
+
+  <div id="overlay">
+    <div id="overlay-text">FIGHT!</div>
+    <div id="overlay-sub">PRESS ANY KEY TO BEGIN</div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ── Particle System ──────────────────────────────────────────────────
+const particles = [];
+function spawnParticles(x, y, color, count, speed = 5, gravity = 0.2) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = speed * (0.5 + Math.random() * 0.8);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd - 1,
+      life: 1, decay: 0.025 + Math.random() * 0.03,
+      size: 2 + Math.random() * 4,
+      color, gravity
+    });
+  }
+}
+
+function spawnHitSpark(x, y, color) {
+  for (let i = 0; i < 12; i++) {
+    const angle = (Math.random() * Math.PI) - Math.PI / 2 + (Math.random() > 0.5 ? 0 : Math.PI);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * (4 + Math.random() * 6),
+      vy: Math.sin(angle) * (4 + Math.random() * 6),
+      life: 1, decay: 0.08 + Math.random() * 0.06,
+      size: 2 + Math.random() * 3,
+      color, gravity: 0.1
+    });
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy;
+    p.vy += p.gravity;
+    p.life -= p.decay;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// ── Floating Text ────────────────────────────────────────────────────
+const floatTexts = [];
+function spawnFloatText(x, y, text, color) {
+  floatTexts.push({ x, y, text, color, life: 1, vy: -2 });
+}
+
+function updateFloatTexts() {
+  for (let i = floatTexts.length - 1; i >= 0; i--) {
+    const t = floatTexts[i];
+    t.y += t.vy; t.life -= 0.025;
+    if (t.life <= 0) floatTexts.splice(i, 1);
+  }
+}
+
+function drawFloatTexts() {
+  floatTexts.forEach(t => {
+    ctx.save();
+    ctx.globalAlpha = t.life;
+    ctx.font = `bold 20px 'Orbitron', monospace`;
+    ctx.fillStyle = t.color;
+    ctx.shadowColor = t.color;
+    ctx.shadowBlur = 15;
+    ctx.textAlign = 'center';
+    ctx.fillText(t.text, t.x, t.y);
+    ctx.restore();
+  });
+}
+
+// ── Fighter Class ────────────────────────────────────────────────────
+class Fighter {
+  constructor(cfg) {
+    this.x = cfg.x; this.y = cfg.y;
+    this.w = 52; this.h = 88;
+    this.color = cfg.color;
+    this.glowColor = cfg.glowColor;
+    this.accentColor = cfg.accentColor;
+    this.name = cfg.name;
+    this.facing = cfg.facing; // 1 = right, -1 = left
+    this.speed = 5;
+    this.vx = 0; this.vy = 0;
+    this.onGround = false;
+    this.hp = 100; this.maxHp = 100;
+    this.sp = 0; this.maxSp = 100; // special meter
+    this.state = 'idle'; // idle, walk, jump, attack, hurt, block, special, dead
+    this.stateTimer = 0;
+    this.attackCooldown = 0;
+    this.blockTimer = 0;
+    this.invincible = 0;
+    this.comboCount = 0;
+    this.comboTimer = 0;
+
+    // animation
+    this.animFrame = 0;
+    this.animTimer = 0;
+
+    // hitbox for attacks
+    this.attackHitbox = null;
+    this.attackType = null;
+  }
+
+  get cx() { return this.x + this.w / 2; }
+  get cy() { return this.y + this.h / 2; }
+  get foot() { return this.y + this.h; }
+
+  isAlive() { return this.hp > 0; }
+
+  update(keys, ground, opponent) {
+    if (this.state === 'dead') return;
+    this.attackCooldown = Math.max(0, this.attackCooldown - 1);
+    this.invincible = Math.max(0, this.invincible - 1);
+    this.comboTimer = Math.max(0, this.comboTimer - 1);
+    if (this.comboTimer === 0) this.comboCount = 0;
+
+    // Gravity
+    this.vy += 0.6;
+
+    // Movement
+    if (!['attack', 'hurt', 'special'].includes(this.state)) {
+      if (keys.left) { this.vx = -this.speed; if (this.onGround) this.state = 'walk'; }
+      else if (keys.right) { this.vx = this.speed; if (this.onGround) this.state = 'walk'; }
+      else { this.vx = 0; if (this.onGround && !['hurt'].includes(this.state)) this.state = 'idle'; }
+
+      // Jump
+      if (keys.jump && this.onGround) {
+        this.vy = -14;
+        this.onGround = false;
+        this.state = 'jump';
+        spawnParticles(this.cx, this.foot, this.glowColor, 8, 3, 0.1);
+      }
+
+      // Block
+      if (keys.block && this.onGround) {
+        this.state = 'block';
+        this.vx = 0;
+      }
+
+      // Auto-face opponent
+      if (opponent && this.state !== 'block') {
+        this.facing = opponent.cx > this.cx ? 1 : -1;
+      }
+    }
+
+    // Attacks
+    if (!['attack', 'hurt', 'block', 'special', 'dead'].includes(this.state) && this.attackCooldown === 0) {
+      if (keys.punch) this.startAttack('punch', opponent);
+      else if (keys.kick) this.startAttack('kick', opponent);
+      else if (keys.special && this.sp >= 50) this.startSpecial(opponent);
+    }
+
+    // Position
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // Ground collision
+    if (this.y + this.h >= ground) {
+      this.y = ground - this.h;
+      this.vy = 0;
+      this.onGround = true;
+      if (this.state === 'jump') this.state = 'idle';
+    } else {
+      this.onGround = false;
+    }
+
+    // Wall bounds
+    this.x = Math.max(0, Math.min(W - this.w, this.x));
+
+    // State timer
+    if (['attack', 'hurt', 'special'].includes(this.state)) {
+      this.stateTimer--;
+      if (this.stateTimer <= 0) {
+        this.state = 'idle';
+        this.attackHitbox = null;
+        this.attackType = null;
+      }
+    }
+
+    // Attack hitbox phase
+    if (this.state === 'attack' || this.state === 'special') {
+      const hitFrame = this.attackType === 'kick' ? 10 : (this.attackType === 'special' ? 15 : 8);
+      if (this.stateTimer === hitFrame) {
+        this.buildHitbox();
+      }
+    }
+
+    // SP regen
+    this.sp = Math.min(this.maxSp, this.sp + 0.05);
+
+    // Combo regen particles
+    if (this.comboCount >= 3 && Math.random() < 0.1) {
+      spawnParticles(this.cx, this.cy, this.glowColor, 1, 2, -0.05);
+    }
+
+    // Animation
+    this.animTimer++;
+    if (this.animTimer > 6) { this.animTimer = 0; this.animFrame++; }
+  }
+
+  startAttack(type, opponent) {
+    this.state = 'attack';
+    this.attackType = type;
+    const durations = { punch: 22, kick: 30 };
+    this.stateTimer = durations[type];
+    this.attackCooldown = durations[type] + 5;
+    spawnParticles(this.cx + this.facing * 30, this.cy, this.glowColor, 5, 3);
+  }
+
+  startSpecial(opponent) {
+    this.state = 'special';
+    this.attackType = 'special';
+    this.stateTimer = 45;
+    this.attackCooldown = 55;
+    this.sp -= 50;
+    // Big visual burst
+    spawnParticles(this.cx, this.cy, this.glowColor, 30, 7, 0.15);
+    spawnParticles(this.cx, this.cy, '#fff', 15, 10, 0.1);
+    spawnFloatText(this.cx, this.cy - 60, '⚡ SPECIAL!', this.glowColor);
+  }
+
+  buildHitbox() {
+    const ranges = { punch: 70, kick: 85, special: 130 };
+    const damages = { punch: 8, kick: 13, special: 25 };
+    const range = ranges[this.attackType];
+    this.attackHitbox = {
+      x: this.facing > 0 ? this.cx : this.cx - range,
+      y: this.attackType === 'kick' ? this.cy : this.cy - 10,
+      w: range,
+      h: this.attackType === 'kick' ? 40 : 30,
+      damage: damages[this.attackType],
+      type: this.attackType
+    };
+  }
+
+  checkHit(other) {
+    if (!this.attackHitbox || this.invincible > 0) return;
+    if (!other.isAlive() || other.invincible > 0) return;
+    const hb = this.attackHitbox;
+    if (
+      other.x < hb.x + hb.w &&
+      other.x + other.w > hb.x &&
+      other.y < hb.y + hb.h &&
+      other.y + other.h > hb.y
+    ) {
+      let dmg = hb.damage;
+      let blocked = false;
+      if (other.state === 'block') {
+        dmg = Math.floor(dmg * 0.15);
+        blocked = true;
+      }
+      other.takeHit(dmg, this.facing, blocked, hb.type);
+      this.attackHitbox = null; // one hit per swing
+      this.sp = Math.min(this.maxSp, this.sp + 8);
+      this.comboCount++;
+      this.comboTimer = 90;
+      if (this.comboCount >= 3) {
+        spawnFloatText(this.cx, this.y - 20, this.comboCount + ' HIT COMBO!', '#ff0');
+      }
+    }
+  }
+
+  takeHit(dmg, fromFacing, blocked, type) {
+    this.hp = Math.max(0, this.hp - dmg);
+    const hitX = fromFacing > 0 ? this.x : this.x + this.w;
+    const hitY = this.cy;
+
+    if (blocked) {
+      spawnHitSpark(hitX, hitY, '#aaa');
+      spawnFloatText(this.cx, this.y - 10, 'BLOCKED', '#aaa');
+    } else {
+      const colors = { punch: this.glowColor, kick: '#ff6', special: '#f0f' };
+      spawnHitSpark(hitX, hitY, colors[type] || this.glowColor);
+      spawnParticles(hitX, hitY, '#f44', 8, 4, 0.2);
+      spawnFloatText(this.cx, this.y - 10, '-' + dmg, '#f44');
+
+      if (!blocked) {
+        this.state = 'hurt';
+        this.stateTimer = 14;
+        this.vx = -fromFacing * 5;
+        this.vy = -3;
+      }
+    }
+
+    this.sp = Math.min(this.maxSp, this.sp + dmg * 0.5);
+    this.invincible = 12;
+
+    if (this.hp <= 0) {
+      this.state = 'dead';
+      spawnParticles(this.cx, this.cy, this.glowColor, 40, 6, 0.3);
+      spawnParticles(this.cx, this.cy, '#fff', 20, 9, 0.2);
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    const t = Date.now() / 1000;
+    const bob = this.state === 'idle' ? Math.sin(t * 3) * 2 : 0;
+    const walkSquash = this.state === 'walk' ? Math.sin(this.animFrame * 0.7) * 3 : 0;
+
+    // Blink if hurt/invincible
+    if (this.invincible > 0 && Math.floor(this.invincible / 3) % 2 === 0) {
+      ctx.restore(); return;
+    }
+
+    const drawY = this.y + bob;
+    const cx = this.cx;
+
+    // Shadow
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(cx, H - 50, this.w * 0.5, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Glow
+    ctx.shadowColor = this.glowColor;
+    ctx.shadowBlur = this.state === 'special' ? 40 : (this.state === 'attack' ? 20 : 10);
+
+    // Body
+    const bodyW = this.w + walkSquash;
+    const bodyH = this.h - walkSquash;
+
+    // Legs
+    this._drawLegs(ctx, cx, drawY, walkSquash, t);
+
+    // Torso
+    const gradient = ctx.createLinearGradient(cx - bodyW/2, drawY + bodyH*0.2, cx + bodyW/2, drawY + bodyH*0.7);
+    gradient.addColorStop(0, this.color);
+    gradient.addColorStop(1, this.accentColor);
+    ctx.fillStyle = gradient;
+    this._roundRect(ctx, cx - bodyW/2 + 4, drawY + bodyH * 0.25, bodyW - 8, bodyH * 0.45, 6);
+    ctx.fill();
+
+    // Chest detail
+    ctx.fillStyle = this.glowColor;
+    ctx.globalAlpha = 0.7;
+    this._roundRect(ctx, cx - 8, drawY + bodyH * 0.3, 16, 10, 3);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Head
+    this._drawHead(ctx, cx, drawY, bodyH, t);
+
+    // Arms
+    this._drawArms(ctx, cx, drawY, bodyH, walkSquash, t);
+
+    // Attack effects
+    if (this.state === 'attack' || this.state === 'special') {
+      this._drawAttackEffect(ctx, cx, drawY, bodyH);
+    }
+
+    // Block shield
+    if (this.state === 'block') {
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = this.glowColor;
+      ctx.shadowBlur = 20;
+      this._roundRect(ctx, this.facing > 0 ? cx + 5 : cx - 35, drawY + bodyH*0.15, 30, bodyH*0.7, 4);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+  }
+
+  _drawLegs(ctx, cx, drawY, squash, t) {
+    const legY = drawY + this.h * 0.68;
+    const legH = this.h * 0.32;
+    const walkAnim = this.state === 'walk' ? Math.sin(this.animFrame * 0.6) * 10 : 0;
+
+    ctx.fillStyle = this.accentColor;
+    ctx.shadowColor = this.glowColor;
+    ctx.shadowBlur = 5;
+
+    // Left leg
+    ctx.save();
+    ctx.translate(cx - 10, legY);
+    ctx.rotate(this.state === 'walk' ? walkAnim * 0.05 : 0);
+    this._roundRect(ctx, -8, 0, 16, legH, 4);
+    ctx.fill();
+    ctx.restore();
+
+    // Right leg
+    ctx.save();
+    ctx.translate(cx + 10, legY);
+    ctx.rotate(this.state === 'walk' ? -walkAnim * 0.05 : 0);
+    this._roundRect(ctx, -8, 0, 16, legH, 4);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  _drawHead(ctx, cx, drawY, bodyH, t) {
+    const headY = drawY + 4;
+    const headH = bodyH * 0.24;
+    const headW = this.w * 0.7;
+
+    // Helmet base
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.glowColor;
+    ctx.shadowBlur = 15;
+    this._roundRect(ctx, cx - headW/2, headY, headW, headH, 8);
+    ctx.fill();
+
+    // Visor
+    ctx.fillStyle = this.glowColor;
+    ctx.globalAlpha = 0.9;
+    this._roundRect(ctx, cx - headW*0.35, headY + headH*0.3, headW*0.7, headH*0.35, 3);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Visor shine
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = 0.4;
+    this._roundRect(ctx, cx - headW*0.3, headY + headH*0.32, headW*0.25, headH*0.12, 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Antenna
+    ctx.strokeStyle = this.glowColor;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(cx, headY);
+    ctx.lineTo(cx, headY - 10);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, headY - 12, 3, 0, Math.PI * 2);
+    ctx.fillStyle = this.glowColor;
+    ctx.fill();
+  }
+
+  _drawArms(ctx, cx, drawY, bodyH, squash, t) {
+    const armY = drawY + bodyH * 0.27;
+    const armH = bodyH * 0.38;
+    const armW = 12;
+    const punchAnim = (this.state === 'attack' && this.attackType === 'punch') ?
+      Math.max(0, (this.stateTimer - 10)) / 12 : 0;
+    const kickAnim = (this.state === 'attack' && this.attackType === 'kick') ?
+      Math.max(0, (this.stateTimer - 15)) / 15 : 0;
+
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.glowColor;
+    ctx.shadowBlur = 8;
+
+    // Left arm
+    const leftExtend = this.facing < 0 ? punchAnim * 25 : 0;
+    this._roundRect(ctx, cx - this.w/2 - armW + 2 - leftExtend, armY, armW + leftExtend, armH * 0.7, 4);
+    ctx.fill();
+
+    // Right arm
+    const rightExtend = this.facing > 0 ? punchAnim * 25 : 0;
+    this._roundRect(ctx, cx + this.w/2 - 2, armY, armW + rightExtend, armH * 0.7, 4);
+    ctx.fill();
+
+    // Kick leg animation
+    if (kickAnim > 0) {
+      ctx.fillStyle = this.accentColor;
+      ctx.save();
+      ctx.translate(cx + this.facing * 10, drawY + bodyH * 0.65);
+      ctx.rotate(this.facing * kickAnim * 1.2);
+      this._roundRect(ctx, -8, 0, 16, this.h * 0.35, 4);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  _drawAttackEffect(ctx, cx, drawY, bodyH) {
+    if (this.stateTimer > 20 && this.attackType !== 'special') return;
+    const effectX = cx + this.facing * (this.attackType === 'special' ? 80 : 50);
+    const effectY = this.attackType === 'kick' ? drawY + bodyH * 0.7 : drawY + bodyH * 0.35;
+
+    if (this.attackType === 'special') {
+      // Special: spinning ring of energy
+      const rings = 3;
+      for (let r = 0; r < rings; r++) {
+        const rad = 20 + r * 15;
+        const rot = Date.now() / 200 + r * (Math.PI / rings);
+        ctx.strokeStyle = this.glowColor;
+        ctx.lineWidth = 3 - r;
+        ctx.globalAlpha = 0.8 - r * 0.2;
+        ctx.shadowColor = this.glowColor;
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(effectX, effectY, rad, rot, rot + Math.PI * 1.5);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // Core orb
+      const grad = ctx.createRadialGradient(effectX, effectY, 0, effectX, effectY, 18);
+      grad.addColorStop(0, '#fff');
+      grad.addColorStop(0.4, this.glowColor);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(effectX, effectY, 18, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Punch / kick flash
+      const sz = this.attackType === 'kick' ? 28 : 22;
+      const grad = ctx.createRadialGradient(effectX, effectY, 0, effectX, effectY, sz);
+      grad.addColorStop(0, '#fff');
+      grad.addColorStop(0.3, this.glowColor);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.globalAlpha = Math.min(1, this.stateTimer / 10);
+      ctx.beginPath();
+      ctx.arc(effectX, effectY, sz, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Impact lines
+      for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2 + Date.now() / 300;
+        ctx.strokeStyle = this.glowColor;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(effectX + Math.cos(angle) * 8, effectY + Math.sin(angle) * 8);
+        ctx.lineTo(effectX + Math.cos(angle) * (sz + 5), effectY + Math.sin(angle) * (sz + 5));
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  _roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  updateHUD(hpBarId, spBarId, hpLabelId) {
+    const pct = (this.hp / this.maxHp) * 100;
+    const spPct = (this.sp / this.maxSp) * 100;
+    const hpBar = document.getElementById(hpBarId);
+    const spBar = document.getElementById(spBarId);
+    const label = document.getElementById(hpLabelId);
+    if (hpBar) {
+      hpBar.style.width = pct + '%';
+      hpBar.style.background = pct > 50
+        ? 'linear-gradient(90deg, #0f0, #0ff)'
+        : pct > 25
+        ? 'linear-gradient(90deg, #ff0, #fa0)'
+        : 'linear-gradient(90deg, #f00, #f60)';
+    }
+    if (spBar) spBar.style.width = spPct + '%';
+    if (label) label.textContent = `HP: ${Math.ceil(this.hp)} / ${this.maxHp}`;
+  }
+}
+
+// ── Background ───────────────────────────────────────────────────────
+function drawBackground(t) {
+  // Sky gradient
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+  skyGrad.addColorStop(0, '#000010');
+  skyGrad.addColorStop(0.6, '#0a0020');
+  skyGrad.addColorStop(1, '#050015');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid floor
+  const ground = H - 50;
+  ctx.strokeStyle = '#0ff2';
+  ctx.lineWidth = 1;
+
+  // Horizontal lines (perspective)
+  for (let i = 0; i <= 8; i++) {
+    const y = ground + i * (H - ground) / 8;
+    const alpha = 0.05 + i * 0.04;
+    ctx.strokeStyle = `rgba(0,255,255,${alpha})`;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Vertical lines (perspective)
+  const vp = { x: W / 2, y: ground };
+  for (let i = -10; i <= 10; i++) {
+    const endX = i * 60 + W / 2;
+    ctx.strokeStyle = 'rgba(0,255,255,0.06)';
+    ctx.beginPath();
+    ctx.moveTo(vp.x, vp.y);
+    ctx.lineTo(endX, H);
+    ctx.stroke();
+  }
+
+  // Cyberpunk city silhouette
+  ctx.fillStyle = '#0a0020';
+  const buildings = [
+    [0,180,80,ground],[60,200,60,ground],[100,140,90,ground],[170,160,50,ground],
+    [200,100,70,ground],[250,170,80,ground],[310,130,60,ground],[350,90,100,ground],
+    [430,160,80,ground],[490,110,90,ground],[560,150,70,ground],[610,80,110,ground],
+    [700,170,60,ground],[740,130,80,ground],[800,100,90,ground],[860,160,50,ground],
+  ];
+  buildings.forEach(([x, y, w, bot]) => {
+    ctx.fillRect(x, y, w, bot - y);
+    // Windows
+    for (let wy = y + 10; wy < bot - 10; wy += 20) {
+      for (let wx = x + 5; wx < x + w - 10; wx += 18) {
+        if (Math.random() < 0.003) continue; // flicker skip
+        const winColor = Math.random() < 0.05
+          ? `rgba(255,200,0,0.6)` : `rgba(0,200,255,0.15)`;
+        ctx.fillStyle = winColor;
+        ctx.fillRect(wx, wy, 10, 8);
+      }
+    }
+  });
+
+  // Neon sign strips on buildings
+  const strips = [
+    [350, 95, '#f0f'], [610, 85, '#0ff'], [200, 105, '#ff0']
+  ];
+  strips.forEach(([x, y, col]) => {
+    ctx.fillStyle = col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 8;
+    ctx.globalAlpha = 0.6 + Math.sin(t * 2 + x) * 0.3;
+    ctx.fillRect(x, y, 50, 3);
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+  });
+
+  // Ground platform
+  const platformGrad = ctx.createLinearGradient(0, ground - 2, 0, ground + 50);
+  platformGrad.addColorStop(0, '#0ff');
+  platformGrad.addColorStop(0.1, '#0ff3');
+  platformGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = platformGrad;
+  ctx.fillRect(0, ground - 2, W, 52);
+
+  // Scanlines effect
+  for (let y = 0; y < H; y += 4) {
+    ctx.fillStyle = 'rgba(0,0,0,0.07)';
+    ctx.fillRect(0, y, W, 2);
+  }
+}
+
+// ── Game State ───────────────────────────────────────────────────────
+const GROUND = H - 50;
+let gameState = 'start'; // start, fight, roundEnd, gameOver
+let round = 1;
+let timer = 60;
+let timerInterval = null;
+let p1Wins = 0, p2Wins = 0;
+let aiCooldown = 0;
+
+const p1 = new Fighter({
+  x: 150, y: GROUND - 88,
+  color: '#003355', glowColor: '#0ff', accentColor: '#005588',
+  name: 'NEON STRIKER', facing: 1
+});
+
+const p2 = new Fighter({
+  x: 650, y: GROUND - 88,
+  color: '#330044', glowColor: '#f0f', accentColor: '#550066',
+  name: 'VOLT PHANTOM', facing: -1
+});
+
+const keys1 = { left: false, right: false, jump: false, punch: false, kick: false, special: false, block: false };
+const keys2 = { left: false, right: false, jump: false, punch: false, kick: false, special: false, block: false };
+
+const keyMap1 = {
+  'KeyA': 'left', 'KeyD': 'right', 'KeyW': 'jump',
+  'KeyF': 'punch', 'KeyG': 'kick', 'KeyH': 'special', 'KeyS': 'block'
+};
+const keyMap2 = {
+  'ArrowLeft': 'left', 'ArrowRight': 'right', 'ArrowUp': 'jump',
+  'Digit1': 'punch', 'Digit2': 'kick', 'Digit3': 'special', 'ArrowDown': 'block'
+};
+
+// Overlay elements
+const overlayText = document.getElementById('overlay-text');
+const overlaySub = document.getElementById('overlay-sub');
+const timerEl = document.getElementById('timer');
+const roundLabel = document.getElementById('round-label');
+
+function showOverlay(text, sub = '') {
+  overlayText.textContent = text;
+  overlayText.classList.add('show');
+  overlaySub.textContent = sub;
+  overlaySub.classList.add('show');
+}
+
+function hideOverlay() {
+  overlayText.classList.remove('show');
+  overlaySub.classList.remove('show');
+}
+
+function startFight() {
+  gameState = 'fight';
+  hideOverlay();
+  timer = 60;
+  timerEl.textContent = timer;
+  roundLabel.textContent = `ROUND ${round}`;
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (gameState !== 'fight') return;
+    timer--;
+    timerEl.textContent = timer;
+    if (timer <= 0) endRound();
+  }, 1000);
+}
+
+function resetFighters() {
+  p1.x = 150; p1.y = GROUND - 88; p1.hp = 100; p1.sp = 0;
+  p1.vx = 0; p1.vy = 0; p1.state = 'idle'; p1.facing = 1;
+  p1.attackHitbox = null; p1.comboCount = 0;
+  p2.x = 650; p2.y = GROUND - 88; p2.hp = 100; p2.sp = 0;
+  p2.vx = 0; p2.vy = 0; p2.state = 'idle'; p2.facing = -1;
+  p2.attackHitbox = null; p2.comboCount = 0;
+  particles.length = 0; floatTexts.length = 0;
+}
+
+function endRound() {
+  if (gameState !== 'fight') return;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  gameState = 'roundEnd';
+
+  let winner = null;
+  if (p1.hp > p2.hp) winner = 'P1';
+  else if (p2.hp > p1.hp) winner = 'P2';
+  else winner = 'DRAW';
+
+  if (winner === 'P1') { p1Wins++; spawnParticles(p1.cx, p1.cy - 40, '#0ff', 30, 6, 0.2); }
+  else if (winner === 'P2') { p2Wins++; spawnParticles(p2.cx, p2.cy - 40, '#f0f', 30, 6, 0.2); }
+
+  const msg = winner === 'DRAW' ? 'DRAW!' : (winner === 'P1' ? 'P1 WINS!' : 'P2 WINS!');
+  showOverlay(msg, 'Next round starting...');
+
+  setTimeout(() => {
+    round++;
+    if (p1Wins >= 2 || p2Wins >= 2 || round > 3) {
+      endGame();
+    } else {
+      resetFighters();
+      showOverlay('ROUND ' + round, 'GET READY...');
+      setTimeout(() => {
+        showOverlay('FIGHT!', '');
+        setTimeout(() => { startFight(); }, 700);
+      }, 1200);
+    }
+  }, 2000);
+}
+
+function endGame() {
+  gameState = 'gameOver';
+  clearInterval(timerInterval);
+  let champion = p1Wins > p2Wins ? 'NEON STRIKER' : (p2Wins > p1Wins ? 'VOLT PHANTOM' : 'BOTH');
+  showOverlay(champion + ' WINS!', 'Press SPACE to play again');
+}
+
+// ── AI for P2 ────────────────────────────────────────────────────────
+function updateAI() {
+  if (gameState !== 'fight') return;
+  const dist = p1.cx - p2.cx;
+  const absDist = Math.abs(dist);
+  aiCooldown = Math.max(0, aiCooldown - 1);
+
+  // Reset keys
+  Object.keys(keys2).forEach(k => keys2[k] = false);
+
+  if (!p2.isAlive() || p1.hp <= 0) return;
+
+  // Move toward player
+  if (absDist > 120) {
+    keys2[dist > 0 ? 'right' : 'left'] = true;
+  } else if (absDist < 60) {
+    keys2[dist > 0 ? 'left' : 'right'] = true;
+  }
+
+  // Attack when in range
+  if (absDist < 110 && aiCooldown === 0) {
+    const r = Math.random();
+    if (p2.sp >= 50 && r < 0.15) {
+      keys2.special = true;
+    } else if (r < 0.5) {
+      keys2.punch = true;
+    } else {
+      keys2.kick = true;
+    }
+    aiCooldown = 20 + Math.floor(Math.random() * 30);
+  }
+
+  // Occasional jump
+  if (Math.random() < 0.008 && p2.onGround) keys2.jump = true;
+
+  // Block if being attacked
+  if (p1.state === 'attack' && absDist < 100 && Math.random() < 0.3) {
+    keys2.block = true;
+  }
+}
+
+// ── Input ────────────────────────────────────────────────────────────
+let twoPlayer = false;
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && gameState === 'gameOver') {
+    round = 1; p1Wins = 0; p2Wins = 0;
+    resetFighters();
+    showOverlay('FIGHT!', '');
+    setTimeout(startFight, 800);
+    return;
+  }
+  if (gameState === 'start') {
+    showOverlay('FIGHT!', '');
+    setTimeout(startFight, 800);
+    gameState = 'loading';
+    return;
+  }
+  if (keyMap1[e.code]) { keys1[keyMap1[e.code]] = true; e.preventDefault(); }
+  if (keyMap2[e.code]) {
+    if (twoPlayer) keys2[keyMap2[e.code]] = true;
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('keyup', e => {
+  if (keyMap1[e.code]) keys1[keyMap1[e.code]] = false;
+  if (keyMap2[e.code]) keys2[keyMap2[e.code]] = false;
+});
+
+// Toggle 2P mode button
+const toggle2p = document.createElement('button');
+toggle2p.textContent = '👥 2-PLAYER MODE: OFF';
+toggle2p.style.cssText = `
+  position: absolute; bottom: -44px; right: 0;
+  font-family: 'Orbitron', monospace; font-size: 0.7rem;
+  background: #0ff1; border: 1px solid #0ff5; color: #0ff;
+  padding: 6px 14px; border-radius: 4px; cursor: pointer;
+  letter-spacing: 2px; transition: all 0.2s;
+`;
+toggle2p.addEventListener('click', () => {
+  twoPlayer = !twoPlayer;
+  toggle2p.textContent = `👥 2-PLAYER MODE: ${twoPlayer ? 'ON' : 'OFF'}`;
+  toggle2p.style.background = twoPlayer ? '#0ff3' : '#0ff1';
+});
+document.getElementById('game-wrapper').appendChild(toggle2p);
+
+// ── Main Loop ────────────────────────────────────────────────────────
+let lastTime = 0;
+function loop(ts) {
+  const dt = ts - lastTime; lastTime = ts;
+  const t = ts / 1000;
+
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw BG
+  drawBackground(t);
+
+  if (gameState === 'fight') {
+    if (!twoPlayer) updateAI();
+
+    p1.update(keys1, GROUND, p2);
+    p2.update(twoPlayer ? keys2 : keys2, GROUND, p1);
+
+    // Check hits
+    p1.checkHit(p2);
+    p2.checkHit(p1);
+
+    // Check KO
+    if (!p1.isAlive() || !p2.isAlive()) {
+      if (gameState === 'fight') endRound();
+    }
+
+    // HUD
+    p1.updateHUD('hp-bar-p1', 'sp-bar-p1', 'hp-label-p1');
+    p2.updateHUD('hp-bar-p2', 'sp-bar-p2', 'hp-label-p2');
+  }
+
+  // Draw fighters (draw back fighter first)
+  if (p1.cx < p2.cx) { p1.draw(ctx); p2.draw(ctx); }
+  else { p2.draw(ctx); p1.draw(ctx); }
+
+  // Win indicators
+  [{ f: p1, x: 60 }, { f: p2, x: W - 60 }].forEach(({ f, x }, idx) => {
+    const wins = idx === 0 ? p1Wins : p2Wins;
+    for (let w = 0; w < wins; w++) {
+      ctx.fillStyle = idx === 0 ? '#0ff' : '#f0f';
+      ctx.shadowColor = idx === 0 ? '#0ff' : '#f0f';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(x + w * 20 - (wins - 1) * 10, 30, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // Particles & float texts
+  updateParticles();
+  drawParticles();
+  updateFloatTexts();
+  drawFloatTexts();
+
+  // Timer color
+  timerEl.style.color = timer <= 10 ? '#f44' : '#fff';
+  timerEl.style.textShadow = timer <= 10 ? '0 0 15px #f44' : '0 0 12px #0ff';
+
+  requestAnimationFrame(loop);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────
+showOverlay('CYBER CLASH', 'PRESS ANY KEY TO START');
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
