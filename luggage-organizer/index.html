@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LuggageIQ — Smart Luggage Organizer</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧳</text></svg>" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ===== SPLASH SCREEN ===== -->
+  <div id="splash" class="splash">
+    <div class="splash-content">
+      <div class="splash-icon">🧳</div>
+      <h1 class="splash-title">LuggageIQ</h1>
+      <p class="splash-sub">Smart Luggage Organizer for your Germany Trip</p>
+      <div class="splash-loader"><div class="splash-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- ===== TOP NAV ===== -->
+  <nav id="topnav" class="topnav">
+    <div class="nav-left">
+      <span class="nav-logo">🧳</span>
+      <span class="nav-title">LuggageIQ</span>
+      <span class="nav-badge">Germany Trip</span>
+    </div>
+    <div class="nav-center">
+      <button class="nav-tab active" data-view="dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-tab" data-view="luggage">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+        My Luggage
+      </button>
+      <button class="nav-tab" data-view="analytics">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analytics
+      </button>
+      <button class="nav-tab" data-view="checklist">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Checklist
+      </button>
+      <button class="nav-tab" data-view="agent">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        AI Agent
+      </button>
+    </div>
+    <div class="nav-right">
+      <div class="theme-switcher">
+        <button class="theme-btn" data-theme="light" title="Light Theme">☀️</button>
+        <button class="theme-btn active" data-theme="dark" title="Dark Theme">🌙</button>
+        <button class="theme-btn" data-theme="ocean" title="Ocean Theme">🌊</button>
+        <button class="theme-btn" data-theme="forest" title="Forest Theme">🌲</button>
+        <button class="theme-btn" data-theme="sunset" title="Sunset Theme">🌅</button>
+      </div>
+      <button id="exportBtn" class="btn-icon" title="Export Data">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main id="app">
+    <!-- DASHBOARD VIEW -->
+    <section id="view-dashboard" class="view active">
+      <div class="dashboard-header">
+        <div>
+          <h1>Welcome back, Traveler!</h1>
+          <p class="subtitle">Your Germany trip luggage at a glance</p>
+        </div>
+        <div class="trip-info-card">
+          <div class="trip-detail"><span class="trip-label">Destination</span><span class="trip-value">🇩🇪 Germany</span></div>
+          <div class="trip-detail"><span class="trip-label">Trip Type</span><span class="trip-value">Travel</span></div>
+          <div class="trip-detail"><span class="trip-label">Bags</span><span class="trip-value" id="stat-bags">-</span></div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card gradient-blue">
+          <div class="stat-icon">📦</div>
+          <div class="stat-info">
+            <span class="stat-number" id="stat-total">0</span>
+            <span class="stat-label">Total Items</span>
+          </div>
+        </div>
+        <div class="stat-card gradient-green">
+          <div class="stat-icon">⚖️</div>
+          <div class="stat-info">
+            <span class="stat-number" id="stat-weight">0 kg</span>
+            <span class="stat-label">Est. Weight</span>
+          </div>
+        </div>
+        <div class="stat-card gradient-purple">
+          <div class="stat-icon">📂</div>
+          <div class="stat-info">
+            <span class="stat-number" id="stat-categories">0</span>
+            <span class="stat-label">Categories</span>
+          </div>
+        </div>
+        <div class="stat-card gradient-orange">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info">
+            <span class="stat-number" id="stat-packed">0%</span>
+            <span class="stat-label">Packed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-charts">
+        <div class="chart-card">
+          <h3>Category Distribution</h3>
+          <canvas id="chart-category-pie"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Weight by Section</h3>
+          <canvas id="chart-weight-bar"></canvas>
+        </div>
+      </div>
+
+      <div class="dashboard-charts">
+        <div class="chart-card full-width">
+          <h3>Packing Progress by Category</h3>
+          <canvas id="chart-progress"></canvas>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <h3>Quick Actions</h3>
+        <div class="action-btns">
+          <button class="action-btn" onclick="switchView('luggage')">📦 Manage Items</button>
+          <button class="action-btn" onclick="switchView('analytics')">📊 View Analytics</button>
+          <button class="action-btn" onclick="switchView('checklist')">✅ Packing Checklist</button>
+          <button class="action-btn" onclick="switchView('agent')">🤖 Ask AI Agent</button>
+          <button class="action-btn" onclick="showAddItemModal()">➕ Add New Item</button>
+          <button class="action-btn" onclick="showAddSectionModal()">📂 Add Section</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LUGGAGE VIEW -->
+    <section id="view-luggage" class="view">
+      <div class="luggage-header">
+        <div>
+          <h1>My Luggage</h1>
+          <p class="subtitle">Manage and organize all your items</p>
+        </div>
+        <div class="luggage-actions">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" placeholder="Search items..." oninput="filterItems(this.value)" />
+          </div>
+          <select id="filterCategory" onchange="filterByCategory(this.value)">
+            <option value="all">All Categories</option>
+          </select>
+          <button class="btn-primary" onclick="showAddItemModal()">+ Add Item</button>
+          <button class="btn-secondary" onclick="showAddSectionModal()">+ Add Section</button>
+        </div>
+      </div>
+
+      <div id="luggage-grid" class="luggage-grid"></div>
+    </section>
+
+    <!-- ANALYTICS VIEW -->
+    <section id="view-analytics" class="view">
+      <div class="analytics-header">
+        <h1>Luggage Analytics</h1>
+        <p class="subtitle">Deep insights into your packing</p>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="chart-card">
+          <h3>Items per Category</h3>
+          <canvas id="chart-items-doughnut"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Weight Distribution</h3>
+          <canvas id="chart-weight-polar"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Packing Status</h3>
+          <canvas id="chart-packing-status"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Priority Breakdown</h3>
+          <canvas id="chart-priority"></canvas>
+        </div>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="chart-card full-width">
+          <h3>Estimated Weight per Item (Top 15)</h3>
+          <canvas id="chart-item-weights"></canvas>
+        </div>
+      </div>
+
+      <div class="analytics-summary">
+        <h3>Packing Intelligence</h3>
+        <div id="analytics-insights" class="insights-grid"></div>
+      </div>
+    </section>
+
+    <!-- CHECKLIST VIEW -->
+    <section id="view-checklist" class="view">
+      <div class="checklist-header">
+        <div>
+          <h1>Packing Checklist</h1>
+          <p class="subtitle">Track what's packed and what's left</p>
+        </div>
+        <div class="checklist-actions">
+          <div class="progress-ring-container">
+            <svg class="progress-ring" width="80" height="80">
+              <circle class="progress-ring-bg" cx="40" cy="40" r="35" />
+              <circle id="progress-ring-circle" class="progress-ring-fg" cx="40" cy="40" r="35" />
+            </svg>
+            <span id="progress-ring-text" class="progress-ring-text">0%</span>
+          </div>
+          <button class="btn-secondary" onclick="markAllPacked()">Pack All</button>
+          <button class="btn-secondary" onclick="unpackAll()">Unpack All</button>
+        </div>
+      </div>
+
+      <div id="checklist-container" class="checklist-container"></div>
+    </section>
+
+    <!-- AI AGENT VIEW -->
+    <section id="view-agent" class="view">
+      <div class="agent-container">
+        <div class="agent-sidebar">
+          <div class="agent-info">
+            <div class="agent-avatar">🤖</div>
+            <h3>OpenClaw Agent</h3>
+            <p class="agent-status">Connected to LuggageIQ</p>
+          </div>
+          <div class="agent-capabilities">
+            <h4>I can help you with:</h4>
+            <ul>
+              <li>➕ Add/remove items</li>
+              <li>✏️ Edit item details</li>
+              <li>📂 Manage sections</li>
+              <li>📊 Analyze your luggage</li>
+              <li>💡 Packing suggestions</li>
+              <li>⚖️ Weight optimization</li>
+              <li>🌤️ Weather-based advice</li>
+              <li>✅ Packing checklist</li>
+            </ul>
+          </div>
+          <div class="agent-quick-cmds">
+            <h4>Quick Commands</h4>
+            <button class="cmd-btn" onclick="sendAgentMessage('Show me a summary of my luggage')">📋 Luggage Summary</button>
+            <button class="cmd-btn" onclick="sendAgentMessage('What should I add for a trip to Germany?')">💡 Suggestions</button>
+            <button class="cmd-btn" onclick="sendAgentMessage('Analyze my luggage weight')">⚖️ Weight Check</button>
+            <button class="cmd-btn" onclick="sendAgentMessage('What am I missing for winter in Germany?')">❄️ Winter Essentials</button>
+            <button class="cmd-btn" onclick="sendAgentMessage('Help me optimize my packing')">🎯 Optimize</button>
+            <button class="cmd-btn" onclick="sendAgentMessage('Show unpacked items')">📦 Unpacked Items</button>
+          </div>
+        </div>
+        <div class="agent-chat">
+          <div id="chat-messages" class="chat-messages">
+            <div class="chat-message agent">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-bubble">
+                <p>Hello! I'm your OpenClaw LuggageIQ assistant. I can help you manage your luggage for your Germany trip. Try asking me to add items, analyze your packing, or get suggestions!</p>
+                <span class="chat-time">Just now</span>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Ask me anything about your luggage..." onkeydown="if(event.key==='Enter')sendChat()" />
+            <button class="btn-send" onclick="sendChat()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== ADD ITEM MODAL ===== -->
+  <div id="modal-add-item" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-item-title">Add New Item</h2>
+        <button class="modal-close" onclick="closeModal('modal-add-item')">&times;</button>
+      </div>
+      <form id="addItemForm" onsubmit="handleAddItem(event)">
+        <input type="hidden" id="editItemId" value="" />
+        <div class="form-row">
+          <div class="form-group">
+            <label>Item Name *</label>
+            <input type="text" id="itemName" required placeholder="e.g., Winter Jacket" />
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="itemCategory" required></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantity</label>
+            <input type="number" id="itemQty" value="1" min="1" />
+          </div>
+          <div class="form-group">
+            <label>Est. Weight (g)</label>
+            <input type="number" id="itemWeight" value="100" min="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="itemPriority">
+              <option value="essential">Essential</option>
+              <option value="important">Important</option>
+              <option value="optional">Optional</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Bag</label>
+            <select id="itemBag">
+              <option value="Main Suitcase">Main Suitcase</option>
+              <option value="Carry-on">Carry-on</option>
+              <option value="Personal Bag">Personal Bag</option>
+              <option value="Backpack">Backpack</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="itemNotes" rows="2" placeholder="Any special notes..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal('modal-add-item')">Cancel</button>
+          <button type="submit" class="btn-primary" id="modal-item-submit">Add Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== ADD SECTION MODAL ===== -->
+  <div id="modal-add-section" class="modal">
+    <div class="modal-content modal-small">
+      <div class="modal-header">
+        <h2>Add New Section</h2>
+        <button class="modal-close" onclick="closeModal('modal-add-section')">&times;</button>
+      </div>
+      <form onsubmit="handleAddSection(event)">
+        <div class="form-group">
+          <label>Section Name *</label>
+          <input type="text" id="sectionName" required placeholder="e.g., Photography Gear" />
+        </div>
+        <div class="form-group">
+          <label>Icon (emoji)</label>
+          <input type="text" id="sectionIcon" placeholder="e.g., 📷" maxlength="2" />
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <input type="color" id="sectionColor" value="#6366f1" />
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal('modal-add-section')">Cancel</button>
+          <button type="submit" class="btn-primary">Create Section</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== ITEM DETAIL MODAL ===== -->
+  <div id="modal-item-detail" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="detail-title">Item Details</h2>
+        <button class="modal-close" onclick="closeModal('modal-item-detail')">&times;</button>
+      </div>
+      <div id="detail-body"></div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST CONTAINER ===== -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
