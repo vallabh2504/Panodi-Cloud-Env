@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Zap, TrendingDown, AlertTriangle } from 'lucide-react'
+import { Zap, TrendingDown, AlertTriangle, LogOut } from 'lucide-react'
 import FloatingEmojis from './components/FloatingEmojis'
 import RoastCard from './components/RoastCard'
+import Login from './components/Login'
 import { analyzeDelusion } from './utils/roastEngine'
+import { supabase } from './supabaseClient'
 
 // ── Scanning animation shown while "processing" ──
 function ScanningOverlay() {
@@ -16,7 +18,6 @@ function ScanningOverlay() {
       style={{ background: 'rgba(5,5,16,0.92)' }}
     >
       <div className="flex flex-col items-center gap-6">
-        {/* Spinning hexagon scanner */}
         <div className="relative w-24 h-24">
           <motion.div
             animate={{ rotate: 360 }}
@@ -47,7 +48,6 @@ function ScanningOverlay() {
           </p>
         </div>
 
-        {/* Fake progress bar */}
         <div className="w-48 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(57,255,20,0.1)' }}>
           <motion.div
             initial={{ width: 0 }}
@@ -90,7 +90,6 @@ function InputForm({ onSubmit }) {
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="w-full max-w-2xl mx-auto flex flex-col gap-6"
     >
-      {/* Dream input */}
       <div className="flex flex-col gap-2">
         <label className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest" style={{ color: '#00f5ff' }}>
           <Zap size={12} />
@@ -108,23 +107,19 @@ function InputForm({ onSubmit }) {
           <p className="text-xs font-mono" style={{ color: '#ff2d78' }}>{errors.dream}</p>
         )}
         <div className="flex items-center justify-between">
-          <p className="text-xs font-mono" style={{ color: 'rgba(226,232,240,0.3)' }}>
-            Be ambitious. Be specific.
-          </p>
+          <p className="text-xs font-mono" style={{ color: 'rgba(226,232,240,0.3)' }}>Be ambitious. Be specific.</p>
           <span className="text-xs font-mono" style={{ color: dream.length > 200 ? '#ff2d78' : 'rgba(226,232,240,0.25)' }}>
             {dream.length}/250
           </span>
         </div>
       </div>
 
-      {/* Divider with icon */}
       <div className="flex items-center gap-3">
         <div className="h-px flex-1" style={{ background: 'rgba(255,45,120,0.2)' }} />
         <TrendingDown size={16} style={{ color: '#ff2d78', opacity: 0.6 }} />
         <div className="h-px flex-1" style={{ background: 'rgba(255,45,120,0.2)' }} />
       </div>
 
-      {/* Reality input */}
       <div className="flex flex-col gap-2">
         <label className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest" style={{ color: '#ff2d78' }}>
           <AlertTriangle size={12} />
@@ -142,16 +137,13 @@ function InputForm({ onSubmit }) {
           <p className="text-xs font-mono" style={{ color: '#ff2d78' }}>{errors.reality}</p>
         )}
         <div className="flex items-center justify-between">
-          <p className="text-xs font-mono" style={{ color: 'rgba(226,232,240,0.3)' }}>
-            Be brutally honest. We can handle it.
-          </p>
+          <p className="text-xs font-mono" style={{ color: 'rgba(226,232,240,0.3)' }}>Be brutally honest. We can handle it.</p>
           <span className="text-xs font-mono" style={{ color: reality.length > 200 ? '#ff2d78' : 'rgba(226,232,240,0.25)' }}>
             {reality.length}/250
           </span>
         </div>
       </div>
 
-      {/* Submit button */}
       <motion.button
         type="submit"
         whileHover={{ scale: 1.02 }}
@@ -164,7 +156,6 @@ function InputForm({ onSubmit }) {
           boxShadow: '0 0 30px rgba(57,255,20,0.2), 0 0 60px rgba(57,255,20,0.1)',
         }}
       >
-        {/* Shine sweep */}
         <motion.div
           className="absolute inset-0 -skew-x-12"
           style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)' }}
@@ -178,7 +169,6 @@ function InputForm({ onSubmit }) {
         </span>
       </motion.button>
 
-      {/* Disclaimer */}
       <p className="text-center text-xs font-mono" style={{ color: 'rgba(226,232,240,0.2)' }}>
         ⚠️ Results may cause existential crisis. Hyderabadi roasts are brutal but loving.
       </p>
@@ -232,20 +222,67 @@ function Header() {
   )
 }
 
+// ── Loading screen ──
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen grid-bg flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+          className="w-10 h-10 rounded-full"
+          style={{ border: '2px solid transparent', borderTopColor: '#39ff14', borderRightColor: '#39ff14' }}
+        />
+        <p className="font-mono text-xs uppercase tracking-widest" style={{ color: 'rgba(57,255,20,0.5)' }}>
+          Initializing...
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ── Main App ──
 export default function App() {
-  const [phase, setPhase] = useState('input') // 'input' | 'scanning' | 'result'
+  const [user, setUser] = useState(undefined) // undefined = loading, null = not authed
+  const [phase, setPhase] = useState('input')
   const [result, setResult] = useState(null)
   const [inputData, setInputData] = useState({ dream: '', reality: '' })
 
-  const handleSubmit = (dream, reality) => {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+  }
+
+  const handleSubmit = async (dream, reality) => {
     setInputData({ dream, reality })
     setPhase('scanning')
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const analysis = analyzeDelusion(dream, reality)
       setResult(analysis)
       setPhase('result')
+
+      if (user) {
+        const { error } = await supabase.from('roasts').insert({
+          user_id: user.id,
+          dream,
+          reality,
+          score: analysis.score,
+          roast: analysis.roast,
+        })
+        if (error) console.error('Failed to save roast:', error.message)
+      }
     }, 1600)
   }
 
@@ -254,11 +291,16 @@ export default function App() {
     setResult(null)
   }
 
+  if (user === undefined) return <LoadingScreen />
+  if (user === null) return <Login />
+
+  const avatarUrl = user.user_metadata?.avatar_url
+  const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]
+
   return (
     <div className="min-h-screen grid-bg relative">
       <FloatingEmojis />
 
-      {/* Radial glow background */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
@@ -267,15 +309,56 @@ export default function App() {
       />
 
       <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Nav bar */}
+        {/* Nav bar with user profile */}
         <nav className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgba(57,255,20,0.1)' }}>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold font-mono glow-green" style={{ color: '#39ff14' }}>DC</span>
             <span className="text-xs font-mono" style={{ color: 'rgba(226,232,240,0.3)' }}>.ai</span>
           </div>
-          <div className="flex items-center gap-2 text-xs font-mono" style={{ color: 'rgba(226,232,240,0.3)' }}>
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#39ff14', boxShadow: '0 0 6px #39ff14' }} />
-            SYSTEM ONLINE
+
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2 text-xs font-mono" style={{ color: 'rgba(226,232,240,0.3)' }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#39ff14', boxShadow: '0 0 6px #39ff14' }} />
+              SYSTEM ONLINE
+            </div>
+
+            {/* User profile */}
+            <div className="flex items-center gap-3">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="w-7 h-7 rounded-full"
+                  style={{ border: '1px solid rgba(57,255,20,0.4)' }}
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono font-bold"
+                  style={{ background: 'rgba(57,255,20,0.1)', border: '1px solid rgba(57,255,20,0.3)', color: '#39ff14' }}
+                >
+                  {displayName?.[0]?.toUpperCase() ?? '?'}
+                </div>
+              )}
+              <span className="hidden md:block text-xs font-mono max-w-[120px] truncate" style={{ color: 'rgba(226,232,240,0.5)' }}>
+                {displayName}
+              </span>
+
+              <motion.button
+                onClick={handleSignOut}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-mono uppercase tracking-wider"
+                style={{
+                  border: '1px solid rgba(255,45,120,0.3)',
+                  color: '#ff2d78',
+                  background: 'rgba(255,45,120,0.05)',
+                }}
+              >
+                <LogOut size={12} />
+                <span className="hidden sm:inline">Sign Out</span>
+              </motion.button>
+            </div>
           </div>
         </nav>
 
@@ -302,13 +385,11 @@ export default function App() {
           </div>
         </main>
 
-        {/* Footer */}
         <footer className="text-center py-4 text-xs font-mono border-t" style={{ borderColor: 'rgba(57,255,20,0.08)', color: 'rgba(226,232,240,0.2)' }}>
           DelusionCheck.ai — Built with ❤️ and brutal honesty in Hyderabad
         </footer>
       </div>
 
-      {/* Scanning overlay */}
       <AnimatePresence>
         {phase === 'scanning' && <ScanningOverlay key="scan" />}
       </AnimatePresence>
