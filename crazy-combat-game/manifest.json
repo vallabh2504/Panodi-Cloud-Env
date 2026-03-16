@@ -1,0 +1,18 @@
+{
+  "name": "Cyber Clash PWA",
+  "short_name": "CyberClash",
+  "description": "High-octane cyberpunk combat game",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00ffff",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "https://cyber-clash-combat-vallabhu.vercel.app/vite.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
