@@ -1,4 +1,5 @@
 {
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "env": {
     "VITE_SUPABASE_URL": "https://lpbacwnciwllvwhdoyoi.supabase.co",
     "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYmFjd25jaXdsbHZ3aGRveW9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2OTA2OTEsImV4cCI6MjA4OTI2NjY5MX0.Mi8OU7EFIUk9kToU1m_puShp_q8D8cL30U_S2ZX7CRk"

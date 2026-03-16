@@ -256,8 +256,12 @@ export default function App() {
       setUser(session?.user ?? null)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      // After OAuth callback, clean up the URL and go to home
+      if (event === 'SIGNED_IN' && window.location.pathname === '/auth/callback') {
+        window.history.replaceState({}, '', '/')
+      }
     })
 
     return () => subscription.unsubscribe()
