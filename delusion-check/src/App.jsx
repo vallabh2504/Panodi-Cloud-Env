@@ -249,6 +249,7 @@ export default function App() {
   const [result, setResult] = useState(null)
   const [inputData, setInputData] = useState({ dream: '', reality: '' })
   const [showHistory, setShowHistory] = useState(false)
+  const [saveError, setSaveError] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -269,6 +270,7 @@ export default function App() {
   const handleSubmit = async (dream, reality) => {
     setInputData({ dream, reality })
     setPhase('scanning')
+    setSaveError(null)
 
     setTimeout(async () => {
       const analysis = analyzeDelusion(dream, reality)
@@ -283,7 +285,10 @@ export default function App() {
           score: analysis.score,
           roast: analysis.roast,
         })
-        if (error) console.error('Failed to save roast:', error.message)
+        if (error) {
+          console.error('Failed to save roast:', error)
+          setSaveError(error.message)
+        }
       }
     }, 1600)
   }
@@ -407,6 +412,29 @@ export default function App() {
       <AnimatePresence>
         {showHistory && (
           <RoastHistory key="history" user={user} onClose={() => setShowHistory(false)} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {saveError && (
+          <motion.div
+            key="save-error"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-sm font-mono text-xs max-w-sm w-full mx-4"
+            style={{
+              background: 'rgba(255,45,120,0.12)',
+              border: '1px solid rgba(255,45,120,0.5)',
+              color: '#ff2d78',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span>⚠ Save failed: {saveError} — check Supabase RLS policies.</span>
+              <button onClick={() => setSaveError(null)} className="shrink-0 opacity-60 hover:opacity-100">✕</button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
