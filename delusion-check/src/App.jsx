@@ -4,6 +4,7 @@ import { Zap, TrendingDown, AlertTriangle, LogOut } from 'lucide-react'
 import FloatingEmojis from './components/FloatingEmojis'
 import RoastCard from './components/RoastCard'
 import Login from './components/Login'
+import RoastHistory from './components/RoastHistory'
 import { analyzeDelusion } from './utils/roastEngine'
 import { supabase } from './supabaseClient'
 
@@ -247,6 +248,7 @@ export default function App() {
   const [phase, setPhase] = useState('input')
   const [result, setResult] = useState(null)
   const [inputData, setInputData] = useState({ dream: '', reality: '' })
+  const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -324,22 +326,30 @@ export default function App() {
 
             {/* User profile */}
             <div className="flex items-center gap-3">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={displayName}
-                  className="w-7 h-7 rounded-full"
-                  style={{ border: '1px solid rgba(57,255,20,0.4)' }}
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono font-bold"
-                  style={{ background: 'rgba(57,255,20,0.1)', border: '1px solid rgba(57,255,20,0.3)', color: '#39ff14' }}
-                >
-                  {displayName?.[0]?.toUpperCase() ?? '?'}
-                </div>
-              )}
+              <motion.button
+                onClick={() => setShowHistory(true)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                title="View Roast History"
+                className="relative"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="w-7 h-7 rounded-full"
+                    style={{ border: '1px solid rgba(57,255,20,0.4)' }}
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono font-bold"
+                    style={{ background: 'rgba(57,255,20,0.1)', border: '1px solid rgba(57,255,20,0.3)', color: '#39ff14' }}
+                  >
+                    {displayName?.[0]?.toUpperCase() ?? '?'}
+                  </div>
+                )}
+              </motion.button>
               <span className="hidden md:block text-xs font-mono max-w-[120px] truncate" style={{ color: 'rgba(226,232,240,0.5)' }}>
                 {displayName}
               </span>
@@ -392,6 +402,12 @@ export default function App() {
 
       <AnimatePresence>
         {phase === 'scanning' && <ScanningOverlay key="scan" />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showHistory && (
+          <RoastHistory key="history" user={user} onClose={() => setShowHistory(false)} />
+        )}
       </AnimatePresence>
     </div>
   )
