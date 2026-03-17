@@ -8,21 +8,22 @@ const tabs = [
   { id: 'settings', label: 'Settings', Icon: Settings },
 ]
 
-export default function BottomNav({ activeTab, onNavigate }) {
+export default function BottomNav({ activeTab, onNavigate, theme }) {
   return (
     <nav style={{
       position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-      width: '100%', maxWidth: '430px', background: '#FFFFFF',
-      borderTop: '1px solid #F0E0DA', display: 'flex',
+      width: '100%', maxWidth: '430px', background: theme.navBg,
+      borderTop: `1px solid ${theme.navBorder}`, display: 'flex',
       paddingBottom: 'env(safe-area-inset-bottom)',
-      zIndex: 50, boxShadow: '0 -4px 20px rgba(61,43,43,0.08)'
+      zIndex: 50, boxShadow: `0 -4px 20px ${theme.cardShadow}`,
+      transition: 'background 0.4s ease, border-color 0.4s ease',
     }}>
       {tabs.map(({ id, label, Icon }) => (
         <button key={id} onClick={() => onNavigate(id)} style={{
           flex: 1, padding: '10px 4px 8px', border: 'none', background: 'none',
           cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center',
-          gap: '3px', color: activeTab === id ? '#E8705A' : '#8C7070',
-          transition: 'color 0.2s'
+          gap: '3px', color: activeTab === id ? theme.navActive : theme.navInactive,
+          transition: 'color 0.2s',
         }}>
           <Icon size={22} strokeWidth={activeTab === id ? 2.5 : 1.8} />
           <span style={{ fontSize: '10px', fontWeight: activeTab === id ? 600 : 400 }}>{label}</span>

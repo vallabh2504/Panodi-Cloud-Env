@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { getSettings, saveSettings, getAllLogs } from '../lib/storage'
+import { themeList } from '../lib/themes'
 import { supabase } from '../lib/supabase'
+import { motion } from 'framer-motion'
+import { Check, Palette } from 'lucide-react'
 
-export default function SettingsScreen({ session }) {
+export default function SettingsScreen({ session, theme, themeId, onThemeChange }) {
   const [settings, setSettings] = useState({ userName: '', waterGoal: 8, fiberGoal: 25, darkMode: false })
   const [saved, setSaved] = useState(false)
   const [showReset, setShowReset] = useState(false)
@@ -34,126 +37,218 @@ export default function SettingsScreen({ session }) {
     const logs = await getAllLogs()
     const data = JSON.stringify({ logs, exportedAt: new Date().toISOString() }, null, 2)
     await navigator.clipboard.writeText(data)
-    alert('Data copied to clipboard! 📋')
+    alert('Data copied to clipboard!')
   }
 
   const resetData = () => {
     const keys = Object.keys(localStorage).filter(k => k.startsWith('fissurecare_'))
     keys.forEach(k => localStorage.removeItem(k))
     setShowReset(false)
-    alert('All data has been reset. 🌱')
+    alert('All data has been reset.')
   }
 
   const InputRow = ({ label, children }) => (
     <div style={{ marginBottom: 16 }}>
-      <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>{label}</p>
+      <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 8 }}>{label}</p>
       {children}
     </div>
   )
 
   return (
     <div>
-      <div style={{ padding: '20px 20px 16px', background: 'linear-gradient(135deg, #FFF0EB, #FFF8F5)', borderBottom: '1px solid #F0E0DA' }}>
-        <p style={{ fontSize: 20, fontWeight: 700, color: '#E8705A' }}>⚙️ Settings</p>
-        <p style={{ fontSize: 13, color: '#8C7070' }}>Personalize your experience</p>
+      <div style={{
+        padding: '20px 20px 16px', background: theme.headerGradient,
+        borderBottom: `1px solid ${theme.cardBorder}`,
+      }}>
+        <p style={{ fontSize: 20, fontWeight: 700, color: theme.primary }}>Settings</p>
+        <p style={{ fontSize: 13, color: theme.textMuted }}>Personalize your experience</p>
       </div>
 
       <div style={{ padding: '20px' }}>
+        {/* ── Theme Picker ── */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+            <Palette size={15} color={theme.primary} />
+            <p style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              THEME
+            </p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {themeList.map((t) => {
+              const isActive = t.id === themeId
+              return (
+                <motion.button
+                  key={t.id}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => onThemeChange(t.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    padding: '14px 16px', borderRadius: 16,
+                    background: isActive ? theme.card : theme.card,
+                    border: `2px solid ${isActive ? t.primary : theme.cardBorder}`,
+                    boxShadow: isActive ? `0 4px 16px ${t.primary}25` : 'none',
+                    cursor: 'pointer', transition: 'all 0.3s ease',
+                    position: 'relative', overflow: 'hidden',
+                  }}
+                >
+                  {/* Theme preview gradient strip */}
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                    background: `linear-gradient(135deg, ${t.primary}, ${t.primaryLight})`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 22,
+                  }}>
+                    {t.emoji}
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: theme.text, marginBottom: 2 }}>{t.name}</p>
+                    <p style={{ fontSize: 12, color: theme.textMuted }}>{t.description}</p>
+                  </div>
+                  {isActive && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      style={{
+                        width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                        background: `linear-gradient(135deg, ${t.primary}, ${t.primaryLight})`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Check size={14} color="#fff" strokeWidth={3} />
+                    </motion.div>
+                  )}
+                </motion.button>
+              )
+            })}
+          </div>
+          {/* Theme color preview dots */}
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 12 }}>
+            {themeList.map((t) => (
+              <motion.div
+                key={t.id}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => onThemeChange(t.id)}
+                style={{
+                  width: t.id === themeId ? 28 : 12, height: 12, borderRadius: 6,
+                  background: `linear-gradient(90deg, ${t.primary}, ${t.primaryLight})`,
+                  cursor: 'pointer', transition: 'width 0.3s ease',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
         <InputRow label="Your name (for the greeting):">
           <input value={settings.userName} onChange={e => setSettings(s => ({ ...s, userName: e.target.value }))}
             placeholder="e.g. Priya"
-            style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1px solid #F0E0DA', fontSize: 14 }} />
+            style={{
+              width: '100%', padding: '12px', borderRadius: 12,
+              border: `1px solid ${theme.cardBorder}`, fontSize: 14,
+              color: theme.text, background: theme.card,
+            }} />
         </InputRow>
 
         <InputRow label={`Daily water goal: ${settings.waterGoal} glasses`}>
           <input type="range" min={4} max={12} value={settings.waterGoal}
             onChange={e => setSettings(s => ({ ...s, waterGoal: Number(e.target.value) }))}
-            style={{ width: '100%', accentColor: '#E8705A' }} />
-          <p style={{ fontSize: 12, color: '#8C7070', marginTop: 4 }}>{settings.waterGoal * 250}ml daily goal</p>
+            style={{ width: '100%', accentColor: theme.primary }} />
+          <p style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>{settings.waterGoal * 250}ml daily goal</p>
         </InputRow>
 
-        <button onClick={handleSave} style={{
-          width: '100%', padding: '16px', marginBottom: 24,
-          background: saved ? 'linear-gradient(135deg, #A8D5A2, #7BC97B)' : 'linear-gradient(135deg, #E8705A, #F5A68A)',
-          border: 'none', borderRadius: 16, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer'
-        }}>
-          {saved ? '✅ Saved!' : 'Save Settings'}
-        </button>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={handleSave}
+          style={{
+            width: '100%', padding: '16px', marginBottom: 24,
+            background: saved ? 'linear-gradient(135deg, #A8D5A2, #7BC97B)' : theme.ctaGradient,
+            border: 'none', borderRadius: 16, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          {saved ? 'Saved!' : 'Save Settings'}
+        </motion.button>
 
         {/* Data Management */}
-        <p style={{ fontSize: 11, fontWeight: 700, color: '#8C7070', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>DATA & PRIVACY</p>
+        <p style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>DATA & PRIVACY</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
           <button onClick={exportData} style={{
-            padding: '14px', background: '#fff', border: '1.5px solid #C9A8F5', borderRadius: 14,
-            color: '#7A58B5', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+            padding: '14px', background: theme.card, border: `1.5px solid ${theme.accent}`, borderRadius: 14,
+            color: theme.primary, fontSize: 14, fontWeight: 600, cursor: 'pointer',
           }}>
-            📥 Export All Data (JSON)
+            Export All Data (JSON)
           </button>
           <button onClick={copyToClipboard} style={{
-            padding: '14px', background: '#fff', border: '1.5px solid #A8D5A2', borderRadius: 14,
-            color: '#5A9E5A', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+            padding: '14px', background: theme.card, border: `1.5px solid ${theme.wellnessHigh}`, borderRadius: 14,
+            color: theme.wellnessHigh, fontSize: 14, fontWeight: 600, cursor: 'pointer',
           }}>
-            📋 Copy Data to Clipboard
+            Copy Data to Clipboard
           </button>
           <button onClick={() => setShowReset(true)} style={{
-            padding: '14px', background: '#fff', border: '1.5px solid #F48585', borderRadius: 14,
-            color: '#E85A5A', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+            padding: '14px', background: theme.card, border: '1.5px solid #F48585', borderRadius: 14,
+            color: '#E85A5A', fontSize: 14, fontWeight: 600, cursor: 'pointer',
           }}>
-            🗑️ Reset All Data
+            Reset All Data
           </button>
         </div>
 
         {/* PWA Install hint */}
-        <div style={{ background: 'linear-gradient(135deg, #F0EBFF, #FFF8F5)', borderRadius: 16, padding: '14px 16px', border: '1px solid #E8D8FF', marginBottom: 24 }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#7A58B5', marginBottom: 4 }}>📱 Install as App</p>
-          <p style={{ fontSize: 12, color: '#8C7070' }}>
+        <div style={{
+          background: theme.tipBg, borderRadius: 16, padding: '14px 16px',
+          border: `1px solid ${theme.tipBorder}`, marginBottom: 24,
+        }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: theme.primary, marginBottom: 4 }}>Install as App</p>
+          <p style={{ fontSize: 12, color: theme.textMuted }}>
             Add Healing Garden to your home screen for the best experience and future notification support.
-            On iOS: tap Share → "Add to Home Screen". On Android: tap the browser menu → "Install App".
+            On iOS: tap Share then "Add to Home Screen". On Android: tap the browser menu then "Install App".
           </p>
         </div>
 
         {/* Disclaimer */}
         <div style={{ background: '#FFF8E8', borderRadius: 14, padding: '12px 14px', border: '1px solid #F5C67A' }}>
-          <p style={{ fontSize: 11, color: '#8C7070', lineHeight: 1.6 }}>
-            ⚠️ <strong>Medical Disclaimer:</strong> Healing Garden is for personal tracking only and does not constitute medical advice. Always consult your doctor or healthcare provider for medical decisions.
+          <p style={{ fontSize: 11, color: theme.textMuted, lineHeight: 1.6 }}>
+            <strong>Medical Disclaimer:</strong> Healing Garden is for personal tracking only and does not constitute medical advice. Always consult your doctor or healthcare provider for medical decisions.
           </p>
         </div>
 
         {/* Sign Out */}
         {session && (
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F0E0DA' }}>
-            <p style={{ fontSize: 12, color: '#8C7070', textAlign: 'center', marginBottom: 12 }}>
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: `1px solid ${theme.cardBorder}` }}>
+            <p style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginBottom: 12 }}>
               Signed in as {session.user.email}
             </p>
             <button onClick={() => supabase.auth.signOut()} style={{
-              width: '100%', padding: '14px', background: '#fff', border: '1.5px solid #E0D0C8',
-              borderRadius: 14, color: '#8C7070', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+              width: '100%', padding: '14px', background: theme.card, border: `1.5px solid ${theme.cardBorder}`,
+              borderRadius: 14, color: theme.textMuted, fontSize: 14, fontWeight: 600, cursor: 'pointer',
             }}>
-              🚪 Sign Out
+              Sign Out
             </button>
           </div>
         )}
 
-        <p style={{ fontSize: 11, color: '#C0A8A8', textAlign: 'center', marginTop: 20 }}>Healing Garden v1.0 · Built with love 💛</p>
+        <p style={{ fontSize: 11, color: theme.navInactive, textAlign: 'center', marginTop: 20 }}>Healing Garden v2.0</p>
       </div>
 
       {showReset && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(61,43,43,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 24, padding: '28px 24px', maxWidth: 320, textAlign: 'center' }}>
-            <p style={{ fontSize: 32, marginBottom: 12 }}>🌱</p>
-            <p style={{ fontSize: 17, fontWeight: 700, color: '#3D2B2B', marginBottom: 8 }}>Reset all data?</p>
-            <p style={{ fontSize: 14, color: '#8C7070', marginBottom: 24 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={{ background: theme.card, borderRadius: 24, padding: '28px 24px', maxWidth: 320, textAlign: 'center' }}
+          >
+            <p style={{ fontSize: 32, marginBottom: 12 }}>{theme.emoji}</p>
+            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 8 }}>Reset all data?</p>
+            <p style={{ fontSize: 14, color: theme.textMuted, marginBottom: 24 }}>
               This will permanently delete all your logs, medications and settings. This cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setShowReset(false)} style={{
-                flex: 1, padding: '14px', background: '#F0E0DA', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#3D2B2B'
+                flex: 1, padding: '14px', background: theme.cardBorder, border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: theme.text,
               }}>Cancel</button>
               <button onClick={resetData} style={{
-                flex: 1, padding: '14px', background: '#F48585', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff'
+                flex: 1, padding: '14px', background: '#F48585', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff',
               }}>Yes, Reset</button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

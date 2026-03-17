@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
+import { getTheme, getThemeId, saveThemeId, themes } from './lib/themes'
 import AuthScreen from './screens/AuthScreen'
 import HomeScreen from './screens/HomeScreen'
 import LogScreen from './screens/LogScreen'
@@ -12,6 +13,14 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('home')
+  const [themeId, setThemeId] = useState(getThemeId())
+
+  const theme = themes[themeId] || themes.cherry
+
+  const handleThemeChange = (id) => {
+    saveThemeId(id)
+    setThemeId(id)
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -28,11 +37,11 @@ export default function App() {
     return (
       <div style={{
         minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'linear-gradient(160deg, #FFF0EB 0%, #FFF8F0 45%, #F0F8EE 100%)'
+        background: theme.backgroundGradient,
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🌿</div>
-          <p style={{ color: '#8C7070', fontSize: 14 }}>Loading your garden…</p>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>{theme.emoji}</div>
+          <p style={{ color: theme.textMuted, fontSize: 14 }}>Loading your garden…</p>
         </div>
       </div>
     )
@@ -41,13 +50,13 @@ export default function App() {
   if (!session) return <AuthScreen />
 
   return (
-    <div className="min-h-dvh" style={{ background: '#FFF8F5', paddingBottom: '80px' }}>
-      {activeTab === 'home' && <HomeScreen onNavigate={setActiveTab} />}
+    <div className="min-h-dvh" style={{ background: theme.background, paddingBottom: '80px', transition: 'background 0.5s ease' }}>
+      {activeTab === 'home' && <HomeScreen onNavigate={setActiveTab} theme={theme} />}
       {activeTab === 'log' && <LogScreen onNavigate={setActiveTab} />}
       {activeTab === 'insights' && <InsightsScreen />}
       {activeTab === 'meds' && <MedsScreen />}
-      {activeTab === 'settings' && <SettingsScreen session={session} />}
-      <BottomNav activeTab={activeTab} onNavigate={setActiveTab} />
+      {activeTab === 'settings' && <SettingsScreen session={session} theme={theme} themeId={themeId} onThemeChange={handleThemeChange} />}
+      <BottomNav activeTab={activeTab} onNavigate={setActiveTab} theme={theme} />
     </div>
   )
 }
