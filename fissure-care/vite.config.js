@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'FissureCare',
-        short_name: 'FissureCare',
+        name: 'Healing Garden',
+        short_name: 'Healing Garden',
         description: 'Healing, one day at a time.',
         theme_color: '#E8705A',
         background_color: '#FFF8F5',

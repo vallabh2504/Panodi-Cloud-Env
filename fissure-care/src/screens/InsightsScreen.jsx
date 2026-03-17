@@ -23,7 +23,7 @@ function generateReport(logs) {
   const bloodDays = logs.filter(l => l.bowelMovements?.some(bm => bm.bloodPresent)).length
   const avgScore = logs.reduce((s, l) => s + (l.wellnessScore || 0), 0) / logs.length
   const avgWater = logs.reduce((s, l) => s + (l.hydration?.waterGlasses || 0), 0) / logs.length
-  return `FissureCare Recovery Report — Last ${logs.length} days\n` +
+  return `Healing Garden Wellness Report — Last ${logs.length} days\n` +
     `Generated: ${new Date().toLocaleDateString()}\n\n` +
     `SUMMARY\n` +
     `Average wellness score: ${Math.round(avgScore)}/100\n` +
@@ -212,7 +212,7 @@ export default function InsightsScreen() {
               const blob = new Blob([report], { type: 'text/plain' })
               const url = URL.createObjectURL(blob)
               const a = document.createElement('a')
-              a.href = url; a.download = `fissurecare-report-${new Date().toISOString().split('T')[0]}.txt`; a.click()
+              a.href = url; a.download = `healing-garden-report-${new Date().toISOString().split('T')[0]}.txt`; a.click()
             }} style={{
               width: '100%', padding: '16px', background: 'linear-gradient(135deg, #C9A8F5, #B08AE8)',
               border: 'none', borderRadius: 20, color: '#fff', fontSize: 15, fontWeight: 700,

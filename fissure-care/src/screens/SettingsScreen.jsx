@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react'
 import { getSettings, saveSettings, getAllLogs } from '../lib/storage'
+import { supabase } from '../lib/supabase'
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ session }) {
   const [settings, setSettings] = useState({ userName: '', waterGoal: 8, fiberGoal: 25, darkMode: false })
   const [saved, setSaved] = useState(false)
   const [showReset, setShowReset] = useState(false)
 
-  useEffect(() => { setSettings(getSettings()) }, [])
+  useEffect(() => {
+    const s = getSettings()
+    if (!s.userName && session?.user?.user_metadata?.full_name) {
+      s.userName = session.user.user_metadata.full_name.split(' ')[0]
+    }
+    setSettings(s)
+  }, [session])
 
   const handleSave = () => {
     saveSettings(settings)
@@ -100,7 +107,7 @@ export default function SettingsScreen() {
         <div style={{ background: 'linear-gradient(135deg, #F0EBFF, #FFF8F5)', borderRadius: 16, padding: '14px 16px', border: '1px solid #E8D8FF', marginBottom: 24 }}>
           <p style={{ fontSize: 14, fontWeight: 600, color: '#7A58B5', marginBottom: 4 }}>📱 Install as App</p>
           <p style={{ fontSize: 12, color: '#8C7070' }}>
-            Add FissureCare to your home screen for the best experience and future notification support.
+            Add Healing Garden to your home screen for the best experience and future notification support.
             On iOS: tap Share → "Add to Home Screen". On Android: tap the browser menu → "Install App".
           </p>
         </div>
@@ -108,11 +115,26 @@ export default function SettingsScreen() {
         {/* Disclaimer */}
         <div style={{ background: '#FFF8E8', borderRadius: 14, padding: '12px 14px', border: '1px solid #F5C67A' }}>
           <p style={{ fontSize: 11, color: '#8C7070', lineHeight: 1.6 }}>
-            ⚠️ <strong>Medical Disclaimer:</strong> FissureCare is for personal tracking only and does not constitute medical advice. Always consult your doctor or healthcare provider for medical decisions.
+            ⚠️ <strong>Medical Disclaimer:</strong> Healing Garden is for personal tracking only and does not constitute medical advice. Always consult your doctor or healthcare provider for medical decisions.
           </p>
         </div>
 
-        <p style={{ fontSize: 11, color: '#C0A8A8', textAlign: 'center', marginTop: 20 }}>FissureCare v1.0 · Built with love 💛</p>
+        {/* Sign Out */}
+        {session && (
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F0E0DA' }}>
+            <p style={{ fontSize: 12, color: '#8C7070', textAlign: 'center', marginBottom: 12 }}>
+              Signed in as {session.user.email}
+            </p>
+            <button onClick={() => supabase.auth.signOut()} style={{
+              width: '100%', padding: '14px', background: '#fff', border: '1.5px solid #E0D0C8',
+              borderRadius: 14, color: '#8C7070', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+            }}>
+              🚪 Sign Out
+            </button>
+          </div>
+        )}
+
+        <p style={{ fontSize: 11, color: '#C0A8A8', textAlign: 'center', marginTop: 20 }}>Healing Garden v1.0 · Built with love 💛</p>
       </div>
 
       {showReset && (
