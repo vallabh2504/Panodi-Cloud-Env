@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_v1QfPlowPKFxdAV3cHiQq6eLuWR8",
+  "orgId": "team_DQ3wHdJuhc4YKHZz4Cl4WcXd",
+  "projectName": "fissure-care-vivid",
+  "settings": {
+    "createdAt": 1773783833654,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": "npm install --legacy-peer-deps",
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}
