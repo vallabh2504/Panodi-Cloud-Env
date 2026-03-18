@@ -1,10 +1,11 @@
-import { Home, PlusCircle, BarChart2, Pill, Settings } from 'lucide-react'
+import { Home, PlusCircle, BarChart2, Pill, Settings, BookOpen } from 'lucide-react'
 
 const tabs = [
   { id: 'home', label: 'Home', Icon: Home },
   { id: 'log', label: 'Log', Icon: PlusCircle },
   { id: 'insights', label: 'Insights', Icon: BarChart2 },
   { id: 'meds', label: 'Care', Icon: Pill },
+  { id: 'wisdom', label: 'Wisdom', Icon: BookOpen },
   { id: 'settings', label: 'Settings', Icon: Settings },
 ]
 
@@ -20,13 +21,13 @@ export default function BottomNav({ activeTab, onNavigate, theme }) {
     }}>
       {tabs.map(({ id, label, Icon }) => (
         <button key={id} onClick={() => onNavigate(id)} style={{
-          flex: 1, padding: '10px 4px 8px', border: 'none', background: 'none',
+          flex: 1, padding: '9px 2px 7px', border: 'none', background: 'none',
           cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center',
-          gap: '3px', color: activeTab === id ? theme.navActive : theme.navInactive,
+          gap: '2px', color: activeTab === id ? theme.navActive : theme.navInactive,
           transition: 'color 0.2s',
         }}>
-          <Icon size={22} strokeWidth={activeTab === id ? 2.5 : 1.8} />
-          <span style={{ fontSize: '10px', fontWeight: activeTab === id ? 600 : 400 }}>{label}</span>
+          <Icon size={20} strokeWidth={activeTab === id ? 2.5 : 1.8} />
+          <span style={{ fontSize: '9px', fontWeight: activeTab === id ? 600 : 400 }}>{label}</span>
         </button>
       ))}
     </nav>

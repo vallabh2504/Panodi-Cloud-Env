@@ -1,25 +1,46 @@
 import { useState, useEffect } from 'react'
 import { getSettings, saveSettings, getAllLogs } from '../lib/storage'
 import { themeList } from '../lib/themes'
-import { supabase } from '../lib/supabase'
 import { motion } from 'framer-motion'
-import { Check, Palette } from 'lucide-react'
+import { Check, Palette, Bell, BellOff } from 'lucide-react'
 
-export default function SettingsScreen({ session, theme, themeId, onThemeChange }) {
-  const [settings, setSettings] = useState({ userName: '', waterGoal: 8, fiberGoal: 25, darkMode: false })
+async function requestNotificationPermission() {
+  if (typeof Notification === 'undefined') return 'unsupported'
+  if (Notification.permission === 'granted') return 'granted'
+  if (Notification.permission === 'denied') return 'denied'
+  const result = await Notification.requestPermission()
+  return result
+}
+
+export default function SettingsScreen({ theme, themeId, onThemeChange }) {
+  const [settings, setSettings] = useState({ userName: '', waterGoal: 8, fiberGoal: 25, darkMode: false, remindersEnabled: false })
   const [saved, setSaved] = useState(false)
   const [showReset, setShowReset] = useState(false)
+  const [notifStatus, setNotifStatus] = useState('unknown')
 
   useEffect(() => {
-    const s = getSettings()
-    if (!s.userName && session?.user?.user_metadata?.full_name) {
-      s.userName = session.user.user_metadata.full_name.split(' ')[0]
+    setSettings(getSettings())
+    if (typeof Notification !== 'undefined') {
+      setNotifStatus(Notification.permission)
+    } else {
+      setNotifStatus('unsupported')
     }
-    setSettings(s)
-  }, [session])
+  }, [])
+
+  const handleToggleReminders = async (enabled) => {
+    if (enabled) {
+      const status = await requestNotificationPermission()
+      setNotifStatus(status)
+      if (status !== 'granted') {
+        alert('Notification permission was not granted. Please enable notifications in your browser settings.')
+        return
+      }
+    }
+    setSettings(s => ({ ...s, remindersEnabled: enabled }))
+  }
 
   const handleSave = () => {
-    saveSettings(settings)
+    saveSettings({ ...settings })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -168,6 +189,61 @@ export default function SettingsScreen({ session, theme, themeId, onThemeChange 
           {saved ? 'Saved!' : 'Save Settings'}
         </motion.button>
 
+        {/* ── Healing Reminders ── */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+            <Bell size={15} color={theme.primary} />
+            <p style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              HEALING REMINDERS
+            </p>
+          </div>
+          <div style={{
+            background: theme.tipBg, borderRadius: 16, padding: '14px 16px',
+            border: `1px solid ${theme.tipBorder}`, marginBottom: 12,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ flex: 1, marginRight: 12 }}>
+                <p style={{ fontSize: 14, fontWeight: 600, color: theme.text, marginBottom: 4 }}>
+                  {settings.remindersEnabled ? 'Reminders Enabled' : 'Enable Reminders'}
+                </p>
+                <p style={{ fontSize: 12, color: theme.textMuted, lineHeight: 1.5 }}>
+                  Gentle nudges for hydration, fruit intake, and evening logging when the app is open.
+                </p>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                onClick={() => handleToggleReminders(!settings.remindersEnabled)}
+                style={{
+                  width: 52, height: 30, borderRadius: 15, border: 'none', cursor: 'pointer',
+                  background: settings.remindersEnabled ? theme.primary : theme.cardBorder,
+                  position: 'relative', flexShrink: 0, transition: 'background 0.3s',
+                }}
+              >
+                <motion.div
+                  animate={{ x: settings.remindersEnabled ? 22 : 2 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  style={{ width: 26, height: 26, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2 }}
+                />
+              </motion.button>
+            </div>
+            {notifStatus === 'denied' && (
+              <p style={{ fontSize: 11, color: '#E85A5A', marginTop: 8 }}>
+                Notifications are blocked. Please enable them in your browser/OS settings.
+              </p>
+            )}
+            {notifStatus === 'unsupported' && (
+              <p style={{ fontSize: 11, color: theme.textMuted, marginTop: 8 }}>
+                Notifications are not supported in this browser.
+              </p>
+            )}
+            {notifStatus === 'granted' && settings.remindersEnabled && (
+              <p style={{ fontSize: 11, color: theme.wellnessHigh, marginTop: 8 }}>
+                Active: morning fruit reminder (9am), hydration check (noon), evening log reminder (8pm).
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Data Management */}
         <p style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>DATA & PRIVACY</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
@@ -209,21 +285,6 @@ export default function SettingsScreen({ session, theme, themeId, onThemeChange 
             <strong>Medical Disclaimer:</strong> Healing Garden is for personal tracking only and does not constitute medical advice. Always consult your doctor or healthcare provider for medical decisions.
           </p>
         </div>
-
-        {/* Sign Out */}
-        {session && (
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: `1px solid ${theme.cardBorder}` }}>
-            <p style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginBottom: 12 }}>
-              Signed in as {session.user.email}
-            </p>
-            <button onClick={() => supabase.auth.signOut()} style={{
-              width: '100%', padding: '14px', background: theme.card, border: `1.5px solid ${theme.cardBorder}`,
-              borderRadius: 14, color: theme.textMuted, fontSize: 14, fontWeight: 600, cursor: 'pointer',
-            }}>
-              Sign Out
-            </button>
-          </div>
-        )}
 
         <p style={{ fontSize: 11, color: theme.navInactive, textAlign: 'center', marginTop: 20 }}>Healing Garden v2.0</p>
       </div>

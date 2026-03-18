@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { getAllLogs } from '../lib/storage'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts'
+import { motion, AnimatePresence } from 'framer-motion'
+import { AlertTriangle } from 'lucide-react'
 
 const TABS = ['Week', 'Month', '3 Months']
 
@@ -17,21 +19,61 @@ function ChartCard({ title, subtitle, children }) {
   )
 }
 
-function generateReport(logs) {
+function generateReport(logs, isEmergency) {
   if (!logs.length) return 'No data available yet.'
-  const avgPain = logs.reduce((s, l) => s + (l.bowelMovements?.[0]?.painLevel || l.dailySymptoms?.restingPain || 0), 0) / logs.length
-  const bloodDays = logs.filter(l => l.bowelMovements?.some(bm => bm.bloodPresent)).length
-  const avgScore = logs.reduce((s, l) => s + (l.wellnessScore || 0), 0) / logs.length
-  const avgWater = logs.reduce((s, l) => s + (l.hydration?.waterGlasses || 0), 0) / logs.length
-  return `Healing Garden Wellness Report — Last ${logs.length} days\n` +
-    `Generated: ${new Date().toLocaleDateString()}\n\n` +
-    `SUMMARY\n` +
+  const last14 = logs.slice(0, 14)
+  const avgPain = last14.reduce((s, l) => s + (l.bowelMovements?.[0]?.painLevel || l.dailySymptoms?.restingPain || 0), 0) / last14.length
+  const bloodDays = last14.filter(l => l.bowelMovements?.some(bm => bm.bloodPresent)).length
+  const avgScore = last14.reduce((s, l) => s + (l.wellnessScore || 0), 0) / last14.length
+  const avgWater = last14.reduce((s, l) => s + (l.hydration?.waterGlasses || 0), 0) / last14.length
+  const avgSitz = last14.reduce((s, l) => s + (l.sitzBaths?.length || 0), 0) / last14.length
+  const highPainDays = last14.filter(l => (l.bowelMovements?.[0]?.painLevel || l.dailySymptoms?.restingPain || 0) >= 7).length
+
+  const header = isEmergency
+    ? `URGENT PATIENT REPORT — Healing Garden\nGenerated: ${new Date().toLocaleDateString()}\n\n` +
+      `⚠️ NOTE TO DOCTOR: Patient has recorded high pain (≥7/10) or bleeding for 2 or more consecutive days.\n` +
+      `This report covers the last 14 days of tracked data.\n`
+    : `Healing Garden Wellness Report\nGenerated: ${new Date().toLocaleDateString()}\nData period: Last ${last14.length} days\n`
+
+  return header +
+    `\n═══════════════════════════════\n` +
+    `SUMMARY (Last ${last14.length} Days)\n` +
+    `═══════════════════════════════\n` +
     `Average wellness score: ${Math.round(avgScore)}/100\n` +
     `Average pain level: ${avgPain.toFixed(1)}/10\n` +
-    `Days with bleeding: ${bloodDays} of ${logs.length} (${Math.round(bloodDays/logs.length*100)}%)\n` +
-    `Average daily water: ${avgWater.toFixed(1)} glasses\n\n` +
+    `High pain days (≥7/10): ${highPainDays} of ${last14.length}\n` +
+    `Days with bleeding: ${bloodDays} of ${last14.length} (${Math.round(bloodDays / last14.length * 100)}%)\n` +
+    `Average daily water: ${avgWater.toFixed(1)} glasses\n` +
+    `Average sitz baths/day: ${avgSitz.toFixed(1)}\n` +
+    `\n═══════════════════════════════\n` +
     `DAILY LOG\n` +
-    logs.map(l => `${l.date}: Pain ${l.bowelMovements?.[0]?.painLevel ?? '–'}, Water ${l.hydration?.waterGlasses || 0}/8 glasses, Sitz baths: ${l.sitzBaths?.length || 0}, Score: ${l.wellnessScore || '–'}`).join('\n')
+    `═══════════════════════════════\n` +
+    last14.map(l => {
+      const pain = l.bowelMovements?.[0]?.painLevel ?? l.dailySymptoms?.restingPain ?? '–'
+      const blood = l.bowelMovements?.some(bm => bm.bloodPresent) ? 'YES' : 'No'
+      const water = l.hydration?.waterGlasses || 0
+      const sitz = l.sitzBaths?.length || 0
+      const score = l.wellnessScore || '–'
+      const bristol = l.bowelMovements?.[0]?.bristolType ? `Bristol ${l.bowelMovements[0].bristolType}` : '–'
+      return `${l.date}  |  Pain: ${pain}/10  |  Bleeding: ${blood}  |  ${bristol}  |  Water: ${water}/8  |  Sitz: ${sitz}  |  Score: ${score}/100`
+    }).join('\n')
+}
+
+function checkEmergencyCondition(logs) {
+  // Check if last 2+ consecutive logs have high pain (>=7) OR bleeding
+  const sorted = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date))
+  let consecutive = 0
+  for (const l of sorted) {
+    const pain = l.bowelMovements?.[0]?.painLevel || l.dailySymptoms?.restingPain || 0
+    const hasBlood = l.bowelMovements?.some(bm => bm.bloodPresent)
+    if (pain >= 7 || hasBlood) {
+      consecutive++
+      if (consecutive >= 2) return true
+    } else {
+      break
+    }
+  }
+  return false
 }
 
 export default function InsightsScreen() {
@@ -41,41 +83,38 @@ export default function InsightsScreen() {
   useEffect(() => { getAllLogs().then(setLogs) }, [])
 
   const days = tab === 'Week' ? 7 : tab === 'Month' ? 30 : 90
-
   const filtered = logs.slice(0, days).reverse()
 
+  const isEmergency = useMemo(() => checkEmergencyCondition(logs), [logs])
+
   const painData = filtered.map(l => ({
-    date: new Date(l.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+    date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
     pain: l.bowelMovements?.[0]?.painLevel ?? l.dailySymptoms?.restingPain ?? 0
   }))
 
   const bloodData = filtered.map(l => ({
-    date: new Date(l.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+    date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
     blood: l.bowelMovements?.some(bm => bm.bloodPresent) ? 1 : 0
   }))
 
   const waterData = filtered.map(l => ({
-    date: new Date(l.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+    date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
     water: l.hydration?.waterGlasses || 0,
     bristol: l.bowelMovements?.[0]?.bristolType || 0
   }))
 
   const scoreData = filtered.map(l => ({
-    date: new Date(l.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+    date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
     score: l.wellnessScore || 0
   }))
 
-  // Bristol distribution
   const bristolCounts = {}
   filtered.forEach(l => l.bowelMovements?.forEach(bm => {
     if (bm.bristolType) bristolCounts[bm.bristolType] = (bristolCounts[bm.bristolType] || 0) + 1
   }))
-  const bristolData = Object.entries(bristolCounts).map(([type, count]) => ({
-    name: `Type ${type}`, value: count
-  }))
+  const bristolData = Object.entries(bristolCounts).map(([type, count]) => ({ name: `Type ${type}`, value: count }))
   const COLORS = ['#F48585', '#F5A68A', '#F5C67A', '#A8D5A2', '#C9A8F5', '#F5C67A', '#F48585']
 
-  // Last blood-free days
   let bloodFreeDays = 0
   for (const l of [...logs]) {
     if (l.bowelMovements?.some(bm => bm.bloodPresent)) break
@@ -84,11 +123,22 @@ export default function InsightsScreen() {
 
   const avgScore = scoreData.length ? Math.round(scoreData.reduce((s, d) => s + d.score, 0) / scoreData.length) : 0
 
+  const downloadReport = (emergency) => {
+    const report = generateReport(logs, emergency)
+    const blob = new Blob([report], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `healing-garden-${emergency ? 'emergency-' : ''}report-${new Date().toISOString().split('T')[0]}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
       <div style={{ padding: '20px 20px 16px', background: 'linear-gradient(135deg, #FFF0EB, #FFF8F5)', borderBottom: '1px solid #F0E0DA' }}>
-        <p style={{ fontSize: 20, fontWeight: 700, color: '#E8705A' }}>📊 Your Insights</p>
-        <p style={{ fontSize: 13, color: '#8C7070' }}>See your healing journey over time</p>
+        <p style={{ fontSize: 20, fontWeight: 700, color: '#E8705A' }}>Your Insights</p>
+        <p style={{ fontSize: 13, color: '#8C7070' }}>Track your healing journey over time</p>
       </div>
 
       {/* Tabs */}
@@ -106,22 +156,61 @@ export default function InsightsScreen() {
       {!logs.length ? (
         <div style={{ textAlign: 'center', padding: '60px 32px' }}>
           <p style={{ fontSize: 40, marginBottom: 12 }}>🌱</p>
-          <p style={{ fontSize: 16, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>No logs yet!</p>
+          <p style={{ fontSize: 16, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>No logs yet</p>
           <p style={{ fontSize: 14, color: '#8C7070' }}>Start logging your daily entries to see insights and trends here.</p>
         </div>
       ) : (
         <>
-          {/* Weekly Score */}
+          {/* Emergency Doctor Alert */}
+          <AnimatePresence>
+            {isEmergency && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  margin: '0 16px 16px',
+                  background: 'linear-gradient(135deg, #FFF0F0, #FFE8E8)',
+                  borderRadius: 20, padding: '16px',
+                  border: '2px solid #F48585',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <AlertTriangle size={18} color="#E85A5A" />
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#E85A5A' }}>
+                    Doctor Consultation Recommended
+                  </p>
+                </div>
+                <p style={{ fontSize: 13, color: '#8C5050', lineHeight: 1.6, marginBottom: 12 }}>
+                  Your logs show high pain (7+/10) or bleeding for 2 or more consecutive days.
+                  Consider sharing a report with your doctor.
+                </p>
+                <button
+                  onClick={() => downloadReport(true)}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: 'linear-gradient(135deg, #E85A5A, #F48585)',
+                    border: 'none', borderRadius: 14, color: '#fff',
+                    fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}
+                >
+                  <AlertTriangle size={16} /> Generate Emergency Doctor Summary
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Score Summary */}
           <div style={{ margin: '0 16px 16px', background: 'linear-gradient(135deg, #FFF0EB, #FFF8F5)', borderRadius: 20, padding: '16px', border: '1px solid #F0E0DA' }}>
             <p style={{ fontSize: 13, color: '#8C7070' }}>{tab} average score</p>
             <p style={{ fontSize: 42, fontWeight: 800, fontFamily: 'Nunito', color: '#E8705A' }}>{avgScore}</p>
             <p style={{ fontSize: 13, color: '#8C7070' }}>
-              {avgScore >= 70 ? 'You\'re doing great! 🌟' : avgScore >= 40 ? 'Making progress 🌱' : 'Keep going, every day counts 💛'}
+              {avgScore >= 70 ? "You're doing great! Keep it up." : avgScore >= 40 ? 'Making progress — every day counts.' : 'Keep going, healing takes time.'}
             </p>
             {bloodFreeDays > 0 && (
               <div style={{ marginTop: 10, background: '#F0FFF5', borderRadius: 12, padding: '8px 12px' }}>
                 <p style={{ fontSize: 13, color: '#5A9E5A', fontWeight: 600 }}>
-                  🎉 {bloodFreeDays} days without bleeding! {bloodFreeDays >= 7 ? 'Incredible healing!' : 'Great progress!'}
+                  {bloodFreeDays} {bloodFreeDays === 1 ? 'day' : 'days'} without bleeding! {bloodFreeDays >= 7 ? 'Incredible healing!' : 'Great progress!'}
                 </p>
               </div>
             )}
@@ -139,11 +228,11 @@ export default function InsightsScreen() {
               </LineChart>
             </ResponsiveContainer>
             <p style={{ fontSize: 12, color: '#8C7070', marginTop: 8 }}>
-              {painData.length >= 2 && painData[painData.length-1].pain < painData[0].pain
-                ? '📉 Trending down — great progress!'
-                : painData.length >= 2 && painData[painData.length-1].pain > painData[0].pain
-                ? '💛 Pain seems elevated. Consider calling your doctor if it continues.'
-                : 'Keep logging to see trends!'}
+              {painData.length >= 2 && painData[painData.length - 1].pain < painData[0].pain
+                ? 'Trending down — great progress!'
+                : painData.length >= 2 && painData[painData.length - 1].pain > painData[0].pain
+                ? 'Pain seems elevated. Consider calling your doctor if it continues.'
+                : 'Keep logging to see trends.'}
             </p>
           </ChartCard>
 
@@ -154,11 +243,11 @@ export default function InsightsScreen() {
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                 <YAxis domain={[0, 1]} tick={{ fontSize: 10 }} width={15} hide />
                 <Tooltip formatter={v => [v ? 'Yes' : 'None', 'Bleeding']} />
-                <Bar dataKey="blood" fill="#F48585" radius={[4,4,0,0]} />
+                <Bar dataKey="blood" fill="#F48585" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
             <p style={{ fontSize: 12, color: '#8C7070', marginTop: 8 }}>
-              {bloodFreeDays > 0 ? `Last bleeding: ${bloodFreeDays} days ago 🎉` : 'Log daily to track bleeding patterns'}
+              {bloodFreeDays > 0 ? `Last bleeding: ${bloodFreeDays} day${bloodFreeDays !== 1 ? 's' : ''} ago` : 'Log daily to track bleeding patterns.'}
             </p>
           </ChartCard>
 
@@ -181,10 +270,11 @@ export default function InsightsScreen() {
 
           {/* Bristol Distribution */}
           {bristolData.length > 0 && (
-            <ChartCard title="Stool Type Distribution" subtitle="Your most common type — aim for Type 4!">
+            <ChartCard title="Stool Type Distribution" subtitle="Your most common type — aim for Type 4">
               <ResponsiveContainer width="100%" height={160}>
                 <PieChart>
-                  <Pie data={bristolData} cx="50%" cy="50%" outerRadius={60} dataKey="value" label={({ name, percent }) => `${name} (${Math.round(percent*100)}%)`} labelLine={false}>
+                  <Pie data={bristolData} cx="50%" cy="50%" outerRadius={60} dataKey="value"
+                    label={({ name, percent }) => `${name} (${Math.round(percent * 100)}%)`} labelLine={false}>
                     {bristolData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
                   <Tooltip />
@@ -205,20 +295,18 @@ export default function InsightsScreen() {
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Doctor's Report */}
+          {/* Standard Doctor's Report */}
           <div style={{ padding: '0 16px 32px' }}>
-            <button onClick={() => {
-              const report = generateReport(filtered)
-              const blob = new Blob([report], { type: 'text/plain' })
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement('a')
-              a.href = url; a.download = `healing-garden-report-${new Date().toISOString().split('T')[0]}.txt`; a.click()
-            }} style={{
-              width: '100%', padding: '16px', background: 'linear-gradient(135deg, #C9A8F5, #B08AE8)',
-              border: 'none', borderRadius: 20, color: '#fff', fontSize: 15, fontWeight: 700,
-              cursor: 'pointer', boxShadow: '0 4px 16px rgba(201,168,245,0.35)'
-            }}>
-              📄 Generate Doctor's Report
+            <button
+              onClick={() => downloadReport(false)}
+              style={{
+                width: '100%', padding: '16px',
+                background: 'linear-gradient(135deg, #C9A8F5, #B08AE8)',
+                border: 'none', borderRadius: 20, color: '#fff', fontSize: 15, fontWeight: 700,
+                cursor: 'pointer', boxShadow: '0 4px 16px rgba(201,168,245,0.35)'
+              }}
+            >
+              Generate Doctor's Report (14 days)
             </button>
           </div>
         </>
