@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { Agent } from '@/types';
+
+const execAsync = promisify(exec);
 
 const mockStatus = {
   "os": {
@@ -60,8 +63,8 @@ const mockStatus = {
 export async function GET() {
   let status = mockStatus;
   try {
-    const rawStatus = execSync('openclaw status --json').toString();
-    status = JSON.parse(rawStatus);
+    const { stdout } = await execAsync('openclaw status --json', { timeout: 5000 });
+    status = JSON.parse(stdout);
   } catch (error) {
     // Fallback to mock status if openclaw is not available (e.g. on Vercel)
   }
