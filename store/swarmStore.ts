@@ -21,6 +21,7 @@ interface SwarmState {
   setSwarmBudget: (swarmId: string, budget: number) => void;
   setLogFilter: (filter: Partial<SwarmState['logFilter']>) => void;
   updateMetric: (delta: { tokens: number; cost: number }) => void;
+  setMetrics: (metrics: Partial<DashboardMetrics>) => void;
 }
 
 export const useSwarmStore = create<SwarmState>((set, get) => ({
@@ -96,4 +97,7 @@ export const useSwarmStore = create<SwarmState>((set, get) => ({
         totalCostToday: parseFloat((s.metrics.totalCostToday + cost).toFixed(4)),
       },
     })),
+
+  setMetrics: (metrics) =>
+    set((s) => ({ metrics: { ...s.metrics, ...metrics } })),
 }));

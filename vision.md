@@ -1,18 +1,19 @@
-# Vision: SwarmOps Dashboard
+# Vision: SwarmOps (v2.1)
 
-## Elevator Pitch
-For AI developers and devops engineers who manage autonomous agent swarms, SwarmOps Dashboard is a centralized control plane. Unlike piecemeal CLI logs or disconnected monitoring tools, SwarmOps provides a real-time, unified UI to observe, manage, and intervene in multi-agent workflows, ensuring safe, cost-effective, and transparent autonomous operations.
+## The Command Center for a Sovereign Swarm
 
-## Core Problem
-As organizations move from single-prompt LLMs to complex, multi-agent swarms (like OpenClaw, AutoGPT, or custom LangChain setups), monitoring becomes a nightmare. Developers struggle to track token usage (costs), understand agent reasoning paths (transparency), and intervene when an agent hallucinates or gets stuck in a loop.
+**SwarmOps** is the definitive interface for monitoring and managing the Panodu AI ecosystem. It is designed for Boss Garu (Vallabh) to provide high-fidelity situational awareness in real-time.
 
-## Target Audience
-- Indie Hackers building AI wrappers and agentic systems.
-- Devops Engineers managing AI pipelines.
-- AI Researchers running long-running complex agent simulations.
+### Key Goals:
+1. **Agentic Transparency**: See exactly what every sub-agent (Main, Gatekeeper, Architect) is doing, down to the last token.
+2. **Operational Control**: Intervene in agent loops when context overflows or LLM errors occur.
+3. **PWA Mobility**: Installable as a native app on iOS/Android for "On-the-Go" monitoring of the 2 AM App Engine.
 
-## Key Value Propositions
-1. **Total Observability:** Real-time logging of every agent's thought, action, and tool execution.
-2. **Cost Control:** Live token tracking and budget alerts per agent/swarm.
-3. **Human-in-the-Loop:** Pause, edit, or override agent decisions mid-flight.
-4. **Complex Architecture:** Built with Next.js 15 (App Router), Tailwind v4 for modern responsive UI, and robust client-side state management for handling high-frequency telemetry data.
+### Design Principles:
+- **Neon Dark**: High-contrast, accessibility-first cyberpunk aesthetic.
+- **Physicality**: Buttons should feel tactile, with depth and motion feedback.
+- **Data Veracity**: No more mock data. If an agent is idle, the dashboard shows it. If $7.4 was spent, the chart shows it.
+
+### Future Expansion:
+- **The War Room**: Direct terminal access within the dashboard to steer `Claude-Worker` without switching to Telegram.
+- **Project Pulse**: A live feed of the 2 AM Engine's code commits and Vercel build status.
