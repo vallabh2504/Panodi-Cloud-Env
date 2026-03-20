@@ -7,9 +7,9 @@ export const MOCK_SWARMS: Swarm[] = [
 ];
 
 export const MOCK_AGENTS: Agent[] = [
-  { id: 'agent-001', name: 'Researcher-A1', swarmId: 'swarm-1', status: 'active', tokensUsed: 45200, costUsd: 1.36 },
-  { id: 'agent-002', name: 'Researcher-A2', swarmId: 'swarm-1', status: 'active', tokensUsed: 38100, costUsd: 1.14 },
-  { id: 'agent-003', name: 'Coder-B1', swarmId: 'swarm-2', status: 'idle', tokensUsed: 22000, costUsd: 0.66 },
+  { id: 'agent-001', name: 'main', swarmId: 'swarm-1', status: 'active', tokensUsed: 45200, costUsd: 1.36 },
+  { id: 'agent-002', name: 'wa-gatekeeper', swarmId: 'swarm-1', status: 'active', tokensUsed: 38100, costUsd: 1.14 },
+  { id: 'agent-003', name: 'architect-pro', swarmId: 'swarm-2', status: 'idle', tokensUsed: 22000, costUsd: 0.66 },
   { id: 'agent-004', name: 'Coder-B2', swarmId: 'swarm-2', status: 'active', tokensUsed: 31000, costUsd: 0.93 },
   { id: 'agent-005', name: 'Pipeline-C1', swarmId: 'swarm-3', status: 'paused', tokensUsed: 49000, costUsd: 1.47 },
 ];
@@ -79,7 +79,7 @@ export function generateInitialLogs(): AgentLog[] {
 
 export const MOCK_INTERVENTIONS: Intervention[] = [
   {
-    id: 'int-001', agentId: 'agent-001', agentName: 'Researcher-A1', swarmId: 'swarm-1',
+    id: 'int-001', agentId: 'agent-001', agentName: 'main', swarmId: 'swarm-1',
     pendingAction: 'delete_file("data/archive/2023-backup.tar.gz")',
     description: 'Agent wants to free disk space by deleting a backup archive. This action is irreversible.',
     riskLevel: 'high', timestamp: Date.now() - 120000,
@@ -91,7 +91,7 @@ export const MOCK_INTERVENTIONS: Intervention[] = [
     riskLevel: 'high', timestamp: Date.now() - 45000,
   },
   {
-    id: 'int-003', agentId: 'agent-003', agentName: 'Coder-B1', swarmId: 'swarm-2',
+    id: 'int-003', agentId: 'agent-003', agentName: 'architect-pro', swarmId: 'swarm-2',
     pendingAction: 'api_call("POST /payments/transfer", { amount: 49.99 })',
     description: 'Agent requesting a payment transfer as part of automated billing workflow.',
     riskLevel: 'medium', timestamp: Date.now() - 10000,

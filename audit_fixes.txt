@@ -1,7 +1,0 @@
-CRITICAL UI/UX & DATA AUDIT: SwarmOps PWA v2.1
-
-Please apply these surgical fixes to the Next.js app immediately:
-
-1. Audit 'app/api/status/route.ts': The 'Agents' list shows ghost agents (Researcher-A1, Coder-B1). This API route must execute `openclaw status --json` via child_process.exec, parse the JSON, and return the REAL agents list. Remove hardcoded fallback arrays!
-2. Audit 'components/Sidebar.tsx': The sidebar is not closing/collapsing on mobile. Implement a proper mobile-first 'Drawer' or 'Hamburger' toggle that works on touch.
-3. Audit 'app/layout.tsx' & global CSS: Fix the viewport/overflow-x issues so the right side is visible on PWA and prevent navigation overlap.
