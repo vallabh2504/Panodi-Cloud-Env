@@ -13,7 +13,7 @@ function parseMarkdownLogs(content: string, existingIds: Set<string>): AgentLog[
 
   return lines
     .map((line, i): AgentLog | null => {
-      const id = `live-log-${btoa(line.slice(0, 60)).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}-${i}`;
+      const id = `live-log-${encodeURIComponent(line.slice(0, 60)).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}-${i}`;
       if (existingIds.has(id)) return null;
       let severity: LogSeverity = 'info';
       const lower = line.toLowerCase();
