@@ -10,6 +10,11 @@ const PORT = 3333;
 const API_KEY = process.env.BRIDGE_API_KEY || 'vps-bridge-token-2026';
 
 app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  
   const auth = req.headers.authorization;
   if (!auth || auth !== `Bearer ${API_KEY}`) {
     return res.status(401).json({ error: 'Unauthorized' });
