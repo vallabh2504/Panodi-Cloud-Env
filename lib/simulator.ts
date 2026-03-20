@@ -37,6 +37,7 @@ export function useSwarmSimulator() {
   const pushLog = useSwarmStore((s) => s.pushLog);
   const updateMetric = useSwarmStore((s) => s.updateMetric);
   const setMetrics = useSwarmStore((s) => s.setMetrics);
+  const setAgents = useSwarmStore((s) => s.setAgents);
   const seenLogIds = useRef<Set<string>>(new Set());
 
   // Simulated log stream (fallback / supplementary activity)
@@ -65,6 +66,7 @@ export function useSwarmSimulator() {
         if (typeof data.totalCostToday === 'number') patch.totalCostToday = data.totalCostToday;
         if (typeof data.totalTokensMonth === 'number') patch.totalTokensMonth = data.totalTokensMonth;
         if (Object.keys(patch).length > 0) setMetrics(patch);
+        if (Array.isArray(data.agents) && data.agents.length > 0) setAgents(data.agents);
       } catch {
         // openclaw unavailable — simulated data continues
       }
@@ -72,7 +74,7 @@ export function useSwarmSimulator() {
     pollStatus();
     const interval = setInterval(pollStatus, 10_000);
     return () => clearInterval(interval);
-  }, [setMetrics]);
+  }, [setMetrics, setAgents]);
 
   // Live log polling from /api/logs every 30s
   useEffect(() => {

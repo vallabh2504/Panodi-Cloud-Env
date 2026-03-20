@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Agent, AgentLog, Swarm, Intervention, DashboardMetrics } from '@/types';
 import {
-  MOCK_AGENTS, MOCK_SWARMS, MOCK_INTERVENTIONS, INITIAL_METRICS, generateInitialLogs,
+  MOCK_SWARMS, MOCK_INTERVENTIONS, INITIAL_METRICS, generateInitialLogs,
 } from '@/lib/mockData';
 
 const MAX_LOGS = 200;
@@ -19,13 +19,14 @@ interface SwarmState {
   setSwarmKillSwitch: (swarmId: string, value: boolean) => void;
   setSwarmActive: (swarmId: string, value: boolean) => void;
   setSwarmBudget: (swarmId: string, budget: number) => void;
+  setAgents: (agents: Agent[]) => void;
   setLogFilter: (filter: Partial<SwarmState['logFilter']>) => void;
   updateMetric: (delta: { tokens: number; cost: number }) => void;
   setMetrics: (metrics: Partial<DashboardMetrics>) => void;
 }
 
 export const useSwarmStore = create<SwarmState>((set, get) => ({
-  agents: MOCK_AGENTS,
+  agents: [],
   swarms: MOCK_SWARMS,
   logs: generateInitialLogs(),
   interventions: MOCK_INTERVENTIONS,
@@ -85,6 +86,8 @@ export const useSwarmStore = create<SwarmState>((set, get) => ({
     set((s) => ({
       swarms: s.swarms.map((sw) => (sw.id === swarmId ? { ...sw, tokenBudget: budget } : sw)),
     })),
+
+  setAgents: (agents) => set({ agents }),
 
   setLogFilter: (filter) =>
     set((s) => ({ logFilter: { ...s.logFilter, ...filter } })),

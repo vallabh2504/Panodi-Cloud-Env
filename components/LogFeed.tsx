@@ -1,13 +1,14 @@
 'use client';
 import { useSwarmStore } from '@/store/swarmStore';
 import LogEntry from './LogEntry';
-import { MOCK_AGENTS, MOCK_SWARMS } from '@/lib/mockData';
 import { LogSeverity } from '@/types';
 
 const SEVERITIES: LogSeverity[] = ['info', 'action', 'thought', 'error'];
 
 export default function LogFeed() {
   const logs = useSwarmStore((s) => s.logs);
+  const agents = useSwarmStore((s) => s.agents);
+  const swarms = useSwarmStore((s) => s.swarms);
   const filter = useSwarmStore((s) => s.logFilter);
   const setLogFilter = useSwarmStore((s) => s.setLogFilter);
 
@@ -29,7 +30,7 @@ export default function LogFeed() {
           aria-label="Filter by agent"
         >
           <option value="">All Agents</option>
-          {MOCK_AGENTS.map((a) => (
+          {agents.map((a) => (
             <option key={a.id} value={a.id}>{a.name}</option>
           ))}
         </select>
@@ -40,7 +41,7 @@ export default function LogFeed() {
           aria-label="Filter by swarm"
         >
           <option value="">All Swarms</option>
-          {MOCK_SWARMS.map((s) => (
+          {swarms.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
