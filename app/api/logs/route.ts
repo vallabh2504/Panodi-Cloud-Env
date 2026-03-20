@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const date = searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
   
   try {
-    const bridgeUrl = process.env.VPS_BRIDGE_URL || 'https://buying-boulevard-ideas-checkout.trycloudflare.com';
+    const bridgeUrl = process.env.VPS_BRIDGE_URL || 'https://composed-jill-importantly-sized.trycloudflare.com';
     const res = await fetch(`${bridgeUrl}/api/logs?date=${date}`, {
       headers: {
         'Authorization': `Bearer ${process.env.BRIDGE_API_KEY || 'vps-bridge-token-2026'}`,
