@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Agent, AgentLog, Swarm, Intervention, DashboardMetrics } from '@/types';
 import {
-  MOCK_SWARMS, MOCK_INTERVENTIONS, INITIAL_METRICS, generateInitialLogs,
+  MOCK_SWARMS, MOCK_INTERVENTIONS, INITIAL_METRICS,
 } from '@/lib/mockData';
 
 const MAX_LOGS = 200;
@@ -28,7 +28,7 @@ interface SwarmState {
 export const useSwarmStore = create<SwarmState>((set, get) => ({
   agents: [],
   swarms: MOCK_SWARMS,
-  logs: generateInitialLogs(),
+  logs: [],
   interventions: MOCK_INTERVENTIONS,
   metrics: INITIAL_METRICS,
   logFilter: { agentId: '', swarmId: '', severity: '' },

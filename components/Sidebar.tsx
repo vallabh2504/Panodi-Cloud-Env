@@ -26,11 +26,10 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         'flex flex-col w-64 h-screen bg-gray-950 border-r border-gray-800 shrink-0',
         // Mobile: fixed drawer sliding from left
         'fixed inset-y-0 left-0 z-30 transition-transform duration-200 ease-in-out',
-        isOpen ? 'translate-x-0' : '-translate-x-full',
-        // Desktop: static in flow, always visible
-        'lg:static lg:translate-x-0 lg:z-auto lg:transition-none',
+        isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none',
+        // Desktop: static in flow, always visible, always interactive
+        'lg:static lg:translate-x-0 lg:z-auto lg:transition-none lg:pointer-events-auto',
       ].join(' ')}
-      aria-hidden={!isOpen}
     >
       <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-800">
         <Zap className="text-violet-400" size={22} />
