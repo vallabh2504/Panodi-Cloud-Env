@@ -1,4 +1,4 @@
-const CACHE_NAME = 'genesis-v1';
+const CACHE_NAME = 'swarmops-v1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',

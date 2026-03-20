@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import SimulatorProvider from '@/components/SimulatorProvider';
@@ -7,6 +7,12 @@ export const metadata: Metadata = {
   title: 'SwarmOps Dashboard',
   description: 'Real-time AI agent swarm monitoring and control',
   manifest: '/manifest.json',
+};
+
+export const viewport: Viewport = {
+  themeColor: '#00ffcc',
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
