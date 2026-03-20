@@ -1,47 +1,33 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import path from 'path';
-
-const MEMORY_DIR = '/root/.openclaw/workspace/memory';
-
-const MOCK_LOG_CONTENT = `
-[08:00:00] [wa-gatekeeper] 🚨 **URGENT WA ALERT** Received message from VIP
-[08:00:05] [main] Received urgent alert, notifying Vallabh via Telegram
-[08:01:00] [main] Executed tool: message (channel="telegram", target="456109422")
-[08:02:30] [architect-pro] Synced latest logs to convex cloud
-[08:03:00] [auditor-pro] Checked SwarmOps deployment status
-`;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
-  const filePath = path.join(MEMORY_DIR, `${date}.md`);
-
+  
   try {
-    const content = await readFile(filePath, 'utf-8');
-    return NextResponse.json({ date, content, source: filePath });
-  } catch {
-    // Try the most recent available log
-    try {
-      const { readdir } = await import('fs/promises');
-      const files = (await readdir(MEMORY_DIR))
-        .filter((f) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f))
-        .sort()
-        .reverse();
-
-      if (files.length === 0) {
-        throw new Error('No files found');
-      }
-
-      const latest = files[0];
-      const latestPath = path.join(MEMORY_DIR, latest);
-      const content = await readFile(latestPath, 'utf-8');
-      return NextResponse.json({ date: latest.replace('.md', ''), content, source: latestPath });
-    } catch {
-      // Fallback for Vercel
-      return NextResponse.json({ date, content: MOCK_LOG_CONTENT, source: 'mock-vercel' });
+    const bridgeUrl = process.env.VPS_BRIDGE_URL || 'http://138.68.93.95:3333';
+    const res = await fetch(`${bridgeUrl}/api/logs?date=${date}`, {
+      headers: {
+        'Authorization': `Bearer ${process.env.BRIDGE_API_KEY || 'vps-bridge-token-2026'}`,
+        'Cache-Control': 'no-cache'
+      },
+      next: { revalidate: 0 }
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      // Ensure we stringify correctly and don't blow up Latin1 buffers
+      return new NextResponse(JSON.stringify(data), {
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
+    } else {
+      console.error('Bridge logs fetch failed:', res.status, await res.text());
+      return NextResponse.json({ date, content: "Error fetching logs from VPS", source: "error" }, { status: 500 });
     }
+  } catch (error) {
+    console.error('Error fetching logs from bridge:', error);
+    return NextResponse.json({ date, content: "Error fetching logs from VPS", source: "error" }, { status: 500 });
   }
 }
