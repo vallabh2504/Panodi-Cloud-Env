@@ -6,6 +6,7 @@ import SimulatorProvider from '@/components/SimulatorProvider';
 export const metadata: Metadata = {
   title: 'SwarmOps Dashboard',
   description: 'Real-time AI agent swarm monitoring and control',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
