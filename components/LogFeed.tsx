@@ -1,4 +1,5 @@
 'use client';
+import { motion } from 'framer-motion';
 import { useSwarmStore } from '@/store/swarmStore';
 import LogEntry from './LogEntry';
 import { LogSeverity } from '@/types';
@@ -20,13 +21,17 @@ export default function LogFeed() {
   });
 
   return (
-    <div className="flex flex-col gap-3 h-full">
+    <div className="flex flex-col gap-4 h-full">
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 items-center">
+      <motion.div
+        className="flex flex-wrap gap-2 items-center backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-3 sticky top-0 z-10"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <select
           value={filter.agentId}
           onChange={(e) => setLogFilter({ agentId: e.target.value })}
-          className="bg-gray-800 border border-gray-700 text-gray-300 text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 outline-none"
+          className="glass rounded-lg px-3 py-2 text-xs text-gray-200 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 outline-none backdrop-blur-xl"
           aria-label="Filter by agent"
         >
           <option value="">All Agents</option>
@@ -37,7 +42,7 @@ export default function LogFeed() {
         <select
           value={filter.swarmId}
           onChange={(e) => setLogFilter({ swarmId: e.target.value })}
-          className="bg-gray-800 border border-gray-700 text-gray-300 text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 outline-none"
+          className="glass rounded-lg px-3 py-2 text-xs text-gray-200 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 outline-none backdrop-blur-xl"
           aria-label="Filter by swarm"
         >
           <option value="">All Swarms</option>
@@ -48,7 +53,7 @@ export default function LogFeed() {
         <select
           value={filter.severity}
           onChange={(e) => setLogFilter({ severity: e.target.value })}
-          className="bg-gray-800 border border-gray-700 text-gray-300 text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 outline-none"
+          className="glass rounded-lg px-3 py-2 text-xs text-gray-200 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 outline-none backdrop-blur-xl"
           aria-label="Filter by severity"
         >
           <option value="">All Severities</option>
@@ -56,34 +61,47 @@ export default function LogFeed() {
             <option key={s} value={s}>{s.toUpperCase()}</option>
           ))}
         </select>
-        <button
+        <motion.button
           onClick={() => setLogFilter({ agentId: '', swarmId: '', severity: '' })}
-          className="text-xs px-3 py-2 text-gray-500 hover:text-gray-300 transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="text-xs px-3 py-2 text-gray-400 hover:text-violet-300 transition-colors font-medium"
           aria-label="Clear filters"
         >
           Clear
-        </button>
-        <span className="ml-auto text-xs text-gray-500">{filtered.length} entries</span>
-      </div>
+        </motion.button>
+        <span className="ml-auto text-xs text-gray-500 font-mono">{filtered.length} entries</span>
+      </motion.div>
 
       {/* Log list */}
-      <div
-        className="flex-1 overflow-y-auto space-y-1 pr-1"
+      <motion.div
+        className="flex-1 overflow-y-auto space-y-1.5 pr-2"
         role="list"
         aria-label="Agent activity feed"
         aria-live="polite"
         aria-atomic="false"
         aria-relevant="additions"
       >
-        {filtered.map((log) => (
-          <LogEntry key={log.id} log={log} />
+        {filtered.map((log, idx) => (
+          <motion.div
+            key={log.id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: idx * 0.02 }}
+          >
+            <LogEntry log={log} />
+          </motion.div>
         ))}
         {filtered.length === 0 && (
-          <p className="text-center text-gray-600 text-sm py-10">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-gray-500 text-sm py-10 font-light"
+          >
             No logs match current filters.
-          </p>
+          </motion.p>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

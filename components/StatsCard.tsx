@@ -10,16 +10,16 @@ interface Props {
 
 export default function StatsCard({ title, value, subtitle, icon: Icon, iconColor = 'text-violet-400' }: Props) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-3">
+    <div className="glass-elevated neon-border-violet rounded-2xl p-6 flex flex-col gap-4 group hover:neon-glow-violet transition-all duration-300">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-400 font-medium">{title}</span>
-        <div className={`p-2 rounded-lg bg-gray-800 ${iconColor}`}>
-          <Icon size={16} />
+        <span className="text-sm text-gray-300 font-semibold tracking-wide">{title}</span>
+        <div className={`p-3 rounded-xl backdrop-blur-lg bg-gradient-to-br from-violet-500/20 to-violet-600/10 border border-violet-400/30 group-hover:border-violet-300/60 transition-all duration-300 ${iconColor}`}>
+          <Icon size={18} className="group-hover:scale-110 transition-transform" />
         </div>
       </div>
       <div>
-        <p className="text-2xl font-bold text-white">{value}</p>
-        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+        <p className="text-3xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">{value}</p>
+        {subtitle && <p className="text-xs text-gray-400 mt-2">{subtitle}</p>}
       </div>
     </div>
   );

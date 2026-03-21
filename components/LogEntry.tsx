@@ -1,10 +1,11 @@
+import { motion } from 'framer-motion';
 import { AgentLog } from '@/types';
 
 const SEVERITY_STYLES: Record<AgentLog['severity'], string> = {
-  info:    'text-blue-400   bg-blue-900/20   border-blue-800/40',
-  action:  'text-green-400  bg-green-900/20  border-green-800/40',
-  thought: 'text-violet-400 bg-violet-900/20 border-violet-800/40',
-  error:   'text-red-400    bg-red-900/20    border-red-800/40',
+  info:    'border-blue-500/40 bg-blue-500/10 text-blue-300 shadow-lg shadow-blue-500/20',
+  action:  'border-green-500/40 bg-green-500/10 text-green-300 shadow-lg shadow-green-500/20',
+  thought: 'border-violet-500/40 bg-violet-500/10 text-violet-300 shadow-lg shadow-violet-500/20',
+  error:   'border-red-500/40 bg-red-500/10 text-red-300 shadow-lg shadow-red-500/20',
 };
 
 const SEVERITY_LABELS: Record<AgentLog['severity'], string> = {
@@ -23,14 +24,17 @@ export default function LogEntry({ log }: Props) {
   });
 
   return (
-    <div
-      className={`flex items-start gap-3 px-3 py-2 rounded-lg border ${styles} font-mono text-xs`}
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      className={`flex items-start gap-3 px-4 py-2.5 rounded-lg border backdrop-blur-xl font-mono text-xs transition-all ${styles}`}
       role="listitem"
+      whileHover={{ scale: 1.01, backdropFilter: 'blur(20px)' }}
     >
-      <span className="shrink-0 opacity-60 tabular-nums">{time}</span>
-      <span className="shrink-0 font-bold w-8">{SEVERITY_LABELS[log.severity]}</span>
+      <span className="shrink-0 opacity-70 tabular-nums text-gray-400">{time}</span>
+      <span className="shrink-0 font-bold w-8 text-white">{SEVERITY_LABELS[log.severity]}</span>
       <span className="shrink-0 text-gray-500 max-w-[100px] truncate">[{log.agentId}]</span>
       <span className="flex-1 break-all">{log.message}</span>
-    </div>
+    </motion.div>
   );
 }

@@ -1,8 +1,107 @@
 @import "tailwindcss";
 
-html,
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  overflow-x: hidden;
-  max-width: 100vw;
+@layer base {
+  :root {
+    --neon-purple: #a855f7;
+    --neon-pink: #ec4899;
+    --neon-cyan: #06b6d4;
+    --neon-violet: #8b5cf6;
+    --neon-blue: #3b82f6;
+  }
+
+  html,
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
+    max-width: 100vw;
+    background: linear-gradient(135deg, #0f0f1e 0%, #1a0f2e 50%, #0f1a2e 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  /* Glassmorphism base */
+  .glass {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  }
+
+  .glass-dark {
+    @apply backdrop-blur-xl bg-black/20 border border-white/5;
+  }
+
+  .glass-elevated {
+    @apply backdrop-blur-2xl bg-white/10 border border-white/20 shadow-2xl;
+  }
+
+  /* Neon glow effects */
+  .neon-glow-purple {
+    @apply shadow-lg shadow-purple-500/20;
+  }
+
+  .neon-glow-pink {
+    @apply shadow-lg shadow-pink-500/20;
+  }
+
+  .neon-glow-cyan {
+    @apply shadow-lg shadow-cyan-500/20;
+  }
+
+  .neon-glow-violet {
+    @apply shadow-lg shadow-violet-500/30;
+  }
+
+  .neon-border-purple {
+    @apply border border-purple-500/30 hover:border-purple-400/60 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300;
+  }
+
+  .neon-border-violet {
+    @apply border border-violet-500/30 hover:border-violet-400/60 hover:shadow-lg hover:shadow-violet-500/30 transition-all duration-300;
+  }
+
+  .neon-border-cyan {
+    @apply border border-cyan-500/30 hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300;
+  }
+
+  /* Animated neon background */
+  .neon-pulse {
+    animation: neon-pulse 3s ease-in-out infinite;
+  }
+
+  .neon-flicker {
+    animation: neon-flicker 0.15s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  /* Futuristic backdrop */
+  .backdrop-neon {
+    @apply backdrop-blur-3xl bg-gradient-to-br from-purple-500/10 via-transparent to-cyan-500/10;
+  }
+
+  /* Smooth transitions */
+  .transition-neon {
+    @apply transition-all duration-300 ease-out;
+  }
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.3));
+  }
+  50% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.6));
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 0.98;
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.5));
+  }
+  20%, 24%, 55% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.3));
+  }
 }
