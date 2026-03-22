@@ -21,12 +21,13 @@ const mockStatus = {
 export async function GET() {
   let status = mockStatus;
   try {
-    const bridgeUrl = process.env.VPS_BRIDGE_URL || 'https://composed-jill-importantly-sized.trycloudflare.com';
+    const bridgeUrl = process.env.VPS_BRIDGE_URL || 'http://localhost:3333';
     const res = await fetch(`${bridgeUrl}/api/status`, {
       headers: {
         'Authorization': `Bearer ${process.env.BRIDGE_API_KEY || 'vps-bridge-token-2026'}`,
         'Cache-Control': 'no-cache'
       },
+      signal: AbortSignal.timeout(10000),
       next: { revalidate: 0 }
     });
     

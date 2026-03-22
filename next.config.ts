@@ -1,10 +1,14 @@
 import type { NextConfig } from "next";
-import path from "path";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const nextConfig: NextConfig = {
-  
+
   turbopack: {
-    root: path.resolve(__dirname),
+    root: resolve(__dirname),
   },
   async headers() {
     return [
