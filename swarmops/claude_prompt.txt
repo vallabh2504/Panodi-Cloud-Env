@@ -1,0 +1,19 @@
+Task: FRESH BUILD: SWARMOPS PWA + LIVE SYNC (v2.1)
+
+Project Directory: /root/.openclaw/workspace/Panodi-Cloud-Env/rendinti-factory/genesis-app-v2
+
+STRICT WORKFLOW:
+1. PWA Setup:
+   - Create 'public/manifest.json' with SwarmOps branding.
+   - Add 'public/sw.js' (Basic service worker for PWA).
+   - Update 'app/layout.tsx' with metadata (manifest, themeColor, viewport).
+2. Live API:
+   - Create 'app/api/status/route.ts' that executes 'openclaw status --json' to return real agent stats.
+   - Update 'lib/mockData.ts' or relevant components to fetch from this API.
+3. Branding:
+   - Ensure all 'Genesis' text is replaced with 'SwarmOps' across the codebase.
+4. Verify & Push:
+   - Run 'npm run build' to verify everything works.
+   - Git add, commit, and push to 'origin main'.
+
+Please complete all these steps autonomously. Exit when finished.
