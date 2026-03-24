@@ -1,26 +1,22 @@
 {
-  "name": "omnilog",
-  "version": "0.1.0",
+  "name": "panodi-cloud-env",
+  "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "swarmops",
+    "delusion-check",
+    "fissure-care",
+    "nexus-edge",
+    "pixel-empire",
+    "weather-bridge",
+    "crazy-combat-game"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "next": "^15.3.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "tailwindcss": "^4",
-    "@tailwindcss/postcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "^15.3.1",
-    "typescript": "^5"
+    "dev:sovereign": "npm --workspace=apps/sovereign-gpt-web run dev",
+    "dev:swarmops": "npm --workspace=swarmops run dev",
+    "dev:delusion": "npm --workspace=delusion-check run dev",
+    "build:sovereign": "npm --workspace=apps/sovereign-gpt-web run build",
+    "build:swarmops": "npm --workspace=swarmops run build"
   }
 }
