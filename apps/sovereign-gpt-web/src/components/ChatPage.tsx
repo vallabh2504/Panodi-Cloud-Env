@@ -6,16 +6,9 @@ import {
 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import type { Theme } from '../App'
+import { useChat, type Message } from '../hooks/useChat'
 
-/* ─── Types ────────────────────────────────────────────────── */
-interface Message {
-  id: string
-  role: 'user' | 'ai'
-  text: string
-  done: boolean
-  ts: Date
-}
-
+/* ─── Props ─────────────────────────────────────────────────── */
 interface ChatPageProps {
   onSignOut: () => void
   theme: Theme
@@ -23,16 +16,7 @@ interface ChatPageProps {
   user: User
 }
 
-/* ─── Fake responses (replaced by real API later) ──────────── */
-const FAKE_RESPONSES = [
-  "Sovereign GPT online. All 608K parameters are actively processing your input through the autonomous factory loop.",
-  "Acknowledged. Running inference across the full parameter matrix. The factory loop has parsed your query and generated this response.",
-  "Processing complete. The sovereign inference engine has analyzed your input and distilled an optimized output.",
-  "Factory loop active. Your request has been routed through all inference nodes and the response is ready.",
-  "Sovereign protocol engaged. Query processed — standing by for further instructions.",
-]
-
-/* ─── Typewriter hook ──────────────────────────────────────── */
+/* ─── Typewriter hook ────────────────────────────────────────── */
 function useTypewriter(text: string, active: boolean, speed = 14) {
   const [displayed, setDisplayed] = useState('')
   useEffect(() => {
@@ -49,7 +33,7 @@ function useTypewriter(text: string, active: boolean, speed = 14) {
   return displayed
 }
 
-/* ─── AI Avatar ─────────────────────────────────────────────── */
+/* ─── AI Avatar ──────────────────────────────────────────────── */
 function AIAvatar() {
   return (
     <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20 ring-1 ring-violet-400/20">
@@ -58,7 +42,7 @@ function AIAvatar() {
   )
 }
 
-/* ─── AI Message ────────────────────────────────────────────── */
+/* ─── AI Message ─────────────────────────────────────────────── */
 function AIMessage({ message }: { message: Message }) {
   const text = useTypewriter(message.text, !message.done)
   const [copied, setCopied] = useState(false)
@@ -79,7 +63,6 @@ function AIMessage({ message }: { message: Message }) {
       <AIAvatar />
 
       <div className="flex-1 min-w-0 space-y-2">
-        {/* Label */}
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold tracking-widest uppercase text-violet-500 dark:text-violet-400 select-none">
             Sovereign GPT
@@ -89,7 +72,6 @@ function AIMessage({ message }: { message: Message }) {
           </span>
         </div>
 
-        {/* Text */}
         <p className="text-[15px] leading-[1.75] text-zinc-800 dark:text-zinc-100 font-normal tracking-[-0.01em]">
           {text}
           {!message.done && (
@@ -97,7 +79,6 @@ function AIMessage({ message }: { message: Message }) {
           )}
         </p>
 
-        {/* Actions */}
         {message.done && (
           <div className="flex items-center gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <button
@@ -116,7 +97,7 @@ function AIMessage({ message }: { message: Message }) {
   )
 }
 
-/* ─── User Message ──────────────────────────────────────────── */
+/* ─── User Message ───────────────────────────────────────────── */
 function UserMessage({ message }: { message: Message }) {
   return (
     <motion.div
@@ -139,7 +120,7 @@ function UserMessage({ message }: { message: Message }) {
   )
 }
 
-/* ─── Thinking Indicator ────────────────────────────────────── */
+/* ─── Thinking Indicator ─────────────────────────────────────── */
 function ThinkingIndicator() {
   return (
     <motion.div
@@ -164,7 +145,7 @@ function ThinkingIndicator() {
   )
 }
 
-/* ─── Divider ───────────────────────────────────────────────── */
+/* ─── Date Divider ───────────────────────────────────────────── */
 function DateDivider({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 px-4 py-2">
@@ -175,27 +156,18 @@ function DateDivider({ label }: { label: string }) {
   )
 }
 
-/* ─── Main Component ────────────────────────────────────────── */
+/* ─── Main Component ─────────────────────────────────────────── */
 export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPageProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: 'ai',
-      text: 'Sovereign GPT online. Factory loop initialized. How can I assist you today?',
-      done: true,
-      ts: new Date(),
-    },
-  ])
-  const [input, setInput] = useState('')
-  const [isThinking, setIsThinking] = useState(false)
+  const { messages, isThinking, isLoading, sendMessage, clearChat } = useChat(user)
+
+  const [input, setInput]           = useState('')
   const [showScrollBtn, setShowScrollBtn] = useState(false)
 
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const bottomRef    = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const responseIndex = useRef(0)
+  const textareaRef  = useRef<HTMLTextAreaElement>(null)
 
-  /* Auto-scroll */
+  /* Auto-scroll on new messages */
   const scrollToBottom = useCallback((smooth = true) => {
     bottomRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant' })
   }, [])
@@ -229,59 +201,43 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
     resizeTextarea()
   }
 
-  /* Send */
-  const sendMessage = useCallback(() => {
+  /* Submit */
+  const handleSend = useCallback(async () => {
     const text = input.trim()
     if (!text || isThinking) return
-
-    const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', text, done: true, ts: new Date() }
-    setMessages(prev => [...prev, userMsg])
     setInput('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
-    setIsThinking(true)
-
-    setTimeout(() => {
-      const aiText = FAKE_RESPONSES[responseIndex.current % FAKE_RESPONSES.length]
-      responseIndex.current++
-      const aiMsg: Message = { id: `a-${Date.now()}`, role: 'ai', text: aiText, done: false, ts: new Date() }
-      setMessages(prev => [...prev, aiMsg])
-      setIsThinking(false)
-
-      const duration = aiText.length * 14 + 80
-      setTimeout(() => {
-        setMessages(prev => prev.map(m => m.id === aiMsg.id ? { ...m, done: true } : m))
-      }, duration)
-    }, 480 + Math.random() * 280)
-  }, [input, isThinking])
+    await sendMessage(text)
+  }, [input, isThinking, sendMessage])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      sendMessage()
+      handleSend()
     }
   }
 
-  const clearChat = () => {
-    setMessages([{
-      id: `welcome-${Date.now()}`,
-      role: 'ai',
-      text: 'Conversation cleared. How can I assist you?',
-      done: true,
-      ts: new Date(),
-    }])
-    responseIndex.current = 0
-    textareaRef.current?.focus()
-  }
-
   /* User display */
-  const avatarUrl = user.user_metadata?.avatar_url as string | undefined
+  const avatarUrl   = user.user_metadata?.avatar_url as string | undefined
   const displayName = (user.user_metadata?.full_name || user.user_metadata?.name || user.email || 'User') as string
-  const initial = displayName[0]?.toUpperCase() ?? 'U'
+  const initial     = displayName[0]?.toUpperCase() ?? 'U'
+
+  /* ── Loading skeleton while chat history is being fetched ── */
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center bg-zinc-50 dark:bg-[#0b0b0f]">
+        <div className="flex items-center gap-3 text-sm text-zinc-400 dark:text-zinc-600">
+          <div className="w-5 h-5 rounded-full border-2 border-violet-300 dark:border-violet-800 border-t-violet-500 animate-spin" />
+          Loading conversation…
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full bg-zinc-50 dark:bg-[#0b0b0f] transition-colors duration-300">
 
-      {/* ── Header ──────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────── */}
       <header className="flex-shrink-0 z-40 flex items-center justify-between px-4 h-[60px] border-b border-zinc-200/80 dark:border-zinc-800/60 bg-white/80 dark:bg-[#0b0b0f]/80 backdrop-blur-xl">
 
         {/* Left */}
@@ -293,12 +249,10 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
             <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">
               Sovereign GPT
             </span>
-            {/* Online chip */}
             <div className="hidden sm:flex items-center gap-1.5 h-[22px] px-2.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
               <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Online</span>
             </div>
-            {/* Params chip */}
             <div className="hidden md:flex items-center h-[22px] px-2.5 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
               <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">608K params</span>
             </div>
@@ -307,7 +261,6 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
 
         {/* Right */}
         <div className="flex items-center gap-1">
-          {/* Clear */}
           <button
             onClick={clearChat}
             title="Clear conversation"
@@ -316,21 +269,16 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
             <RotateCcw size={15} />
           </button>
 
-          {/* Theme toggle */}
           <button
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-all duration-150"
           >
-            {theme === 'dark'
-              ? <Sun size={16} />
-              : <Moon size={16} />
-            }
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
           <div className="w-px h-5 mx-1 bg-zinc-200 dark:bg-zinc-700/60" />
 
-          {/* User avatar */}
           <div className="flex items-center gap-2.5">
             {avatarUrl
               ? <img src={avatarUrl} alt={displayName} className="w-7 h-7 rounded-full ring-2 ring-violet-400/30 object-cover" />
@@ -345,7 +293,6 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
             </span>
           </div>
 
-          {/* Sign out */}
           <button
             onClick={onSignOut}
             title="Sign out"
@@ -357,11 +304,8 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
         </div>
       </header>
 
-      {/* ── Messages ────────────────────────────────────────── */}
-      <div
-        ref={scrollAreaRef}
-        className="flex-1 overflow-y-auto scroll-smooth"
-      >
+      {/* ── Messages ───────────────────────────────────────── */}
+      <div ref={scrollAreaRef} className="flex-1 overflow-y-auto scroll-smooth">
         <div className="max-w-3xl mx-auto pb-6 pt-2">
           <DateDivider label="Today" />
 
@@ -378,7 +322,7 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
         </div>
       </div>
 
-      {/* ── Scroll to bottom button ──────────────────────────── */}
+      {/* ── Scroll-to-bottom button ─────────────────────────── */}
       <AnimatePresence>
         {showScrollBtn && (
           <motion.button
@@ -395,11 +339,9 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
         )}
       </AnimatePresence>
 
-      {/* ── Input ───────────────────────────────────────────── */}
+      {/* ── Input ──────────────────────────────────────────── */}
       <div className="flex-shrink-0 border-t border-zinc-200/80 dark:border-zinc-800/60 bg-white/80 dark:bg-[#0b0b0f]/80 backdrop-blur-xl px-4 py-4">
         <div className="max-w-3xl mx-auto">
-
-          {/* Input box */}
           <div className="relative flex items-end rounded-2xl border border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900/80 shadow-sm focus-within:border-violet-400/60 dark:focus-within:border-violet-500/50 focus-within:ring-2 focus-within:ring-violet-400/10 dark:focus-within:ring-violet-500/10 transition-all duration-200">
             <textarea
               ref={textareaRef}
@@ -417,7 +359,7 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
               <motion.button
                 whileHover={{ scale: 1.06 }}
                 whileTap={{ scale: 0.94 }}
-                onClick={sendMessage}
+                onClick={handleSend}
                 disabled={!input.trim() || isThinking}
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-violet-600 transition-colors shadow-md shadow-violet-500/25"
               >
@@ -429,7 +371,6 @@ export default function ChatPage({ onSignOut, theme, toggleTheme, user }: ChatPa
             </div>
           </div>
 
-          {/* Hint */}
           <p className="flex items-center justify-center gap-2 mt-2.5 text-[11px] text-zinc-400 dark:text-zinc-600 select-none">
             <span className="inline-flex items-center gap-0.5">
               <kbd className="px-1.5 py-0.5 rounded-md border border-zinc-300 dark:border-zinc-700 font-mono text-[10px] text-zinc-500 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-800">⏎</kbd>
