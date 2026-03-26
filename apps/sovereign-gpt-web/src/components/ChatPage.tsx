@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import OrbBackground from './OrbBackground'
+import { streamChat, checkHealth, type ChatMessage as ApiMessage } from '../lib/api'
 
 interface Message {
   id: string
@@ -30,14 +31,6 @@ function useTypewriter(text: string, active: boolean, speed = 18) {
 
   return displayed
 }
-
-const AI_RESPONSES = [
-  "Initializing autonomous factory loop... All systems nominal. How can I assist you today?",
-  "Processing query through the sovereign inference engine. My 608K parameter matrix is fully engaged.",
-  "Acknowledged. Running analysis across all factory nodes. Stand by for optimized output.",
-  "Factory loop active. Query received and parsed. Generating response now...",
-  "Sovereign protocol engaged. All 608K parameters are contributing to this response.",
-]
 
 function AIBubble({ message }: { message: Message }) {
   const text = useTypewriter(message.text, !message.done)
@@ -105,15 +98,22 @@ export default function ChatPage({ onSignOut }: ChatPageProps) {
   ])
   const [input, setInput] = useState('')
   const [isThinking, setIsThinking] = useState(false)
+  const [engineStatus, setEngineStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const responseIndex = useRef(0)
+
+  // Check engine health on mount
+  useEffect(() => {
+    checkHealth()
+      .then(() => setEngineStatus('online'))
+      .catch(() => setEngineStatus('offline'))
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  function sendMessage() {
+  const sendMessage = useCallback(() => {
     const text = input.trim()
     if (!text || isThinking) return
 
@@ -122,19 +122,47 @@ export default function ChatPage({ onSignOut }: ChatPageProps) {
     setInput('')
     setIsThinking(true)
 
-    setTimeout(() => {
-      const aiText = AI_RESPONSES[responseIndex.current % AI_RESPONSES.length]
-      responseIndex.current++
-      const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', text: aiText, done: false }
-      setMessages(prev => [...prev, aiMsg])
-      setIsThinking(false)
+    // Build conversation history for the API
+    const history: ApiMessage[] = messages
+      .filter(m => m.id !== '0') // skip the welcome message
+      .map(m => ({
+        role: m.role === 'ai' ? 'assistant' as const : 'user' as const,
+        content: m.text,
+      }))
+    history.push({ role: 'user', content: text })
 
-      const typingDuration = aiText.length * 18 + 100
-      setTimeout(() => {
-        setMessages(prev => prev.map(m => m.id === aiMsg.id ? { ...m, done: true } : m))
-      }, typingDuration)
-    }, 600 + Math.random() * 400)
-  }
+    const aiMsgId = (Date.now() + 1).toString()
+
+    // Create the AI message placeholder for streaming
+    const aiMsg: Message = { id: aiMsgId, role: 'ai', text: '', done: false }
+    setMessages(prev => [...prev, aiMsg])
+    setIsThinking(false)
+
+    streamChat(
+      history,
+      // onToken — append each token as it arrives
+      (token) => {
+        setMessages(prev =>
+          prev.map(m => m.id === aiMsgId ? { ...m, text: m.text + token } : m)
+        )
+      },
+      // onDone — mark the message as complete
+      () => {
+        setMessages(prev =>
+          prev.map(m => m.id === aiMsgId ? { ...m, done: true } : m)
+        )
+      },
+      // onError — show error in the AI bubble
+      (error) => {
+        setMessages(prev =>
+          prev.map(m => m.id === aiMsgId
+            ? { ...m, text: `Error: ${error}`, done: true }
+            : m
+          )
+        )
+      },
+    )
+  }, [input, isThinking, messages])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -142,6 +170,18 @@ export default function ChatPage({ onSignOut }: ChatPageProps) {
       sendMessage()
     }
   }
+
+  const statusColor = engineStatus === 'online'
+    ? 'bg-emerald-400'
+    : engineStatus === 'offline'
+      ? 'bg-red-400'
+      : 'bg-yellow-400'
+
+  const statusText = engineStatus === 'online'
+    ? 'Engine Online'
+    : engineStatus === 'offline'
+      ? 'Engine Offline'
+      : 'Connecting...'
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 overflow-hidden">
@@ -174,10 +214,8 @@ export default function ChatPage({ onSignOut }: ChatPageProps) {
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 text-xs font-semibold"
             style={{ background: 'rgba(14,165,233,0.1)', color: '#38bdf8' }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Model Status
-            <span className="text-white/40">|</span>
-            <span className="text-emerald-400">608K Params</span>
+            <span className={`w-1.5 h-1.5 rounded-full ${statusColor} animate-pulse`} />
+            {statusText}
           </div>
           <button
             onClick={onSignOut}
@@ -251,16 +289,17 @@ export default function ChatPage({ onSignOut }: ChatPageProps) {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Send a message..."
+            placeholder={engineStatus === 'offline' ? 'Engine offline — start bridge_api.py first' : 'Send a message...'}
             rows={1}
-            className="flex-1 bg-transparent text-white text-sm placeholder-slate-500 resize-none focus:outline-none leading-relaxed"
+            disabled={engineStatus === 'offline'}
+            className="flex-1 bg-transparent text-white text-sm placeholder-slate-500 resize-none focus:outline-none leading-relaxed disabled:opacity-50"
             style={{ maxHeight: '120px' }}
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={sendMessage}
-            disabled={!input.trim() || isThinking}
+            disabled={!input.trim() || isThinking || engineStatus === 'offline'}
             className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-white transition-opacity disabled:opacity-30"
             style={{ background: 'linear-gradient(135deg, #ff6b35 0%, #0ea5e9 100%)' }}
           >
