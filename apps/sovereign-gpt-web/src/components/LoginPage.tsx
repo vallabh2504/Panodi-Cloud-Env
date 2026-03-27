@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
-import { Zap, Sun, Moon, AlertCircle, Shield, Cpu, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Zap, Sun, Moon, AlertCircle, Shield, Cpu, Sparkles, TreePine, Binary } from 'lucide-react'
 import type { Theme } from '../App'
 
 /* ─── Google SVG icon ───────────────────────────────────────── */
@@ -14,10 +14,18 @@ function GoogleIcon() {
   )
 }
 
-/* ─── Premium feature pill ───────────────────────────────────────────── */
+/* ─── Theme icon map ────────────────────────────────────────── */
+const themeIcons: Record<Theme, React.ReactNode> = {
+  dark: <Moon size={18} />,
+  light: <Sun size={18} />,
+  forest: <TreePine size={18} />,
+  cyber: <Binary size={18} />,
+}
+
+/* ─── Premium feature pill ──────────────────────────────────── */
 function FeaturePill({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.05 }}
@@ -25,8 +33,8 @@ function FeaturePill({ icon, label }: { icon: React.ReactNode; label: string }) 
       className="glass px-3.5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group cursor-default"
     >
       <div className="flex items-center gap-2">
-        <span className="text-violet-500 dark:text-violet-400 group-hover:scale-110 transition-transform">{icon}</span>
-        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 tracking-wide">{label}</span>
+        <span className="accent-text group-hover:scale-110 transition-transform">{icon}</span>
+        <span className="text-xs font-semibold tracking-wide opacity-80">{label}</span>
       </div>
     </motion.div>
   )
@@ -44,41 +52,54 @@ interface LoginPageProps {
 /* ─── Component ─────────────────────────────────────────────── */
 export default function LoginPage({ onLogin, signingIn, authError, theme, toggleTheme }: LoginPageProps) {
   return (
-    <div className="flex flex-col min-h-full bg-white dark:bg-transparent transition-theme">
-
-      {/* ── Top bar with enhanced glass effect ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 dark:border-white/10 bg-white/50 dark:bg-white/[0.02] backdrop-blur-md transition-theme">
+    <div className="flex flex-col min-h-full transition-theme">
+      {/* ── Top bar ──────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-6 py-5 header-glow glass backdrop-blur-xl transition-theme">
         {/* Logo */}
         <div className="flex items-center gap-3 select-none">
-          <motion.div 
+          <motion.div
             whileHover={{ scale: 1.08, rotate: 5 }}
             whileTap={{ scale: 0.95 }}
-            className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30 dark:shadow-violet-600/40 ring-1 ring-violet-400/30 dark:ring-violet-400/50 hover:ring-violet-400/50 dark:hover:ring-violet-400/70 transition-all"
+            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg transition-all relative overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-glow)))`,
+            }}
           >
-            <Zap size={14} className="text-white" strokeWidth={2.8} />
+            <motion.div
+              animate={{ x: ['100%', '-100%'] }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            />
+            <Zap size={14} className="text-white relative z-10" strokeWidth={2.8} />
           </motion.div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-400 bg-clip-text text-transparent tracking-tight">Sovereign GPT</span>
-            <span className="text-[9px] font-medium text-zinc-500 dark:text-zinc-500 tracking-widest uppercase">Protocol V15.4</span>
+            <span className="text-sm font-bold text-gradient tracking-tight">Sovereign GPT</span>
+            <span className="text-[9px] font-medium opacity-50 tracking-widest uppercase">Protocol V15.4</span>
           </div>
         </div>
 
-        {/* Theme toggle with premium styling */}
+        {/* Theme toggle */}
         <motion.button
           onClick={toggleTheme}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.92 }}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          className="w-10 h-10 rounded-xl glass flex items-center justify-center text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-200 hover:text-zinc-700 transition-all duration-200 group hover:shadow-lg"
+          className="w-10 h-10 rounded-xl glass flex items-center justify-center transition-all duration-200 group hover:shadow-lg overflow-hidden"
         >
-          {theme === 'dark' ? 
-            <Sun size={18} className="group-hover:rotate-12 transition-transform" /> : 
-            <Moon size={18} className="group-hover:-rotate-12 transition-transform" />
-          }
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={theme}
+              initial={{ y: 20, opacity: 0, rotate: -90 }}
+              animate={{ y: 0, opacity: 1, rotate: 0 }}
+              exit={{ y: -20, opacity: 0, rotate: 90 }}
+              transition={{ duration: 0.3 }}
+            >
+              {themeIcons[theme]}
+            </motion.div>
+          </AnimatePresence>
         </motion.button>
       </div>
 
-      {/* ── Center card ─────────────────────────────────────── */}
+      {/* ── Center card ──────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center p-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 32, scale: 0.95 }}
@@ -86,22 +107,24 @@ export default function LoginPage({ onLogin, signingIn, authError, theme, toggle
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-[400px]"
         >
-
-          {/* ── Hero section ────────────────────────────────────────── */}
+          {/* ── Hero section ──────────────────────────────────── */}
           <div className="text-center mb-10">
-            {/* Icon with premium glow */}
             <motion.div
               initial={{ scale: 0.7, opacity: 0, rotateZ: -20 }}
               animate={{ scale: 1, opacity: 1, rotateZ: 0 }}
               transition={{ delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="inline-flex items-center justify-center relative"
             >
-              {/* Glow background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-2xl blur-2xl opacity-40 dark:opacity-50 -z-10 scale-150" />
-              
-              <div className="w-[80px] h-[80px] rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 dark:from-violet-600 dark:via-purple-600 dark:to-indigo-700 flex items-center justify-center shadow-2xl shadow-violet-500/40 dark:shadow-violet-600/50 ring-1 ring-violet-400/40 dark:ring-violet-400/60 relative overflow-hidden">
-                {/* Shine effect */}
-                <motion.div 
+              {/* Glow */}
+              <div
+                className="absolute inset-0 rounded-2xl blur-2xl opacity-40 -z-10 scale-150"
+                style={{ background: `linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-glow)))` }}
+              />
+              <div
+                className="w-[80px] h-[80px] rounded-2xl flex items-center justify-center shadow-2xl relative overflow-hidden"
+                style={{ background: `linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-glow)))` }}
+              >
+                <motion.div
                   animate={{ x: ['100%', '-100%'] }}
                   transition={{ duration: 3, repeat: Infinity }}
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
@@ -116,67 +139,65 @@ export default function LoginPage({ onLogin, signingIn, authError, theme, toggle
               transition={{ delay: 0.22, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="mt-8"
             >
-              <h1 className="text-[32px] font-black bg-gradient-to-r from-zinc-900 to-zinc-700 dark:from-zinc-50 dark:to-zinc-200 bg-clip-text text-transparent tracking-tight leading-tight mb-3">
-                Welcome to Sovereign GPT
+              <h1 className="text-[32px] font-black tracking-tight leading-tight mb-3">
+                Welcome to <span className="text-gradient">Sovereign GPT</span>
               </h1>
-              <p className="text-[15px] text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
+              <p className="text-[15px] leading-relaxed font-medium opacity-70">
                 The Autonomous Factory Engine.<br />
-                <span className="text-violet-600 dark:text-violet-400 font-semibold">Sign in to start the loop.</span>
+                <span className="accent-text font-semibold opacity-100">Sign in to start the loop.</span>
               </p>
             </motion.div>
           </div>
 
-          {/* ── Premium Glass Card ────────────────────────────────────────── */}
+          {/* ── Premium Glass Card ────────────────────────────── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.28, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-premium rounded-2xl overflow-hidden shadow-2xl shadow-black/20 dark:shadow-black/40"
+            className="glass-premium rounded-2xl overflow-hidden"
           >
-
             {/* Error state */}
             {authError && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: -12, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: 'auto' }}
-                exit={{ opacity: 0, y: -12, height: 0 }}
-                className="mx-5 mt-5 flex items-start gap-3 p-3.5 rounded-xl bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-500/30 backdrop-blur-sm"
+                className="mx-5 mt-5 flex items-start gap-3 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 backdrop-blur-sm"
               >
-                <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-[13px] text-red-600 dark:text-red-400 leading-snug font-medium">{authError}</p>
+                <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-[13px] text-red-400 leading-snug font-medium">{authError}</p>
               </motion.div>
             )}
 
             <div className="p-6 space-y-4">
-              {/* Google Sign-in button - Premium styling */}
               <motion.button
                 onClick={onLogin}
                 disabled={signingIn}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center justify-center gap-3 h-12 px-5 rounded-xl font-semibold text-[14px] transition-all border border-zinc-300 dark:border-zinc-700/80 bg-white dark:bg-zinc-800/80 text-zinc-800 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-700/90 hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-lg dark:hover:shadow-lg dark:hover:shadow-black/40 disabled:opacity-50 disabled:cursor-not-allowed shadow-md dark:shadow-black/30 active:scale-[0.98] backdrop-blur-sm group"
+                className="w-full flex items-center justify-center gap-3 h-12 px-5 rounded-xl font-semibold text-[14px] transition-all glass hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm group"
               >
-                {signingIn
-                  ? <>
-                      <motion.div 
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        className="w-4 h-4 border-2 border-zinc-300 dark:border-zinc-600 border-t-violet-500 rounded-full" 
-                      />
-                      <span>Signing in…</span>
-                    </>
-                  : <>
-                      <GoogleIcon />
-                      <span>Continue with Google</span>
-                    </>
-                }
+                {signingIn ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full"
+                    />
+                    <span>Signing in\u2026</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    <span>Continue with Google</span>
+                  </>
+                )}
               </motion.button>
             </div>
 
-            {/* Divider + feature pills */}
+            {/* Feature pills */}
             <div className="px-6 pb-6">
-              <div className="py-4 border-t border-zinc-200/30 dark:border-white/10 mb-4" />
-              <motion.div 
+              <div className="py-4 border-t border-current/5 mb-4" />
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.42, duration: 0.5 }}
@@ -189,18 +210,17 @@ export default function LoginPage({ onLogin, signingIn, authError, theme, toggle
             </div>
           </motion.div>
 
-          {/* Footer text */}
+          {/* Footer */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.48, duration: 0.5 }}
-            className="text-center text-[11px] text-zinc-500 dark:text-zinc-600 mt-8 leading-relaxed font-medium tracking-wide"
+            className="text-center text-[11px] opacity-40 mt-8 leading-relaxed font-medium tracking-wide"
           >
-            Protocol V15.4 · Stable Release
+            Protocol V15.4 &middot; Stable Release
             <br />
-            <span className="text-zinc-400 dark:text-zinc-700">By signing in you agree to our Terms of Service</span>
+            <span className="opacity-60">By signing in you agree to our Terms of Service</span>
           </motion.p>
-
         </motion.div>
       </div>
     </div>
