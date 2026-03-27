@@ -1,110 +1,57 @@
-/**
- * Sovereign GPT — API Client
- * Connects the frontend to the Bridge API with streaming support.
- */
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
-
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
 }
 
-export interface HealthResponse {
-  status: string
-  model: string
-  engine: string
-}
+const TUNNEL_URL = 'https://mentor-plants-defence-katie.trycloudflare.com';
+const SOVEREIGN_ENGINE_KEY = 'sk-sovereign-nano-2026';
 
-/** Check if the bridge API is reachable */
-export async function checkHealth(): Promise<HealthResponse> {
-  const res = await fetch(`${API_BASE}/health`)
-  if (!res.ok) throw new Error(`Bridge API unreachable (${res.status})`)
-  return res.json()
-}
-
-/** Send a chat request and stream the response token-by-token */
-export async function streamChat(
-  messages: ChatMessage[],
-  onToken: (token: string) => void,
-  onDone: () => void,
-  onError: (error: string) => void,
-): Promise<void> {
-  let res: Response
-
+export async function checkHealth(): Promise<boolean> {
   try {
-    res = await fetch(`${API_BASE}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, stream: true }),
-    })
-  } catch {
-    onError('Cannot reach Sovereign GPT engine. Is bridge_api.py running?')
-    return
+    const res = await fetch(`${TUNNEL_URL}/health`);
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function streamChat(
+  history: ChatMessage[],
+  onChunk: (text: string) => void
+): Promise<void> {
+  const response = await fetch(`${TUNNEL_URL}/chat`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SOVEREIGN_ENGINE_KEY}`
+    },
+    body: JSON.stringify({ messages: history }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Engine error: ${response.statusText}`);
   }
 
-  if (!res.ok) {
-    const text = await res.text()
-    onError(`Bridge API error: ${text}`)
-    return
-  }
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No reader available');
 
-  const reader = res.body?.getReader()
-  if (!reader) {
-    onError('Streaming not supported')
-    return
-  }
-
-  const decoder = new TextDecoder()
-  let buffer = ''
-
+  const decoder = new TextDecoder();
   while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
-
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    
+    const lines = chunk.split('\n');
     for (const line of lines) {
-      if (!line.startsWith('data: ')) continue
-      const data = line.slice(6).trim()
-
-      if (data === '[DONE]') {
-        onDone()
-        return
-      }
-
-      try {
-        const parsed = JSON.parse(data)
-        if (parsed.error) {
-          onError(parsed.error)
-          return
-        }
-        if (parsed.content) {
-          onToken(parsed.content)
-        }
-      } catch {
-        // skip malformed chunks
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6);
+        if (data.trim() === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) onChunk(content);
+        } catch (e) {}
       }
     }
   }
-
-  onDone()
-}
-
-/** Send a chat request without streaming (single response) */
-export async function sendChat(messages: ChatMessage[]): Promise<string> {
-  const res = await fetch(`${API_BASE}/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, stream: false }),
-  })
-
-  if (!res.ok) {
-    throw new Error(`Bridge API error: ${await res.text()}`)
-  }
-
-  const data = await res.json()
-  return data.content
 }
