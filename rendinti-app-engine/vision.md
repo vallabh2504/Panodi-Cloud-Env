@@ -1,50 +1,42 @@
-Rendinti App Engine — Vision
-
-Problem space
-- Target: urban and peri-urban markets in developing countries where food and goods delivery is growing but faces friction: rider safety risks, unreliable offline/low-connectivity payments, poor order accuracy/merchant integration, and lack of transparency for customers.
+Project: Rendinti App Engine — Genesis Run
 
 Vision
-- Build a lightweight, resilient delivery platform (Rendinti) that prioritizes rider safety, supports offline-capable payments, and improves order accuracy through simple merchant integration and verification.
-- Mobile-first PWAs for riders and customers; small merchant dashboard; serverless backend hosted in Panodi-Cloud-Env and deployed to Vercel.
 
-Core differentiators
-- Safety-first routing & pacing incentives: route suggestions that avoid high-risk roads, enforced max-speed alerts, and a short safety checklist per shift.
-- Offline-capable payment flow: local QR + tokenized voucher fallback when network/PSP fails; reconcile when online.
-- Order verification: photo-on-pickup, merchant-prepared QR, and lightweight checksum to reduce wrong deliveries.
-- Minimal footprint: PWA with caching, low-bandwidth APIs, and optional SMS fallbacks.
+Rendinti is a lightweight app engine that helps small restaurants and home cooks generate and publish dynamic, localized dinner menus and limited-run meal offers that convert social followers into paying customers.
 
-Primary users & personas
-- Rider (motorbike/bike): needs clear routes, low-bandwidth UI, safety prompts, offline order/receipt capture.
-- Customer: needs accurate ETAs, simple payments, and delivery verification.
-- Merchant: needs easy order acceptance, offline order printing/screening, and reconciliation.
+Problem (summary of research)
+- Many small eateries and home cooks struggle to create timely, appealing one-off menus for events, limited-quantity specials, or pop-up dinners. They lack design resources, rapid copywriting, and simple deployment to sell/payments.
+- Existing solutions (full POS or marketplace platforms) are heavy, expensive, or require onboarding and fees that small operators avoid.
+- There's demand for short-run promotion tools that integrate simple ordering (pre-orders), attractive menu presentation, social shareability, and low-friction payments.
 
-Success metrics (first 6 months)
-- Reduce wrong-delivery rate by 40% vs baseline.
-- Enable 99% of orders to be captured offline and reconciled within 12 hours.
-- Achieve 80% rider adoption of safety checklist features on onboarding.
+Product Goals
+- Enable a user to create a one-page, beautifully rendered menu for an event (name, date/time, limited-quantity items with photos, descriptions, and quantities available), publish it to a short URL, and accept payments via Stripe or link-to-pay.
+- Fast authoring: templates + AI-assisted copy & pricing suggestions from ingredient-cost inputs.
+- Lightweight deployment: single repo per event, Vercel-hosted static site with Next.js; optional serverless endpoints for webhooks and payments.
+- Reusable engine: templates and components, plus a simple admin UI to create and manage events and view orders.
 
-Constraints & non-goals
-- Not a full replacement for heavy logistic operators; focused on SME-marketplaces and hyperlocal networks.
-- Initially support a single payment provider integration + tokenized voucher fallback.
+Success metrics
+- Time to create & publish an event: target < 10 minutes for a new user with photos.
+- Conversion rate from link click to order: target > 4% for followers with intent.
+- Hosting cost: keep under $10/month for average usage.
 
-Roadmap (MVP)
-1. Core API + auth (email/phone + OTP) and minimal DB schema.
-2. PWA rider app: accept orders, routing (map links), photo capture, offline queueing.
-3. Merchant PWA: orders list, confirm/prep, QR generation for each order.
-4. Customer PWA: place order, pay (online + voucher fallback), track with photo proof.
-5. Admin dashboard (basic) and reconciliation tools.
+Scope for Genesis Run (MVP)
+- CLI/admin to create an event (JSON/YAML) with items and quantities.
+- Static Next.js site generator that renders a single-event menu page using a template and deploys to Vercel via their Git integration or the Vercel CLI.
+- Stripe checkout integration for simple pre-orders (no full POS).
+- Minimal analytics: order count and revenue per event.
+- Automated CI: GitHub Actions that build and deploy to Vercel on push to main.
 
-Deployment
-- Repo: projects/Panodi-Cloud-Env/rendinti-app-engine
-- CI/CD: Vercel for frontend (PWA), serverless functions for API (Vercel/Edge Functions) or Node server in Panodi infra.
+Constraints
+- No complex inventory sync; keep per-event quotas assigned at event creation.
+- Payment handled via Stripe Checkout to reduce PCI scope.
+- Use free-tier friendly tooling (Vercel Hobby, Postgres-free options like SQLite for initial runs) with clear upgrade paths.
 
-Security & Privacy
-- Minimal PII storage; OTP-based auth; photo proofs stored encrypted at rest with retention policies.
-- Rider location shared only for active deliveries and anonymized in analytics.
+Next steps
+1. Build a repo scaffold in Panodi-Cloud-Env/projects/rendinti-app-engine with Next.js template, sample event, and CI/deploy scripts.
+2. Create BRD.md detailing user flows, data model, API surfaces, and integration points.
+3. Spawn Claude-Worker to implement the scaffold, push to the repo, set up Vercel project, and deploy (requires user credentials).
+4. Provide final Vercel URL and instructions for owner to connect Stripe.
 
-Open questions
-- Which local payment provider to integrate first? (user preference/market)
-- Map/routing provider and offline routing feasibility.
-
-"Surprise Boss Garu" note
-- Deliver a live PWA URL on Vercel with a functional demo flow (create order, merchant confirm, rider pickup photo, delivery proof).
+Notes
+- The deploy step requires the user's Vercel account or an API token; I'll provide deployment steps and attempt to use Vercel CLI if credentials are provided by the user.

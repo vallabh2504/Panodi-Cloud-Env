@@ -1,41 +1,62 @@
-# Rendinti App Engine MVP
+# Rendinti App Engine
 
-Objective: Build an MVP delivery platform focusing on rider safety and offline-capable order/payment capture.
+Next.js scaffold for Rendinti applications.
 
-## Tech Stack
-- **Frontend**: Next.js 14 (App Router), Tailwind CSS
-- **PWA**: Manifest.json, Lucide icons, IndexedDB (idb) for offline queueing
-- **Backend API**: Serverless Next.js API Routes (Auth, Orders, Photos, Vouchers)
-- **Database**: Mock (MVP). In production, connect to a database.
-- **Offline Protocol**: Actions are queued to IndexedDB when offline and synced automatically when online.
+## Features
 
-## Core Features Implemented
-- **Auth (Mock)**: Use phone + OTP (Try `123456`).
-- **Order Lifecycle**: Browse orders, accept (preparing), take pickup photo (mock), and complete delivery with customer OTP.
-- **Offline Support**: Queue order status updates when connectivity is lost.
-- **Serverless API**:
-  - `POST /api/auth`: Login.
-  - `GET /api/orders`: List pending orders.
-  - `POST /api/orders`: Update order status.
-  - `POST /api/upload`: Mock photo proof upload.
-  - `POST /api/voucher`: Reconcile offline signed vouchers.
+- **Next.js 14 App Router** (Tailwind CSS, TypeScript, ESLint)
+- **Stripe Integration Mockups**:
+  - `/api/checkout-session`: Create Stripe Checkout sessions.
+  - `/api/webhooks`: Stripe Webhook handler with signature placeholder.
+- **Mock Data**:
+  - `/public/events.json`: Sample event listings.
+  - `/public/orders.json`: Sample order history.
+- **Admin Page**: Simple order management interface at `/admin`.
+- **CI/CD**: GitHub Actions workflow for building and optional Vercel deployment.
 
-## Deployment to Vercel
+## Getting Started
 
-1. **Install Vercel CLI**: `npm i -g vercel`
-2. **Login**: `vercel login`
-3. **Deploy**:
-   ```bash
-   cd projects/Panodi-Cloud-Env/rendinti-app-engine
-   vercel --prod
-   ```
-4. **Environment Variables**: Add any necessary secrets (e.g., `NEXT_PUBLIC_MAPS_API_KEY`) to the Vercel dashboard.
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Vallabh2504/Panodi-Cloud-Env.git
+    cd Panodi-Cloud-Env/rendinti-app-engine
+    ```
 
-## Demo Walkthrough
-1. Access the app and login with phone number and OTP `123456`.
-2. View the mock orders list.
-3. Toggle airplane mode (simulate offline) and click "Accept". Notice the "Action queued offline" alert.
-4. Restore connectivity and see the status sync automatically in the background console logs.
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
----
-Built by Architect-Pro (Claw-Worker) for Panodi-Cloud-Env.
+3.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+
+4.  **Visit:** `http://localhost:3000` (Home) and `http://localhost:3000/admin` (Admin).
+
+## Deployment (Vercel)
+
+### 1. Setup Vercel
+
+1.  Go to [Vercel](https://vercel.com) and create a new project.
+2.  Link your repository.
+3.  Add the following Environment Variables:
+    - `STRIPE_SECRET_KEY`: Your Stripe Test/Live secret key.
+    - `STRIPE_WEBHOOK_SECRET`: Your Stripe Webhook secret (once configured).
+
+### 2. GitHub Actions (Optional Auto-Deploy)
+
+To enable automatic deployments via GitHub Actions:
+1.  Go to your GitHub Repository Settings > Secrets and variables > Actions.
+2.  Add `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID`.
+3.  Uncomment the Vercel deploy step in `.github/workflows/deploy.yml`.
+
+## Stripe Integration Setup
+
+1.  Replace the mock API logic in `src/app/api/checkout-session/route.ts` with the official `stripe` package.
+2.  Install Stripe: `npm install stripe`.
+3.  Configure your webhook URL in the [Stripe Dashboard](https://dashboard.stripe.com/test/webhooks) pointing to `https://your-domain.com/api/webhooks`.
+
+## Admin Page
+
+The admin page (`/admin`) currently reads orders from `public/orders.json`. In a real application, you should move this data to a database like SQLite (via Prisma or Drizzle) or a cloud database like Convex.

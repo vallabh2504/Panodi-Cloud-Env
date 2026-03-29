@@ -1,0 +1,26 @@
+[
+  {
+    "id": "evt_001",
+    "name": "Summer Tech Summit 2026",
+    "date": "2026-07-15",
+    "location": "San Francisco, CA",
+    "price": 299.00,
+    "description": "The premier conference for Next.js and cloud engineering."
+  },
+  {
+    "id": "evt_002",
+    "name": "Cloud Native Workshop",
+    "date": "2026-08-22",
+    "location": "Austin, TX",
+    "price": 150.00,
+    "description": "Hands-on workshop for Kubernetes and Rendinti App Engine."
+  },
+  {
+    "id": "evt_003",
+    "name": "AI Builders Meetup",
+    "date": "2026-09-10",
+    "location": "Remote",
+    "price": 0.00,
+    "description": "A monthly gathering of AI developers building on Rendinti."
+  }
+]

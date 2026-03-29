@@ -1,71 +1,77 @@
-Rendinti App Engine — Business Requirements Document (MVP)
+Rendinti App Engine — BRD (Business Requirements Document)
 
-Objective
-Build an MVP delivery platform focusing on rider safety and offline-capable order/payment capture for SME merchants in emerging markets.
+1. Executive Summary
+Rendinti App Engine is a focused product to help small food operators create and publish limited-run menus (events) fast. The MVP will provide authoring, publishing to a short URL, and accepting pre-orders via Stripe Checkout.
 
-Stakeholders
-- Boss Garu (Product Lead)
-- Riders (operators)
-- Merchants (SMEs)
-- Customers (end users)
-- Dev team: Claude-Worker (build), QA, DevOps
+2. Stakeholders
+- Boss Garu (Product Owner)
+- Small restaurants, home chefs, caterers (end users)
+- DevOps (Claude-Worker / Build agents)
 
-Functional Requirements
-1. Authentication
-   - Phone-number + OTP login for riders, merchants, customers.
-2. Order lifecycle
-   - Customer creates order (merchant selection, items, delivery address).
-   - Merchant receives order push; can confirm/prep and generate an order QR.
-   - Rider accepts order, marks pickup with photo, and marks delivered with photo and customer OTP.
-3. Payments
-   - Integrate one PSP (configurable). Support online payments when connected.
-   - Voucher token fallback: when payment fails or offline, generate a signed voucher stored locally; reconcile when online.
-4. Offline support
-   - PWA caches routes, orders, and queued actions (pickup/deliver) using IndexedDB; retries when connectivity restores.
-5. Safety features
-   - Safety checklist per shift (toggleable), max-speed warning (client-side using GPS), and optional route suggestions avoiding high-risk roads.
-6. Notifications & Tracking
-   - Basic ETA updates via server-sent events or polling.
-   - Photo proofs attached to order history.
-7. Admin
-   - Simple dashboard for order logs, reconciliation, and merchant onboarding.
+3. User Personas
+- Quick-Serve Owner: Needs to move surplus ingredients into a limited-time special.
+- Home Chef: Wants to run a weekend pop-up with minimal setup.
+- Social Seller: Primarily posts on Instagram and needs a link to take pre-orders.
 
-Non-functional Requirements
-- Lightweight PWA UI, under 2MB initial payload.
-- API latency <500ms for core flows under normal conditions.
-- Support 1000 concurrent daily active users in MVP infra.
-- Secure storage, encrypted photo at rest, OTP expiry 5 minutes.
+4. Functional Requirements
+FR1: Event creation
+- Admin can create an event with title, description, date/time window, timezone, location (optional), and hero image.
+- Each event contains a list of items: name, description, price, photo, available_quantity, pickup/delivery option.
 
-MVP Scope (explicit)
-- Single-country setup, single PSP, one language (English), basic maps via deep links to Google Maps.
-- No routing engine; use map links and simple distance estimation.
+FR2: Menu Page generation
+- Generate a single, responsive, shareable menu page per event with SEO metadata and social cards.
+- Show remaining quantity, simple add-to-cart, and Stripe Checkout for payment.
 
-Deliverables
-- Repo scaffolding in projects/Panodi-Cloud-Env/rendinti-app-engine with frontend (Next.js PWA), backend API (serverless functions), and README with local dev instructions.
-- Vercel deployment for frontend and functions.
-- Demo walkthrough script and test data.
+FR3: Payments
+- Integrate Stripe Checkout sessions (serverless endpoint) for secure payments.
+- Webhook handler to record successful payments and decrement item quantities.
 
-Success Criteria
-- End-to-end demo works: create order (customer) -> merchant confirm -> rider pickup photo -> delivery proof -> payment reconciled (voucher or PSP).
+FR4: Publishing and Deployment
+- Repo-based deployment: pushing to main triggers Vercel to build and publish a unique URL per event.
+- Provide a CLI or admin UI to trigger deployment.
 
-Assumptions
-- PSP provides an API for payment capture and webhooks.
-- Basic smartphone hardware for riders (GPS + camera).
+FR5: Admin dashboard (MVP-lite)
+- View orders per event and basic revenue summary.
 
-Risks & Mitigations
-- Offline voucher security: use signed tokens with expiry and server-side reconciliation.
-- Rider safety routing accuracy: outsource to maps provider for routing info; log incidents for manual review.
+5. Non-functional Requirements
+- Time-to-publish target: <10 minutes for new users (excluding account setup).
+- Security: use Stripe Checkout; store minimal payment data; secure webhooks with signatures.
+- Availability: best-effort for Hobby tier; document scaling to Pro for high volume.
 
-Timeline
-- Planning & design: 2 days
-- Build MVP (Claude-Worker): 3-5 days
-- Deploy & QA: 1-2 days
+6. Data Model
+- Event: id, slug, title, description, start_time, end_time, timezone, hero_image, metadata
+- Item: id, event_id, name, description, price_cents, currency, photo_url, available_quantity
+- Order: id, event_id, items[{item_id, qty, price_cents}], total_cents, stripe_session_id, status, created_at
 
-Next steps
-1. Spawn Claude-Worker to scaffold project and implement core flows in Panodi-Cloud-Env.
-2. Configure Vercel project and provide access token (DevOps step) — Claude-Worker will request token or instructions.
-3. Run deployment and return Vercel URL.
+7. API Surfaces
+- GET /api/events/[slug] -> event payload (used by static generation via getStaticProps)
+- POST /api/create-checkout-session -> creates Stripe session for a cart
+- POST /api/webhook -> Stripe webhook endpoint to confirm payment
 
-Appendix
-- Repo path: projects/Panodi-Cloud-Env/rendinti-app-engine
-- Suggested tech: Next.js (React) PWA, Vercel Deploy, Node/Express serverless API, IndexedDB for offline queue, simple JWT/OTP auth.
+8. Integration Points
+- Stripe (Checkout, Webhooks)
+- Vercel (deploy and hosting)
+- Optional: Supabase/Planetscale for persistent storage; start with flat JSON or SQLite in repo for genesis run
+
+9. CI/CD
+- GitHub Actions to run build, tests (if any), and call Vercel CLI to deploy (if using token).
+
+10. Acceptance Criteria
+- A sample event can be created and published to a Vercel URL.
+- A test Stripe payment flow completes (using Stripe test keys) and an order is recorded.
+- Admin can view orders in a basic dashboard.
+
+11. Risks and Mitigations
+- Risk: Vercel deploy requires token or owner connection. Mitigation: Provide step-by-step for owner to connect and add Vercel token as a secret; or use user's CLI to deploy locally.
+- Risk: Stripe onboarding required. Mitigation: Test keys supported; owner must connect live keys for production.
+
+12. Timeline for Genesis Run
+- Research + BRD + vision: 2 hours
+- Scaffold Next.js app + API endpoints + CI: 4–6 hours (Claude-Worker)
+- Testing and deploy: 1–2 hours (plus account setup time)
+
+13. Deliverables
+- projects/Panodi-Cloud-Env/rendinti-app-engine repo scaffold
+- vision.md, BRD.md
+- Deployment instructions and Vercel URL (once deployed)
+
