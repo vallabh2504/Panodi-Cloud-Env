@@ -1,0 +1,18 @@
+[
+  {
+    "id": "ord_1",
+    "customer": "Alice Johnson",
+    "item": "Summer Tech Summit 2026",
+    "amount": 299.00,
+    "status": "Paid",
+    "date": "2026-03-25"
+  },
+  {
+    "id": "ord_2",
+    "customer": "Bob Smith",
+    "item": "Cloud Native Workshop",
+    "amount": 150.00,
+    "status": "Pending",
+    "date": "2026-03-28"
+  }
+]
