@@ -16,7 +16,7 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, user }) => {
       if (session.user) {
         session.user.id = user.id;
-        session.user.role = (user as any).role;
+        session.user.role = (user as unknown as { role: string }).role;
       }
       return session;
     },
