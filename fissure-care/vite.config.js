@@ -11,11 +11,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Healing Garden',
-        short_name: 'Healing Garden',
-        description: 'Healing, one day at a time.',
-        theme_color: '#E8705A',
-        background_color: '#FFF8F5',
+        name: 'CareNest',
+        short_name: 'CareNest',
+        description: 'Gentle fissure recovery tracking.',
+        theme_color: '#5865F2',
+        background_color: '#F7F8FE',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

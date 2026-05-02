@@ -1,12 +1,37 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
+import { Leaf } from 'lucide-react'
 import AuthScreen from './screens/AuthScreen'
 import HomeScreen from './screens/HomeScreen'
 import LogScreen from './screens/LogScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MedsScreen from './screens/MedsScreen'
 import SettingsScreen from './screens/SettingsScreen'
-import BottomNav from './components/BottomNav'
+import BottomNav from './components/layout/BottomNav'
+
+function LoadingScreen() {
+  return (
+    <div style={{
+      minHeight: '100dvh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      background: 'var(--gradient-hero)', fontFamily: 'var(--font-main)',
+    }}>
+      <div style={{
+        width: 72, height: 72, borderRadius: 22,
+        background: 'rgba(255,255,255,0.14)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,255,255,0.22)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 20,
+      }}>
+        <Leaf size={36} color="#fff" strokeWidth={1.8} />
+      </div>
+      <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, letterSpacing: '0.02em' }}>
+        Loading CareNest…
+      </p>
+    </div>
+  )
+}
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -24,28 +49,15 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'linear-gradient(160deg, #FFF0EB 0%, #FFF8F0 45%, #F0F8EE 100%)'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🌿</div>
-          <p style={{ color: '#8C7070', fontSize: 14 }}>Loading your garden…</p>
-        </div>
-      </div>
-    )
-  }
-
+  if (loading) return <LoadingScreen />
   if (!session) return <AuthScreen />
 
   return (
-    <div className="min-h-dvh" style={{ background: '#FFF8F5', paddingBottom: '80px' }}>
-      {activeTab === 'home' && <HomeScreen onNavigate={setActiveTab} />}
-      {activeTab === 'log' && <LogScreen onNavigate={setActiveTab} />}
+    <div style={{ minHeight: '100dvh', background: 'var(--color-bg)', paddingBottom: 80 }}>
+      {activeTab === 'home'     && <HomeScreen     onNavigate={setActiveTab} />}
+      {activeTab === 'log'      && <LogScreen      onNavigate={setActiveTab} />}
       {activeTab === 'insights' && <InsightsScreen />}
-      {activeTab === 'meds' && <MedsScreen />}
+      {activeTab === 'meds'     && <MedsScreen />}
       {activeTab === 'settings' && <SettingsScreen session={session} />}
       <BottomNav activeTab={activeTab} onNavigate={setActiveTab} />
     </div>
