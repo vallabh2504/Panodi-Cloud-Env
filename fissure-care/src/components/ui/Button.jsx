@@ -8,7 +8,6 @@ export default function Button({
     cursor: disabled ? 'not-allowed' : 'pointer',
     transition: 'all 0.18s ease', border: 'none', outline: 'none',
     width: fullWidth ? '100%' : 'auto', opacity: disabled ? 0.6 : 1,
-    textDecoration: 'none',
   }
   const sizes = {
     sm:  { padding: '8px 16px',  fontSize: 13, borderRadius: 'var(--radius-sm)' },
@@ -16,19 +15,10 @@ export default function Button({
     lg:  { padding: '18px 32px', fontSize: 16, borderRadius: 'var(--radius-md)' },
   }
   const variants = {
-    primary: {
-      background: 'var(--gradient-primary)', color: '#fff',
-      boxShadow: '0 8px 24px rgba(88,101,242,0.35)',
-    },
-    secondary: {
-      background: 'var(--color-surface)', color: 'var(--color-indigo)',
-      border: '1.5px solid var(--color-border)', boxShadow: 'var(--shadow-sm)',
-    },
+    primary: { background: 'var(--gradient-primary)', color: '#fff', boxShadow: '0 8px 24px rgba(88,101,242,0.35)' },
+    secondary: { background: 'var(--color-surface)', color: 'var(--color-indigo)', border: '1.5px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' },
     ghost: { background: 'transparent', color: 'var(--color-text-secondary)' },
-    danger: {
-      background: 'var(--color-soft-danger)', color: 'var(--color-danger)',
-      border: '1px solid rgba(239,68,68,0.2)',
-    },
+    danger: { background: 'var(--color-soft-danger)', color: 'var(--color-danger)', border: '1px solid rgba(239,68,68,0.2)' },
   }
   return (
     <button onClick={onClick} disabled={disabled}
