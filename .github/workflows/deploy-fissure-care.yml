@@ -1,0 +1,32 @@
+name: Deploy Fissure Care to Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: fissure-care/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: fissure-care
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Deploy to Vercel (force production)
+        run: vercel deploy --prod --force --yes --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: fissure-care
+        env:
+          VERCEL_ORG_ID: team_DQ3wHdJuhc4YKHZz4Cl4WcXd
+          VERCEL_PROJECT_ID: prj_v1QfPlowPKFxdAV3cHiQq6eLuWR8
