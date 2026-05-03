@@ -14,19 +14,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: fissure-care/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
         working-directory: fissure-care
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
       - name: Deploy to Vercel (force production)
-        run: vercel deploy --prod --force --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: fissure-care
         env:
           VERCEL_ORG_ID: team_DQ3wHdJuhc4YKHZz4Cl4WcXd
           VERCEL_PROJECT_ID: prj_v1QfPlowPKFxdAV3cHiQq6eLuWR8
+          T1: ${{ secrets.VERCEL_TOKEN }}
+          T2: ${{ secrets.VERCEL_AUTH_TOKEN }}
+          T3: ${{ secrets.VERCEL_SECRET }}
+          T4: ${{ secrets.VERCEL_API_TOKEN }}
+        run: |
+          TOKEN="${T1:-${T2:-${T3:-$T4}}}"
+          if [ -z "$TOKEN" ]; then
+            echo "ERROR: No Vercel token found in secrets (tried VERCEL_TOKEN, VERCEL_AUTH_TOKEN, VERCEL_SECRET, VERCEL_API_TOKEN)"
+            exit 1
+          fi
+          echo "Deploying to Vercel..."
+          vercel deploy --prod --force --yes --token="$TOKEN"
