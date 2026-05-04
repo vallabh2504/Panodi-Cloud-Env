@@ -10,7 +10,7 @@ import MetricCard from '../components/ui/MetricCard'
 import InsightCard from '../components/ui/InsightCard'
 import PageHeader from '../components/layout/PageHeader'
 
-const RANGE_OPTS = [{ value: 7, label: '7 Days' }, { value: 30, label: '30 Days' }, { value: 90, label: '90 Days' }]
+const RANGE_OPTS = [{ value: 30, label: '30 Days' }, { value: 60, label: '60 Days' }, { value: 90, label: '90 Days' }]
 
 const CUSTOM_TOOLTIP = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
@@ -31,7 +31,7 @@ const CUSTOM_TOOLTIP = ({ active, payload, label }) => {
 }
 
 export default function InsightsScreen() {
-  const [range, setRange] = useState(7)
+  const [range, setRange] = useState(30)
   const [logs, setLogs] = useState([])
   const [chartData, setChartData] = useState([])
 
@@ -41,8 +41,6 @@ export default function InsightsScreen() {
       cutoff.setDate(cutoff.getDate() - range)
       const filtered = all.filter(l => l.date && new Date(l.date) >= cutoff)
       setLogs(filtered)
-
-      // Build chart data from most recent `range` days
       const days = []
       for (let i = range - 1; i >= 0; i--) {
         const d = new Date(); d.setDate(d.getDate() - i)
@@ -53,7 +51,6 @@ export default function InsightsScreen() {
         const water = log?.hydration?.waterGlasses ?? null
         days.push({
           label: new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          shortLabel: new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           pain, bleeding, water,
         })
       }
@@ -67,11 +64,7 @@ export default function InsightsScreen() {
         <PageHeader title="Insights" subtitle="Your recovery at a glance" />
         <div style={{ padding: '0 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <SegmentedControl
-              options={RANGE_OPTS}
-              value={range}
-              onChange={setRange}
-            />
+            <SegmentedControl options={RANGE_OPTS} value={range} onChange={setRange} />
           </div>
           <div style={{
             background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)',
@@ -89,30 +82,17 @@ export default function InsightsScreen() {
     )
   }
 
-  // Compute metrics
   const pains = logs.map(l => l.bowelMovements?.[0]?.painLevel ?? l.dailySymptoms?.restingPain).filter(v => v != null)
   const avgPain = pains.length ? (pains.reduce((a, b) => a + b, 0) / pains.length).toFixed(1) : null
-
   const firstHalf = pains.slice(0, Math.floor(pains.length / 2))
   const secondHalf = pains.slice(Math.floor(pains.length / 2))
   const firstAvg = firstHalf.length ? firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length : null
   const secondAvg = secondHalf.length ? secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length : null
   const painImproved = firstAvg && secondAvg ? Math.round(((firstAvg - secondAvg) / firstAvg) * 100) : null
-
   const bleedingDays = logs.filter(l => l.bowelMovements?.some(b => b.bloodPresent)).length
-
-  const completedDays = logs.filter(l => {
-    const water = (l.hydration?.waterGlasses || 0) >= 6
-    const sitz = (l.sitzBaths?.length || 0) > 0
-    return water || sitz
-  }).length
+  const completedDays = logs.filter(l => (l.hydration?.waterGlasses || 0) >= 6 || (l.sitzBaths?.length || 0) > 0).length
   const routineRate = logs.length ? Math.round((completedDays / logs.length) * 100) : 0
-
-  // Pattern detection
-  const hardStoolWithHighPain = logs.filter(l => {
-    const bm = l.bowelMovements?.[0]
-    return bm?.bristolType && bm.bristolType <= 2 && bm.painLevel >= 5
-  }).length
+  const hardStoolWithHighPain = logs.filter(l => { const bm = l.bowelMovements?.[0]; return bm?.bristolType && bm.bristolType <= 2 && bm.painLevel >= 5 }).length
   const patternDetected = hardStoolWithHighPain >= 2
 
   const exportSummary = () => {
@@ -120,18 +100,14 @@ export default function InsightsScreen() {
       'CareNest — Doctor Summary Report',
       `Generated: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`,
       `Period: Last ${range} days (${logs.length} days logged)`,
-      '',
-      '--- SYMPTOM SUMMARY ---',
+      '', '--- SYMPTOM SUMMARY ---',
       `Average pain level: ${avgPain ?? 'N/A'} / 10`,
       `Pain trend: ${painImproved != null ? (painImproved > 0 ? `Improved ${painImproved}%` : `Worsened ${Math.abs(painImproved)}%`) : 'Not enough data'}`,
       `Days with bleeding: ${bleedingDays}`,
       `Routine completion: ${routineRate}%`,
-      '',
-      '--- NOTES ---',
+      '', '--- NOTES ---',
       ...logs.filter(l => l.selfCare?.notes).map(l => `${l.date}: ${l.selfCare.notes}`),
-      '',
-      'This summary is for informational purposes only.',
-      'Not a substitute for professional medical advice.',
+      '', 'Not a substitute for professional medical advice.',
     ]
     const blob = new Blob([lines.join('\n')], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -140,60 +116,36 @@ export default function InsightsScreen() {
     a.click(); URL.revokeObjectURL(url)
   }
 
-  const hasChartData = chartData.some(d => d.pain !== null)
-
   return (
     <div style={{ paddingBottom: 100 }}>
       <PageHeader title="Insights" subtitle="Your recovery at a glance" />
-
       <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-        {/* Time filter */}
         <SegmentedControl options={RANGE_OPTS} value={range} onChange={setRange} />
 
-        {/* Metric cards */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <MetricCard
-            label="Avg Pain"
-            value={avgPain ?? '–'}
-            unit="/10"
+          <MetricCard label="Avg Pain" value={avgPain ?? '–'} unit="/10"
             change={painImproved != null ? (painImproved > 0 ? `↓ ${painImproved}% improved` : `↑ ${Math.abs(painImproved)}% higher`) : null}
             icon={<TrendingDown size={16} />}
-            accent={painImproved > 0 ? 'var(--color-success)' : 'var(--color-indigo)'}
-          />
-          <MetricCard
-            label="Bleeding"
-            value={bleedingDays}
-            unit="days"
-            change={bleedingDays === 0 ? 'Blood-free period' : `In ${logs.length} logged days`}
+            accent={painImproved > 0 ? 'var(--color-success)' : 'var(--color-indigo)'} />
+          <MetricCard label="Bleeding" value={bleedingDays} unit="days"
+            change={bleedingDays === 0 ? 'Blood-free period' : `In ${logs.length} days`}
             icon={<Droplet size={16} />}
-            accent={bleedingDays === 0 ? 'var(--color-success)' : 'var(--color-danger)'}
-          />
-          <MetricCard
-            label="Routine"
-            value={`${routineRate}%`}
+            accent={bleedingDays === 0 ? 'var(--color-success)' : 'var(--color-danger)'} />
+          <MetricCard label="Routine" value={`${routineRate}%`}
             change={`${completedDays} / ${logs.length} days`}
-            icon={<CheckSquare size={16} />}
-            accent="var(--color-lavender)"
-            style={{ gridColumn: '1 / -1' }}
-          />
+            icon={<CheckSquare size={16} />} accent="var(--color-lavender)"
+            style={{ gridColumn: '1 / -1' }} />
         </div>
 
-        {/* Pain trend chart */}
-        {hasChartData && (
-          <div style={{
-            background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)',
-            padding: '18px 16px 14px',
-            border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)',
-          }}>
+        {chartData.some(d => d.pain !== null) && (
+          <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', padding: '18px 16px 14px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 16 }}>Pain trend</p>
             <ResponsiveContainer width="100%" height={140}>
               <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontFamily: 'var(--font-main)' }}
-                  interval={range <= 7 ? 0 : 'preserveStartEnd'} tickLine={false} axisLine={false} />
-                <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontFamily: 'var(--font-main)' }}
-                  tickLine={false} axisLine={false} />
+                  interval="preserveStartEnd" tickLine={false} axisLine={false} />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontFamily: 'var(--font-main)' }} tickLine={false} axisLine={false} />
                 <Tooltip content={<CUSTOM_TOOLTIP />} />
                 <Line type="monotone" name="Pain" dataKey="pain" stroke="var(--color-indigo)" strokeWidth={2.5}
                   dot={{ fill: 'var(--color-indigo)', r: 3, strokeWidth: 0 }} connectNulls activeDot={{ r: 5 }} />
@@ -202,68 +154,46 @@ export default function InsightsScreen() {
           </div>
         )}
 
-        {/* Bleeding chart */}
         {chartData.some(d => d.bleeding !== null) && (
-          <div style={{
-            background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)',
-            padding: '18px 16px 14px',
-            border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)',
-          }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', padding: '18px 16px 14px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 16 }}>Bleeding incidents</p>
             <ResponsiveContainer width="100%" height={100}>
               <BarChart data={chartData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontFamily: 'var(--font-main)' }}
-                  interval={range <= 7 ? 0 : 'preserveStartEnd'} tickLine={false} axisLine={false} />
+                  interval="preserveStartEnd" tickLine={false} axisLine={false} />
                 <YAxis hide />
                 <Tooltip content={<CUSTOM_TOOLTIP />} />
                 <Bar name="Bleeding" dataKey="bleeding" radius={[4, 4, 0, 0]}>
-                  {chartData.map((_, i) => (
-                    <Cell key={i} fill={chartData[i].bleeding ? 'var(--color-danger)' : 'var(--color-surface-soft)'} />
-                  ))}
+                  {chartData.map((_, i) => <Cell key={i} fill={chartData[i].bleeding ? 'var(--color-danger)' : 'var(--color-surface-soft)'} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         )}
 
-        {/* Pattern insight */}
         {patternDetected && (
-          <InsightCard
-            icon={<Brain size={20} />}
-            title="Pattern detected"
-            description="Higher pain was logged on days with hard stool. Try increasing fibre and water intake."
-            accent="var(--color-lavender)"
-          />
+          <InsightCard icon={<Brain size={20} />} title="Pattern detected"
+            description="Higher pain logged on days with hard stool. Try increasing fibre and water intake."
+            accent="var(--color-lavender)" />
         )}
 
-        {/* Doctor summary */}
-        <div style={{
-          background: 'var(--gradient-soft)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '18px',
-          border: '1px solid var(--color-border)',
-        }}>
+        <div style={{ background: 'var(--gradient-soft)', borderRadius: 'var(--radius-lg)', padding: '18px', border: '1px solid var(--color-border)' }}>
           <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 4 }}>Doctor summary</p>
           <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5, marginBottom: 14 }}>
-            Download a plain-text summary of your symptoms to share with your doctor at your next appointment.
+            Download a plain-text summary of your symptoms to share at your next appointment.
           </p>
           <button onClick={exportSummary} style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '11px 18px',
-            background: 'var(--color-surface)',
-            border: '1.5px solid var(--color-border)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-indigo)', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', fontFamily: 'var(--font-main)',
-            boxShadow: 'var(--shadow-sm)',
+            display: 'flex', alignItems: 'center', gap: 8, padding: '11px 18px',
+            background: 'var(--color-surface)', border: '1.5px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)', color: 'var(--color-indigo)', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'var(--font-main)', boxShadow: 'var(--shadow-sm)',
           }}>
-            <Download size={16} />
-            Export summary
+            <Download size={16} /> Export summary
           </button>
         </div>
 
         <p style={{ fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.5 }}>
-          Insights are based on your personal logs. Not a substitute for medical advice.
+          Insights are based on your logs. Not a substitute for medical advice.
         </p>
       </div>
     </div>
