@@ -19,10 +19,6 @@ jobs:
         run: npm install
         working-directory: fissure-care
 
-      - name: Build
-        run: npm run build
-        working-directory: fissure-care
-
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
@@ -41,5 +37,9 @@ jobs:
             echo "ERROR: No Vercel token found in secrets (tried VERCEL_TOKEN, VERCEL_AUTH_TOKEN, VERCEL_SECRET, VERCEL_API_TOKEN)"
             exit 1
           fi
-          echo "Deploying to Vercel..."
-          vercel deploy --prod --force --yes --prebuilt --token="$TOKEN"
+          echo "Pulling Vercel project config..."
+          vercel pull --yes --environment=production --token="$TOKEN"
+          echo "Building..."
+          vercel build --prod --token="$TOKEN"
+          echo "Deploying prebuilt output..."
+          vercel deploy --prod --prebuilt --token="$TOKEN"
