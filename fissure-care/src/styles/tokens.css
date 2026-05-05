@@ -1,5 +1,5 @@
 :root {
-  /* ── Brand: Healing Teal ── */
+  /* ── Brand: Sage Healing (base/fallback) ── */
   --color-primary:       #2D7D6F;
   --color-primary-light: #4CA99A;
   --color-primary-muted: #E8F4F2;
@@ -47,13 +47,6 @@
   --gradient-accent:  linear-gradient(135deg, #C4956A 0%, #D4A880 100%);
   --gradient-score:   linear-gradient(145deg, #1A4A42 0%, #2D7D6F 45%, #4CA99A 100%);
 
-  /* ── Radius ── */
-  --radius-sm:   10px;
-  --radius-md:   16px;
-  --radius-lg:   22px;
-  --radius-xl:   32px;
-  --radius-full: 9999px;
-
   /* ── Shadows ── */
   --shadow-sm:    0 2px 12px rgba(44,49,64,0.06), 0 1px 3px rgba(44,49,64,0.04);
   --shadow-md:    0 8px 32px rgba(44,49,64,0.10), 0 2px 8px rgba(44,49,64,0.06);
@@ -65,6 +58,13 @@
   --glass-bg:     rgba(255, 252, 248, 0.82);
   --glass-border: 1px solid rgba(255, 255, 255, 0.42);
   --glass-blur:   blur(16px);
+
+  /* ── Radius ── */
+  --radius-sm:   10px;
+  --radius-md:   16px;
+  --radius-lg:   22px;
+  --radius-xl:   32px;
+  --radius-full: 9999px;
 
   /* ── Typography ── */
   --font-main: "Poppins", "Inter", system-ui, sans-serif;
@@ -84,4 +84,59 @@
   --duration-fast:   160ms;
   --duration-normal: 320ms;
   --duration-slow:   520ms;
+}
+
+/* ── Theme: Lavender Dream ── */
+[data-theme="lavender"] {
+  --color-primary:       #7C6FCD;
+  --color-primary-light: #A89FE0;
+  --color-primary-muted: #EDE9FF;
+  --color-primary-deep:  #4A3FA0;
+  --color-primary-glow:  rgba(124, 111, 205, 0.35);
+
+  --color-accent:        #C4956A;
+  --color-accent-light:  #F5E6D8;
+
+  --color-bg:            #F5F3FF;
+  --color-bg-warm:       #EDE9FF;
+  --color-surface:       rgba(255, 253, 255, 0.88);
+  --color-surface-solid: #FEFCFF;
+  --color-surface-soft:  #EDE9FF;
+  --color-surface-teal:  #F0EEFF;
+  --color-surface-warm:  #FBF5FF;
+
+  --gradient-hero:    linear-gradient(145deg, #3D2FA0 0%, #7C6FCD 50%, #A89FE0 100%);
+  --gradient-primary: linear-gradient(135deg, #7C6FCD 0%, #A89FE0 55%, #C4B8F0 100%);
+  --gradient-warm:    linear-gradient(135deg, #F5F3FF 0%, #EDE9FF 50%, #F5F0FF 100%);
+  --gradient-score:   linear-gradient(145deg, #3D2FA0 0%, #7C6FCD 45%, #A89FE0 100%);
+
+  --shadow-teal:  0 12px 40px rgba(124,111,205,0.38);
+
+  --glass-bg:     rgba(255, 253, 255, 0.82);
+}
+
+/* ── Theme: Rose Glow ── */
+[data-theme="rose"] {
+  --color-primary:       #C06080;
+  --color-primary-light: #E08FAA;
+  --color-primary-muted: #FFE8F0;
+  --color-primary-deep:  #8A3050;
+  --color-primary-glow:  rgba(192, 96, 128, 0.35);
+
+  --color-bg:            #FFF5F8;
+  --color-bg-warm:       #FFE8F0;
+  --color-surface:       rgba(255, 250, 252, 0.88);
+  --color-surface-solid: #FFFAFC;
+  --color-surface-soft:  #FFE8F0;
+  --color-surface-teal:  #FFECF4;
+  --color-surface-warm:  #FFF0F6;
+
+  --gradient-hero:    linear-gradient(145deg, #7A2040 0%, #C06080 50%, #E08FAA 100%);
+  --gradient-primary: linear-gradient(135deg, #C06080 0%, #E08FAA 55%, #F0B8CC 100%);
+  --gradient-warm:    linear-gradient(135deg, #FFF5F8 0%, #FFE8F0 50%, #FFF0F8 100%);
+  --gradient-score:   linear-gradient(145deg, #7A2040 0%, #C06080 45%, #E08FAA 100%);
+
+  --shadow-teal:  0 12px 40px rgba(192,96,128,0.38);
+
+  --glass-bg:     rgba(255, 250, 252, 0.82);
 }

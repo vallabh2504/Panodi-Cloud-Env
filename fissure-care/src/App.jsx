@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Leaf } from 'lucide-react'
 import { supabase } from './lib/supabase'
+import { ThemeProvider } from './lib/theme'
 import AuthScreen from './screens/AuthScreen'
 import HomeScreen from './screens/HomeScreen'
 import LogScreen from './screens/LogScreen'
@@ -98,35 +99,37 @@ export default function App() {
   }
 
   return (
-    <>
-      <CustomCursor />
-      <AnimatePresence mode="wait">
-        {loading ? (
-          <LoadingScreen key="loading" />
-        ) : !session ? (
-          <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <AuthScreen />
-          </motion.div>
-        ) : (
-          <div key="app" style={{ minHeight: '100dvh', background: 'var(--color-bg)', paddingBottom: 80 }}>
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={activeTab}
-                custom={direction}
-                variants={pageVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={pageTransition}
-                style={{ minHeight: 'calc(100dvh - 80px)' }}
-              >
-                {screenMap[activeTab]}
-              </motion.div>
-            </AnimatePresence>
-            <BottomNav activeTab={activeTab} onNavigate={handleNavigate} />
-          </div>
-        )}
-      </AnimatePresence>
-    </>
+    <ThemeProvider>
+      <>
+        <CustomCursor />
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <LoadingScreen key="loading" />
+          ) : !session ? (
+            <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <AuthScreen />
+            </motion.div>
+          ) : (
+            <div key="app" style={{ minHeight: '100dvh', background: 'var(--color-bg)', paddingBottom: 80 }}>
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={activeTab}
+                  custom={direction}
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={pageTransition}
+                  style={{ minHeight: 'calc(100dvh - 80px)' }}
+                >
+                  {screenMap[activeTab]}
+                </motion.div>
+              </AnimatePresence>
+              <BottomNav activeTab={activeTab} onNavigate={handleNavigate} />
+            </div>
+          )}
+        </AnimatePresence>
+      </>
+    </ThemeProvider>
   )
 }

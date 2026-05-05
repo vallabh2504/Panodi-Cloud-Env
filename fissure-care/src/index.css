@@ -147,3 +147,67 @@ input[type="range"]::-moz-range-thumb {
 /* ── Focus ring override ── */
 :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 button:focus-visible, a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* ── Theme-aware body background ── */
+body {
+  background-attachment: fixed;
+}
+
+/* ── Floating particles ── */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(40px);
+  will-change: transform;
+}
+.particle--page {
+  background: var(--color-primary-glow);
+}
+.particle--hero {
+  background: rgba(255,255,255,0.12);
+}
+.particle-1 { width: 180px; height: 180px; top: -40px; right: -40px; animation: drift1 16s ease-in-out infinite alternate; }
+.particle-2 { width: 140px; height: 140px; bottom: 10%; left: -30px; animation: drift2 20s ease-in-out infinite alternate; }
+.particle-3 { width: 100px; height: 100px; top: 35%; left: 20%; animation: drift1 24s ease-in-out infinite alternate-reverse; }
+.particle-4 { width: 120px; height: 120px; top: 15%; right: 15%; animation: drift2 18s ease-in-out infinite alternate; }
+.particle-5 { width: 80px; height: 80px; bottom: 30%; right: 10%; animation: drift1 22s ease-in-out infinite alternate-reverse; }
+.particle-6 { width: 160px; height: 160px; bottom: -20px; right: 20%; animation: drift2 26s ease-in-out infinite alternate; }
+.particle-7 { width: 70px; height: 70px; top: 55%; left: 5%; animation: drift1 19s ease-in-out infinite alternate; }
+.particle-8 { width: 90px; height: 90px; top: 25%; right: 35%; animation: drift2 21s ease-in-out infinite alternate-reverse; }
+
+@keyframes drift1 {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(-20px, 22px) scale(1.08); }
+}
+@keyframes drift2 {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(16px, -18px) scale(0.92); }
+}
+
+/* ── Pulse glow animation ── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-primary-glow); }
+  50%       { box-shadow: 0 0 0 8px transparent; }
+}
+.pulse { animation: pulse-glow 2.4s ease-in-out infinite; }
+
+/* ── Theme switcher pill ── */
+.theme-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface-solid);
+  font-family: var(--font-main);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  color: var(--color-text-primary);
+}
+.theme-pill.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-muted);
+  color: var(--color-primary);
+}
+.theme-pill:active { transform: scale(0.95); }

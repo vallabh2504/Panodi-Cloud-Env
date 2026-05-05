@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+import { useTheme, THEMES, THEME_LABELS } from '../lib/theme'
 import { getSettings, saveSettings, getAllLogs } from '../lib/storage'
 import { haptic } from '../lib/haptics'
 import {
@@ -98,6 +99,7 @@ export default function SettingsScreen({ session }) {
   const [copied, setCopied] = useState(false)
   const [resetModal, setResetModal] = useState(false)
   const [saved, setSaved] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     const s = getSettings()
@@ -186,8 +188,14 @@ export default function SettingsScreen({ session }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      style={{ paddingBottom: 100 }}
+      style={{ paddingBottom: 100, position: 'relative' }}
     >
+      {/* Subtle ambient background */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden', opacity: 0.4 }}>
+        <div className="particle particle-4 particle--page" />
+        <div className="particle particle-6 particle--page" />
+      </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
       <PageHeader
         title="Settings"
         subtitle="Your preferences & data"
@@ -221,6 +229,70 @@ export default function SettingsScreen({ session }) {
       />
 
       <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* Theme selector */}
+        <FadeUp delay={0.02}>
+          <div style={{
+            background: 'var(--color-surface-solid)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '16px 18px 18px',
+            border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-sm)',
+          }}>
+            <p style={{
+              fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)',
+              textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12,
+            }}>
+              Theme
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {THEMES.map(t => {
+                const isActive = theme === t
+                const THEME_COLORS = { lavender: '#7C6FCD', sage: '#2D7D6F', rose: '#C06080' }
+                return (
+                  <motion.button
+                    key={t}
+                    whileTap={{ scale: 0.93 }}
+                    onClick={() => { haptic.tap(); setTheme(t) }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 7,
+                      padding: '9px 16px',
+                      borderRadius: 999,
+                      border: `1.5px solid ${isActive ? THEME_COLORS[t] : 'var(--color-border-strong)'}`,
+                      background: isActive ? `${THEME_COLORS[t]}18` : 'var(--color-surface-soft)',
+                      fontFamily: 'var(--font-main)',
+                      fontSize: 13, fontWeight: 600,
+                      cursor: 'pointer',
+                      color: isActive ? THEME_COLORS[t] : 'var(--color-text-secondary)',
+                      transition: 'all 0.18s ease',
+                    }}
+                  >
+                    <div style={{
+                      width: 12, height: 12, borderRadius: '50%',
+                      background: THEME_COLORS[t],
+                      boxShadow: isActive ? `0 0 0 3px ${THEME_COLORS[t]}30` : 'none',
+                      transition: 'box-shadow 0.18s',
+                    }} />
+                    {THEME_LABELS[t].split(' ')[1]}
+                  </motion.button>
+                )
+              })}
+            </div>
+            {/* Live preview strip */}
+            <motion.div
+              key={theme}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+              style={{
+                marginTop: 14,
+                height: 4, borderRadius: 2,
+                background: 'var(--gradient-primary)',
+                transformOrigin: 'left',
+              }}
+            />
+          </div>
+        </FadeUp>
 
         {/* Profile group */}
         <FadeUp delay={0.05}>
@@ -393,6 +465,7 @@ export default function SettingsScreen({ session }) {
         <p style={{ fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'center' }}>
           CareNest v2.0 · Your data stays private
         </p>
+      </div>
       </div>
 
       {/* Reset confirmation modal with AnimatePresence */}

@@ -260,9 +260,14 @@ export default function InsightsScreen() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.35 }}
-        style={{ paddingBottom: 100 }}
+        style={{ paddingBottom: 100, position: 'relative' }}
       >
-        <PageHeader title="Insights" subtitle="Your recovery at a glance" />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden', opacity: 0.35 }}>
+          <div className="particle particle-2 particle--page" />
+          <div className="particle particle-5 particle--page" />
+        </div>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+        <PageHeader title="Insights" subtitle="Your recovery at a glance" gradient />
         <div style={{ padding: '0 16px' }}>
           <FadeUp delay={0.05}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
@@ -271,7 +276,9 @@ export default function InsightsScreen() {
           </FadeUp>
           <FadeUp delay={0.12}>
             <div style={{
-              background: 'var(--color-surface-solid)',
+              background: 'rgba(255,255,255,0.72)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               borderRadius: 'var(--radius-lg)',
               padding: '52px 24px',
               textAlign: 'center',
@@ -285,6 +292,7 @@ export default function InsightsScreen() {
               </p>
             </div>
           </FadeUp>
+        </div>
         </div>
       </motion.div>
     )
@@ -352,9 +360,14 @@ export default function InsightsScreen() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.35 }}
-      style={{ paddingBottom: 100 }}
+      style={{ paddingBottom: 100, position: 'relative' }}
     >
-      <PageHeader title="Insights" subtitle="Your recovery at a glance" />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden', opacity: 0.35 }}>
+        <div className="particle particle-2 particle--page" />
+        <div className="particle particle-5 particle--page" />
+      </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
+      <PageHeader title="Insights" subtitle="Your recovery at a glance" gradient />
 
       <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
@@ -403,7 +416,9 @@ export default function InsightsScreen() {
         {hasPainData && (
           <FadeUp delay={0.1}>
             <div style={{
-              background: 'var(--color-surface-solid)',
+              background: 'rgba(255,255,255,0.72)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               borderRadius: 'var(--radius-lg)',
               padding: '18px 16px 14px',
               border: '1px solid var(--color-border)',
@@ -451,7 +466,9 @@ export default function InsightsScreen() {
         {hasBleedingData && (
           <FadeUp delay={0.12}>
             <div style={{
-              background: 'var(--color-surface-solid)',
+              background: 'rgba(255,255,255,0.72)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               borderRadius: 'var(--radius-lg)',
               padding: '18px 16px 14px',
               border: '1px solid var(--color-border)',
@@ -490,7 +507,9 @@ export default function InsightsScreen() {
         {/* Calendar heatmap */}
         <FadeUp delay={0.14}>
           <div style={{
-            background: 'var(--color-surface-solid)',
+            background: 'rgba(255,255,255,0.72)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             borderRadius: 'var(--radius-lg)',
             padding: '18px 16px 16px',
             border: '1px solid var(--color-border)',
@@ -559,6 +578,7 @@ export default function InsightsScreen() {
         <p style={{ fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.5 }}>
           Insights are based on your logs. Not a substitute for medical advice.
         </p>
+      </div>
       </div>
     </motion.div>
   )
