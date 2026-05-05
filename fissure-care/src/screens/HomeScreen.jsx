@@ -8,6 +8,35 @@ import CareTask from '../components/ui/CareTask'
 import TextReveal from '../components/animations/TextReveal'
 import FadeUp from '../components/animations/FadeUp'
 
+function HealingIllustration() {
+  return (
+    <svg viewBox="0 0 160 130" fill="none" style={{ width: 120, height: 98, flexShrink: 0 }}>
+      <circle cx="80" cy="70" r="44" fill="rgba(255,255,255,0.05)" />
+      <circle cx="80" cy="70" r="30" fill="rgba(255,255,255,0.07)" />
+      <ellipse cx="52" cy="66" rx="18" ry="34" fill="rgba(76,169,154,0.5)" transform="rotate(-30 52 66)" />
+      <ellipse cx="52" cy="66" rx="10" ry="27" fill="rgba(110,196,184,0.38)" transform="rotate(-30 52 66)" />
+      <ellipse cx="108" cy="66" rx="18" ry="34" fill="rgba(76,169,154,0.5)" transform="rotate(30 108 66)" />
+      <ellipse cx="108" cy="66" rx="10" ry="27" fill="rgba(110,196,184,0.38)" transform="rotate(30 108 66)" />
+      <ellipse cx="62" cy="56" rx="14" ry="28" fill="rgba(196,212,210,0.55)" transform="rotate(-14 62 56)" />
+      <ellipse cx="98" cy="56" rx="14" ry="28" fill="rgba(196,212,210,0.55)" transform="rotate(14 98 56)" />
+      <ellipse cx="80" cy="52" rx="16" ry="38" fill="rgba(240,248,246,0.7)" />
+      <circle cx="80" cy="60" r="18" fill="rgba(255,255,255,0.2)" />
+      <circle cx="80" cy="60" r="11" fill="rgba(255,255,255,0.28)" />
+      <circle cx="80" cy="60" r="6.5" fill="rgba(196,149,106,0.88)" />
+      <circle cx="80" cy="60" r="3" fill="rgba(255,225,190,1)" />
+      <path d="M80 80 Q77 98 80 116" stroke="rgba(76,169,154,0.55)" strokeWidth="3.2" strokeLinecap="round" />
+      <ellipse cx="60" cy="108" rx="24" ry="8" fill="rgba(74,158,110,0.16)" transform="rotate(-12 60 108)" />
+      <ellipse cx="100" cy="106" rx="20" ry="7" fill="rgba(74,158,110,0.14)" transform="rotate(10 100 106)" />
+      <ellipse cx="32" cy="44" rx="4.5" ry="6.5" fill="rgba(255,255,255,0.32)" />
+      <ellipse cx="128" cy="48" rx="3.5" ry="5.5" fill="rgba(255,255,255,0.26)" />
+      <circle cx="114" cy="30" r="2.5" fill="rgba(255,220,170,0.95)" />
+      <circle cx="46" cy="26" r="2" fill="rgba(255,220,170,0.85)" />
+      <circle cx="132" cy="70" r="1.8" fill="rgba(255,255,255,0.75)" />
+      <circle cx="28" cy="78" r="1.5" fill="rgba(255,255,255,0.6)" />
+    </svg>
+  )
+}
+
 const staggerContainer = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.08, delayChildren: 0.35 } },
@@ -78,37 +107,44 @@ export default function HomeScreen({ onNavigate }) {
         <div className="orb orb-1" />
         <div className="orb orb-2" />
         <div className="orb orb-3" />
-        <div style={{ padding: '56px 22px 0', position: 'relative', zIndex: 1 }}>
-          <TextReveal
-            text={greeting}
-            tag="p"
-            onMount={true}
-            delay={0.05}
-            style={{
-              fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.65)',
-              marginBottom: 6, letterSpacing: '0.04em',
-            }}
-          />
-          <TextReveal
-            text={name ? `Hi, ${name} 👋` : "Let's be gentle today."}
-            tag="h1"
-            onMount={true}
-            delay={0.18}
-            style={{
-              fontSize: 28, fontWeight: 800, color: '#fff',
-              margin: 0, letterSpacing: '-0.4px', lineHeight: 1.2,
-            }}
-          />
-          {name && (
+        <div style={{ padding: '52px 22px 16px', position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ flex: 1 }}>
+            <TextReveal
+              text={greeting}
+              tag="p"
+              onMount={true}
+              delay={0.05}
+              style={{
+                fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)',
+                marginBottom: 5, letterSpacing: '0.06em', textTransform: 'uppercase',
+              }}
+            />
+            <TextReveal
+              text={name ? `Hi, ${name} 👋` : "Let's be gentle today."}
+              tag="h1"
+              onMount={true}
+              delay={0.18}
+              style={{
+                fontSize: 26, fontWeight: 800, color: '#fff',
+                margin: 0, letterSpacing: '-0.3px', lineHeight: 1.22,
+              }}
+            />
             <motion.p
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.55, duration: 0.4 }}
-              style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 5 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+              style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', marginTop: 5 }}
             >
-              Let&#39;s make today gentle.
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </motion.p>
-          )}
+          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7, rotate: -10 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 160, damping: 20, delay: 0.3 }}
+          >
+            <HealingIllustration />
+          </motion.div>
         </div>
       </div>
 
@@ -159,7 +195,7 @@ export default function HomeScreen({ onNavigate }) {
               </motion.div>
             )}
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', marginTop: 8 }}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+              {doneCount}/3 tasks done today
             </p>
           </div>
         </motion.div>

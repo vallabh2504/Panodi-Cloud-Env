@@ -12,12 +12,15 @@ const TABS = [
 
 export default function BottomNav({ activeTab, onNavigate }) {
   return (
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+      display: 'flex', justifyContent: 'center',
+    }}>
     <motion.nav
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 220, damping: 28, delay: 0.15 }}
       style={{
-        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
         width: '100%', maxWidth: 430,
         background: 'rgba(254, 252, 248, 0.94)',
         backdropFilter: 'blur(20px)',
@@ -25,7 +28,6 @@ export default function BottomNav({ activeTab, onNavigate }) {
         borderTop: '1px solid var(--color-border)',
         boxShadow: '0 -4px 24px rgba(44,49,64,0.08)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        zIndex: 50,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
@@ -74,5 +76,6 @@ export default function BottomNav({ activeTab, onNavigate }) {
         })}
       </div>
     </motion.nav>
+    </div>
   )
 }
