@@ -1,6 +1,12 @@
 @import './styles/tokens.css';
 @import "tailwindcss";
 
+/* ── Lenis smooth scroll ── */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: hidden; }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -15,12 +21,14 @@ body {
   overflow-x: hidden;
 }
 
-button { font-family: var(--font-main); }
+button { font-family: var(--font-main); cursor: pointer; }
 input, textarea, select { font-family: var(--font-main); }
 
+/* ── Scrollbar hide ── */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ── Custom range input ── */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -33,18 +41,109 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--gradient-primary);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(88, 101, 242, 0.4);
+  box-shadow: 0 2px 10px var(--color-primary-glow, rgba(45,125,111,0.4));
 }
 input[type="range"]::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: 24px; height: 24px;
   border-radius: 50%;
-  background: var(--color-indigo);
-  cursor: pointer;
-  border: none;
+  background: var(--color-primary);
+  cursor: pointer; border: none;
 }
+
+/* ── Ambient orbs for HomeScreen hero ── */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(50px);
+  will-change: transform;
+}
+.orb-1 {
+  width: 340px; height: 340px;
+  background: radial-gradient(circle, rgba(76,169,154,0.22) 0%, transparent 70%);
+  top: -80px; right: -80px;
+  animation: orbDrift1 14s ease-in-out infinite alternate;
+}
+.orb-2 {
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(196,149,106,0.15) 0%, transparent 70%);
+  bottom: -30px; left: -60px;
+  animation: orbDrift2 18s ease-in-out infinite alternate;
+}
+.orb-3 {
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  top: 40%; left: 30%;
+  animation: orbDrift1 22s ease-in-out infinite alternate-reverse;
+}
+@keyframes orbDrift1 {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(-24px, 18px) scale(1.06); }
+}
+@keyframes orbDrift2 {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(18px, -22px) scale(0.94); }
+}
+
+/* ── Shimmer skeleton ── */
+.skeleton {
+  background: linear-gradient(90deg, #ede8df 25%, #e5ddd3 50%, #ede8df 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 12px;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Custom cursor (desktop only) ── */
+@media (hover: hover) and (pointer: fine) {
+  body { cursor: none; }
+  a, button, [role="button"], input[type="range"] { cursor: none; }
+}
+.cursor-dot {
+  position: fixed;
+  width: 8px; height: 8px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  top: 0; left: 0;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, background 0.2s;
+}
+.cursor-ring {
+  position: fixed;
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  top: 0; left: 0;
+  transform: translate(-50%, -50%);
+  opacity: 0.6;
+}
+.cursor-dot.hover { width: 12px; height: 12px; background: var(--color-accent); }
+.cursor-ring.hover { width: 52px; height: 52px; border-color: var(--color-accent); opacity: 0.4; }
+
+/* ── Text reveal chars ── */
+.tr-char { display: inline-block; }
+
+/* ── Glass card ── */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  box-shadow: var(--shadow-glass);
+}
+
+/* ── Focus ring override ── */
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
