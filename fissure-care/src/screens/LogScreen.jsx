@@ -109,6 +109,7 @@ function ProgressDots({ current, total }) {
                 : '2px solid var(--color-primary-light)',
               borderRadius: 9999,
               opacity: isDone ? 0.55 : 1,
+              boxShadow: isActive ? '0 0 0 3px rgba(45,125,111,0.2), 0 0 12px rgba(45,125,111,0.4)' : 'none',
             }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             style={{ display: 'inline-block' }}
@@ -805,7 +806,13 @@ export default function LogScreen({ onNavigate }) {
       background: 'var(--color-bg)',
       display: 'flex', flexDirection: 'column',
       fontFamily: 'var(--font-main)',
+      position: 'relative',
     }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden', opacity: 0.35 }}>
+        <div className="particle particle-3 particle--page" />
+        <div className="particle particle-6 particle--page" />
+      </div>
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
       {/* Header */}
       <div style={{
         padding: '52px 20px 4px',
@@ -864,6 +871,7 @@ export default function LogScreen({ onNavigate }) {
 
       {/* Nav buttons */}
       <NavButtons />
+      </div>
     </div>
   )
 }

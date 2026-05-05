@@ -84,7 +84,9 @@ function TimelineGroup({ period, items, done, onToggle }) {
                   alignItems: 'center',
                   gap: 12,
                   padding: '13px 14px',
-                  background: isDone ? 'var(--color-surface-soft)' : 'var(--color-surface-solid)',
+                  background: isDone ? 'var(--color-primary-muted)' : 'rgba(255,255,255,0.72)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
                   borderRadius: 'var(--radius-md)',
                   border: `1.5px solid var(--color-border)`,
                   cursor: 'pointer',
@@ -218,11 +220,17 @@ export default function MedsScreen() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      style={{ paddingBottom: 100 }}
+      style={{ paddingBottom: 100, position: 'relative' }}
     >
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden', opacity: 0.35 }}>
+        <div className="particle particle-1 particle--page" />
+        <div className="particle particle-8 particle--page" />
+      </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
       <PageHeader
         title="Care Plan"
         subtitle="Your daily recovery routine"
+        gradient
         action={
           <motion.button
             whileTap={{ scale: 0.93 }}
@@ -266,17 +274,23 @@ export default function MedsScreen() {
         </FadeUp>
 
         {/* Timeline groups */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 22 }}
+        >
           {periods.map(period => (
-            <TimelineGroup
-              key={period}
-              period={period}
-              items={grouped[period]}
-              done={done}
-              onToggle={toggleDone}
-            />
+            <motion.div key={period} variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 220, damping: 26 } } }}>
+              <TimelineGroup
+                period={period}
+                items={grouped[period]}
+                done={done}
+                onToggle={toggleDone}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* My medications */}
         {meds.length > 0 && (
@@ -523,6 +537,7 @@ export default function MedsScreen() {
           </motion.button>
         </div>
       </BottomSheet>
+      </div>
     </motion.div>
   )
 }
