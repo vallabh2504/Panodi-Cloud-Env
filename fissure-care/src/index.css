@@ -1,50 +1,52 @@
-@import './styles/tokens.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap');
 @import "tailwindcss";
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+@theme {
+  --color-cream: #FFF8F5;
+  --color-primary: #E8705A;
+  --color-secondary: #A8D5A2;
+  --color-accent: #C9A8F5;
+  --color-warning: #F5C67A;
+  --color-danger: #F48585;
+  --color-text: #3D2B2B;
+  --color-text-muted: #8C7070;
+  --color-card: #FFFFFF;
+  --color-border: #F0E0DA;
+  --font-family-sans: 'Inter', sans-serif;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+}
 
+* { box-sizing: border-box; }
 body {
-  font-family: var(--font-main);
-  background: var(--color-bg);
-  color: var(--color-text-primary);
+  background-color: #FFF8F5;
+  color: #3D2B2B;
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   max-width: 430px;
   margin: 0 auto;
   min-height: 100dvh;
   overflow-x: hidden;
 }
 
-button { font-family: var(--font-main); }
-input, textarea, select { font-family: var(--font-main); }
+:root {
+  --primary: #E8705A;
+  --secondary: #A8D5A2;
+  --accent: #C9A8F5;
+  --warning: #F5C67A;
+  --danger: #F48585;
+  --cream: #FFF8F5;
+  --text: #3D2B2B;
+  --text-muted: #8C7070;
+  --border: #F0E0DA;
+}
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--color-surface-soft);
-  outline: none;
-  width: 100%;
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(88, 101, 242, 0.4);
-}
-input[type="range"]::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-indigo);
-  cursor: pointer;
-  border: none;
+/* Smooth theme transitions */
+body, div, nav, button, input {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
 }

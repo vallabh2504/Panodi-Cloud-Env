@@ -1,65 +1,90 @@
 import { useState, useEffect } from 'react'
-import { supabase } from './lib/supabase'
-import { Leaf } from 'lucide-react'
-import AuthScreen from './screens/AuthScreen'
+import { getThemeId, saveThemeId, themes } from './lib/themes'
 import HomeScreen from './screens/HomeScreen'
 import LogScreen from './screens/LogScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MedsScreen from './screens/MedsScreen'
 import SettingsScreen from './screens/SettingsScreen'
-import BottomNav from './components/layout/BottomNav'
+import WisdomScreen from './screens/WisdomScreen'
+import BottomNav from './components/BottomNav'
 
-function LoadingScreen() {
-  return (
-    <div style={{
-      minHeight: '100dvh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      background: 'var(--gradient-hero)', fontFamily: 'var(--font-main)',
-    }}>
-      <div style={{
-        width: 72, height: 72, borderRadius: 22,
-        background: 'rgba(255,255,255,0.14)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.22)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        marginBottom: 20,
-      }}>
-        <Leaf size={36} color="#fff" strokeWidth={1.8} />
-      </div>
-      <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, letterSpacing: '0.02em' }}>
-        Loading CareNest…
-      </p>
-    </div>
-  )
+function scheduleHealingReminders() {
+  const settings = JSON.parse(localStorage.getItem('fissurecare_settings') || '{}')
+  if (!settings.remindersEnabled) return
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+
+  const now = new Date()
+  const today = now.toISOString().split('T')[0]
+  const hasLoggedToday = !!localStorage.getItem(`fissurecare_log_${today}`)
+  const hour = now.getHours()
+
+  // Hydration nudge at noon if not logged
+  if (hour >= 12 && hour < 14 && !hasLoggedToday) {
+    const lastNudge = localStorage.getItem('fissurecare_nudge_noon_' + today)
+    if (!lastNudge) {
+      new Notification('Healing Garden — Hydration Check', {
+        body: 'Have you had 8 glasses of water today? Staying hydrated is key to healing.',
+        icon: '/icon.svg',
+        badge: '/icon.svg',
+        tag: 'hydration-noon',
+      })
+      localStorage.setItem('fissurecare_nudge_noon_' + today, '1')
+    }
+  }
+
+  // Evening log reminder at 8pm
+  if (hour >= 20 && hour < 22 && !hasLoggedToday) {
+    const lastNudge = localStorage.getItem('fissurecare_nudge_evening_' + today)
+    if (!lastNudge) {
+      new Notification('Healing Garden — Log Your Day', {
+        body: 'Take 2 minutes to log today\'s entry and track your healing progress.',
+        icon: '/icon.svg',
+        badge: '/icon.svg',
+        tag: 'log-evening',
+      })
+      localStorage.setItem('fissurecare_nudge_evening_' + today, '1')
+    }
+  }
+
+  // Morning fruit reminder at 9am if not logged
+  if (hour >= 9 && hour < 11 && !hasLoggedToday) {
+    const lastNudge = localStorage.getItem('fissurecare_nudge_morning_' + today)
+    if (!lastNudge) {
+      new Notification('Healing Garden — Good Morning', {
+        body: 'Start your day with papaya or oats! Fiber-rich foods accelerate healing.',
+        icon: '/icon.svg',
+        badge: '/icon.svg',
+        tag: 'fruit-morning',
+      })
+      localStorage.setItem('fissurecare_nudge_morning_' + today, '1')
+    }
+  }
 }
 
 export default function App() {
-  const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('home')
+  const [themeId, setThemeId] = useState(getThemeId())
+
+  const theme = themes[themeId] || themes.cherry
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-    return () => subscription.unsubscribe()
+    scheduleHealingReminders()
   }, [])
 
-  if (loading) return <LoadingScreen />
-  if (!session) return <AuthScreen />
+  const handleThemeChange = (id) => {
+    saveThemeId(id)
+    setThemeId(id)
+  }
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--color-bg)', paddingBottom: 80 }}>
-      {activeTab === 'home'     && <HomeScreen     onNavigate={setActiveTab} />}
-      {activeTab === 'log'      && <LogScreen      onNavigate={setActiveTab} />}
+    <div className="min-h-dvh" style={{ background: theme.background, paddingBottom: '80px', transition: 'background 0.5s ease' }}>
+      {activeTab === 'home' && <HomeScreen onNavigate={setActiveTab} theme={theme} />}
+      {activeTab === 'log' && <LogScreen onNavigate={setActiveTab} />}
       {activeTab === 'insights' && <InsightsScreen />}
-      {activeTab === 'meds'     && <MedsScreen />}
-      {activeTab === 'settings' && <SettingsScreen session={session} />}
-      <BottomNav activeTab={activeTab} onNavigate={setActiveTab} />
+      {activeTab === 'meds' && <MedsScreen />}
+      {activeTab === 'wisdom' && <WisdomScreen theme={theme} />}
+      {activeTab === 'settings' && <SettingsScreen theme={theme} themeId={themeId} onThemeChange={handleThemeChange} />}
+      <BottomNav activeTab={activeTab} onNavigate={setActiveTab} theme={theme} />
     </div>
   )
 }
