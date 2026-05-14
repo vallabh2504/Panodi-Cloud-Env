@@ -1,142 +1,31 @@
 :root {
-  /* ── Brand: Sage Healing (base/fallback) ── */
-  --color-primary:       #2D7D6F;
-  --color-primary-light: #4CA99A;
-  --color-primary-muted: #E8F4F2;
-  --color-primary-deep:  #1A4A42;
-  --color-primary-glow:  rgba(45, 125, 111, 0.35);
-
-  /* ── Accent: Warm Terracotta ── */
-  --color-accent:        #C4956A;
-  --color-accent-light:  #F5E6D8;
-  --color-accent-deep:   #9E6B42;
-
-  /* ── Backgrounds ── */
-  --color-bg:             #F5F0E8;
-  --color-bg-warm:        #F0EBE0;
-  --color-surface:        rgba(255, 252, 248, 0.85);
-  --color-surface-solid:  #FEFCF8;
-  --color-surface-soft:   #F0EBE2;
-  --color-surface-teal:   #EDF5F3;
-  --color-surface-warm:   #FBF5EC;
-
-  /* ── Text ── */
-  --color-text-primary:    #2C3140;
-  --color-text-secondary:  #6B7280;
-  --color-text-muted:      #9CA3AF;
-  --color-text-on-dark:    rgba(255, 255, 255, 0.92);
-  --color-text-on-dark-muted: rgba(255, 255, 255, 0.55);
-
-  /* ── Semantic ── */
-  --color-success:      #4A9E6E;
-  --color-success-soft: #E8F5EE;
-  --color-warning:      #C4845A;
-  --color-warning-soft: #FDF0E8;
-  --color-danger:       #B85450;
-  --color-danger-soft:  #FBF0EF;
-
-  /* ── Borders ── */
-  --color-border:        rgba(44, 49, 64, 0.08);
-  --color-border-strong: rgba(44, 49, 64, 0.14);
-  --color-glass-border:  rgba(255, 255, 255, 0.4);
-
-  /* ── Gradients ── */
-  --gradient-hero:    linear-gradient(145deg, #1A4A42 0%, #2D7D6F 50%, #4CA99A 100%);
-  --gradient-primary: linear-gradient(135deg, #2D7D6F 0%, #4CA99A 55%, #6EC4B8 100%);
-  --gradient-warm:    linear-gradient(135deg, #F5F0E8 0%, #EDF5F3 50%, #F5EDE8 100%);
-  --gradient-accent:  linear-gradient(135deg, #C4956A 0%, #D4A880 100%);
-  --gradient-score:   linear-gradient(145deg, #1A4A42 0%, #2D7D6F 45%, #4CA99A 100%);
-
-  /* ── Shadows ── */
-  --shadow-sm:    0 2px 12px rgba(44,49,64,0.06), 0 1px 3px rgba(44,49,64,0.04);
-  --shadow-md:    0 8px 32px rgba(44,49,64,0.10), 0 2px 8px rgba(44,49,64,0.06);
-  --shadow-lg:    0 20px 60px rgba(44,49,64,0.14), 0 8px 20px rgba(44,49,64,0.08);
-  --shadow-teal:  0 12px 40px rgba(45,125,111,0.38);
-  --shadow-glass: 0 4px 24px rgba(44,49,64,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
-
-  /* ── Glass ── */
-  --glass-bg:     rgba(255, 252, 248, 0.82);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.42);
-  --glass-blur:   blur(16px);
-
-  /* ── Radius ── */
-  --radius-sm:   10px;
-  --radius-md:   16px;
-  --radius-lg:   22px;
-  --radius-xl:   32px;
-  --radius-full: 9999px;
-
-  /* ── Typography ── */
+  --color-lavender: #7C6CFF;
+  --color-indigo: #5865F2;
+  --color-soft-blue: #4DA3FF;
+  --color-deep-blue: #1E2A78;
+  --color-bg: #F7F8FE;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F1F2FF;
+  --color-surface-lavender: #F3EFFF;
+  --color-surface-blue: #EEF6FF;
+  --color-text-primary: #0F1A3A;
+  --color-text-secondary: #667085;
+  --color-text-muted: #98A2B3;
+  --color-border: #E6E8F2;
+  --color-border-strong: #D5D9EA;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-soft-danger: #FFF0F3;
+  --gradient-primary: linear-gradient(135deg, #5865F2 0%, #7C6CFF 55%, #4DA3FF 100%);
+  --gradient-hero: linear-gradient(145deg, #111B5E 0%, #27228A 45%, #6C63FF 100%);
+  --gradient-soft: linear-gradient(135deg, #F7F8FE 0%, #EEF1FF 50%, #F8F3FF 100%);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 30px;
+  --shadow-sm: 0 4px 12px rgba(30, 42, 120, 0.06);
+  --shadow-md: 0 10px 28px rgba(30, 42, 120, 0.10);
+  --shadow-lg: 0 20px 50px rgba(30, 42, 120, 0.16);
   --font-main: "Poppins", "Inter", system-ui, sans-serif;
-
-  --text-xs:   clamp(0.72rem,  0.68rem + 0.2vw,  0.82rem);
-  --text-sm:   clamp(0.82rem,  0.76rem + 0.3vw,  0.94rem);
-  --text-base: clamp(0.94rem,  0.88rem + 0.3vw,  1.05rem);
-  --text-lg:   clamp(1.05rem,  0.96rem + 0.45vw, 1.22rem);
-  --text-xl:   clamp(1.2rem,   1.08rem + 0.6vw,  1.45rem);
-  --text-2xl:  clamp(1.45rem,  1.2rem  + 1.25vw, 1.9rem);
-  --text-3xl:  clamp(1.8rem,   1.4rem  + 2vw,    2.6rem);
-
-  /* ── Motion ── */
-  --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-smooth:     cubic-bezier(0.22, 1, 0.36, 1);
-  --duration-fast:   160ms;
-  --duration-normal: 320ms;
-  --duration-slow:   520ms;
-}
-
-/* ── Theme: Lavender Dream ── */
-[data-theme="lavender"] {
-  --color-primary:       #7C6FCD;
-  --color-primary-light: #A89FE0;
-  --color-primary-muted: #EDE9FF;
-  --color-primary-deep:  #4A3FA0;
-  --color-primary-glow:  rgba(124, 111, 205, 0.35);
-
-  --color-accent:        #C4956A;
-  --color-accent-light:  #F5E6D8;
-
-  --color-bg:            #F5F3FF;
-  --color-bg-warm:       #EDE9FF;
-  --color-surface:       rgba(255, 253, 255, 0.88);
-  --color-surface-solid: #FEFCFF;
-  --color-surface-soft:  #EDE9FF;
-  --color-surface-teal:  #F0EEFF;
-  --color-surface-warm:  #FBF5FF;
-
-  --gradient-hero:    linear-gradient(145deg, #3D2FA0 0%, #7C6FCD 50%, #A89FE0 100%);
-  --gradient-primary: linear-gradient(135deg, #7C6FCD 0%, #A89FE0 55%, #C4B8F0 100%);
-  --gradient-warm:    linear-gradient(135deg, #F5F3FF 0%, #EDE9FF 50%, #F5F0FF 100%);
-  --gradient-score:   linear-gradient(145deg, #3D2FA0 0%, #7C6FCD 45%, #A89FE0 100%);
-
-  --shadow-teal:  0 12px 40px rgba(124,111,205,0.38);
-
-  --glass-bg:     rgba(255, 253, 255, 0.82);
-}
-
-/* ── Theme: Rose Glow ── */
-[data-theme="rose"] {
-  --color-primary:       #C06080;
-  --color-primary-light: #E08FAA;
-  --color-primary-muted: #FFE8F0;
-  --color-primary-deep:  #8A3050;
-  --color-primary-glow:  rgba(192, 96, 128, 0.35);
-
-  --color-bg:            #FFF5F8;
-  --color-bg-warm:       #FFE8F0;
-  --color-surface:       rgba(255, 250, 252, 0.88);
-  --color-surface-solid: #FFFAFC;
-  --color-surface-soft:  #FFE8F0;
-  --color-surface-teal:  #FFECF4;
-  --color-surface-warm:  #FFF0F6;
-
-  --gradient-hero:    linear-gradient(145deg, #7A2040 0%, #C06080 50%, #E08FAA 100%);
-  --gradient-primary: linear-gradient(135deg, #C06080 0%, #E08FAA 55%, #F0B8CC 100%);
-  --gradient-warm:    linear-gradient(135deg, #FFF5F8 0%, #FFE8F0 50%, #FFF0F8 100%);
-  --gradient-score:   linear-gradient(145deg, #7A2040 0%, #C06080 45%, #E08FAA 100%);
-
-  --shadow-teal:  0 12px 40px rgba(192,96,128,0.38);
-
-  --glass-bg:     rgba(255, 250, 252, 0.82);
 }
