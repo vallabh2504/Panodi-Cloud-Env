@@ -712,20 +712,19 @@ export default function LogScreen({ onNavigate, onLogSaved }) {
             animate="center"
             exit="exit"
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            style={{ paddingBottom: 100 }}
+            style={{ paddingBottom: 160 }}
           >
             {renderStep()}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Bottom navigation */}
+      {/* Bottom navigation — sits above the app's BottomNav bar */}
       <div style={{
-        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        position: 'fixed', bottom: 'calc(64px + env(safe-area-inset-bottom))', left: '50%', transform: 'translateX(-50%)',
         width: '100%', maxWidth: 430,
         background: theme.navBg, borderTop: `1px solid ${theme.navBorder}`,
-        padding: '12px 20px', display: 'flex', gap: 12, zIndex: 10,
-        paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+        padding: '10px 20px', display: 'flex', gap: 12, zIndex: 10,
         boxShadow: `0 -4px 20px ${theme.cardShadow}`,
       }}>
         <motion.button
