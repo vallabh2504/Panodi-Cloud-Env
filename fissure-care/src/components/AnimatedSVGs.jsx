@@ -1,11 +1,16 @@
-import { useEffect, useId } from 'react'
+import { useId } from 'react'
 import { motion } from 'framer-motion'
 
-/* 1. FlameIcon — animated organic flame */
+/* 1. FlameIcon — animated organic flame
+   FIX: transform-origin moved to element style (not inside @keyframes) */
 export function FlameIcon({ size = 28, color = '#E8705A', style = {} }) {
   return (
     <svg width={size} height={size * 1.3} viewBox="0 0 24 32" fill="none" style={style}>
-      <g style={{ transformOrigin: '12px 28px', animation: 'svgFlameDance 1.8s ease-in-out infinite' }}>
+      <g style={{
+        transformOrigin: '12px 26px',
+        transformBox: 'fill-box',
+        animation: 'svgFlameDance 1.8s ease-in-out infinite',
+      }}>
         <path d="M12 2C12 2 4 9 4 17C4 22 7.6 27 12 27C16.4 27 20 22 20 17C20 9 12 2 12 2Z"
           fill={color} opacity="0.9" />
         <path d="M12 10C12 10 8 14 8 18C8 21 9.8 24 12 24C14.2 24 16 21 16 18C16 14 12 10 12 10Z"
@@ -15,17 +20,19 @@ export function FlameIcon({ size = 28, color = '#E8705A', style = {} }) {
   )
 }
 
-/* 2. SunIcon — spinning sun rays */
+/* 2. SunIcon — spinning sun rays
+   FIX: use SVG transform attribute (not CSS) for static ray rotation so it's
+   in SVG coordinate space; CSS animation only on the spinning group */
 export function SunIcon({ size = 32, color = '#F5C67A', style = {} }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" style={style}>
       <circle cx="16" cy="16" r="6.5" fill={color} />
       <g style={{ transformOrigin: '16px 16px', animation: 'svgSunSpin 12s linear infinite' }}>
-        {[0,45,90,135,180,225,270,315].map(a => (
+        {[0, 45, 90, 135, 180, 225, 270, 315].map(a => (
           <line key={a}
-            x1="16" y1="3.5" x2="16" y2="1"
+            x1="16" y1="2" x2="16" y2="5"
             stroke={color} strokeWidth="2.2" strokeLinecap="round"
-            style={{ transformOrigin: '16px 16px', transform: `rotate(${a}deg)` }}
+            transform={`rotate(${a} 16 16)`}
           />
         ))}
       </g>
@@ -36,7 +43,8 @@ export function SunIcon({ size = 32, color = '#F5C67A', style = {} }) {
 /* 3. MoonIcon — glowing crescent */
 export function MoonIcon({ size = 28, color = '#C9A8F5', style = {} }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" style={{ animation: 'svgMoonGlow 3s ease-in-out infinite', ...style }}>
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none"
+      style={{ animation: 'svgMoonGlow 3s ease-in-out infinite', ...style }}>
       <path d="M14 4C9 4 5 8.5 5 14C5 19.5 9 24 14 24C11.5 22 10 18.5 10 14C10 9.5 11.5 6 14 4Z"
         fill={color} />
       <circle cx="19" cy="8" r="1.5" fill={color} opacity="0.5" />
@@ -83,8 +91,7 @@ export function HeartPulse({ size = 56, color = '#E8705A', style = {} }) {
       />
       <motion.path
         d="M28 37C28 37 14 27 14 19C14 15.7 16.5 13 20 13C23 13 26 15 28 19C30 15 33 13 36 13C39.5 13 42 15.7 42 19C42 27 28 37 28 37Z"
-        fill="#fff"
-        opacity="0.25"
+        fill="#fff" opacity="0.25"
         animate={{ scale: [1, 1.13, 0.97, 1.06, 1] }}
         transition={{ duration: 1.3, repeat: Infinity, repeatDelay: 0.9, ease: 'easeInOut' }}
         style={{ transformOrigin: '28px 28px' }}
@@ -93,7 +100,9 @@ export function HeartPulse({ size = 56, color = '#E8705A', style = {} }) {
   )
 }
 
-/* 6. BloomFlower — petals opening */
+/* 6. BloomFlower — petals opening
+   FIX: use Framer Motion `rotate` shorthand instead of CSS transform string so
+   Framer Motion can compose scaleY + rotate without overriding static rotate */
 export function BloomFlower({ size = 80, color = '#E8705A', style = {} }) {
   const petals = [0, 72, 144, 216, 288]
   return (
@@ -101,10 +110,10 @@ export function BloomFlower({ size = 80, color = '#E8705A', style = {} }) {
       {petals.map((angle, i) => (
         <motion.ellipse key={i}
           cx="40" cy="22" rx="8" ry="16"
-          fill={color} opacity="0.82"
-          style={{ transformOrigin: '40px 40px', transform: `rotate(${angle}deg)` }}
-          initial={{ scaleY: 0, opacity: 0 }}
-          animate={{ scaleY: 1, opacity: 0.82 }}
+          fill={color}
+          style={{ transformOrigin: '40px 40px' }}
+          initial={{ scaleY: 0, opacity: 0, rotate: angle }}
+          animate={{ scaleY: 1, opacity: 0.82, rotate: angle }}
           transition={{ delay: i * 0.1, type: 'spring', stiffness: 220, damping: 16 }}
         />
       ))}
@@ -160,7 +169,8 @@ export function SteamWisps({ size = 44, color = '#A8D5A2', style = {} }) {
   )
 }
 
-/* 9. StarField — twinkling star cluster */
+/* 9. StarField — twinkling star cluster
+   FIX: add transformBox fill-box so transformOrigin scales from each star's own center */
 export function StarField({ size = 60, color = '#F5C67A', style = {} }) {
   const stars = [
     { x: 30, y: 12, r: 5, anim: 'svgStarA 1.4s ease-in-out infinite' },
@@ -175,7 +185,7 @@ export function StarField({ size = 60, color = '#F5C67A', style = {} }) {
         <polygon key={i}
           points={`${s.x},${s.y - s.r} ${s.x + s.r * 0.35},${s.y - s.r * 0.35} ${s.x + s.r},${s.y} ${s.x + s.r * 0.35},${s.y + s.r * 0.35} ${s.x},${s.y + s.r} ${s.x - s.r * 0.35},${s.y + s.r * 0.35} ${s.x - s.r},${s.y} ${s.x - s.r * 0.35},${s.y - s.r * 0.35}`}
           fill={color}
-          style={{ transformOrigin: `${s.x}px ${s.y}px`, animation: s.anim }}
+          style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: s.anim }}
         />
       ))}
     </svg>
@@ -183,7 +193,7 @@ export function StarField({ size = 60, color = '#F5C67A', style = {} }) {
 }
 
 /* 10. WaveBar — flowing horizontal wave */
-export function WaveBar({ width = '100%', color = '#E8705A', opacity = 0.3, style = {} }) {
+export function WaveBar({ color = '#E8705A', opacity = 0.3, style = {} }) {
   return (
     <div style={{ overflow: 'hidden', height: 18, ...style }}>
       <svg width="200%" height="18" viewBox="0 0 400 18" preserveAspectRatio="none"
@@ -195,11 +205,12 @@ export function WaveBar({ width = '100%', color = '#E8705A', opacity = 0.3, styl
   )
 }
 
-/* 11. HealingLeaf — gently swaying leaf */
+/* 11. HealingLeaf — gently swaying leaf
+   FIX: transformOrigin must be on element style, not inside @keyframes */
 export function HealingLeaf({ size = 22, color = '#A8D5A2', style = {} }) {
   return (
     <svg width={size} height={size * 1.2} viewBox="0 0 22 26" fill="none"
-      style={{ animation: 'svgLeafSway 3s ease-in-out infinite', ...style }}>
+      style={{ transformOrigin: 'bottom center', animation: 'svgLeafSway 3s ease-in-out infinite', ...style }}>
       <path d="M11 2C11 2 3 8 3 15C3 20 6.6 25 11 25C15.4 25 19 20 19 15C19 8 11 2 11 2Z"
         fill={color} opacity="0.85" />
       <path d="M11 4L11 23" stroke="#fff" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
@@ -209,57 +220,55 @@ export function HealingLeaf({ size = 22, color = '#A8D5A2', style = {} }) {
   )
 }
 
-/* 12. SeedlingGrow — sprouting plant path-draw */
+/* 12. SeedlingGrow — sprouting plant path-draw
+   FIX: use motion.path for stem instead of motion.line (better pathLength support) */
 export function SeedlingGrow({ size = 80, color = '#A8D5A2', style = {} }) {
   return (
     <svg width={size} height={size} viewBox="0 0 80 80" fill="none" style={style}>
-      {/* Soil mound */}
       <motion.ellipse cx="40" cy="68" rx="24" ry="7" fill={color} opacity="0.2"
         initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
+        style={{ transformOrigin: '40px 68px' }}
       />
-      {/* Stem */}
-      <motion.line x1="40" y1="68" x2="40" y2="28"
+      <motion.path d="M40 68 L40 28"
         stroke={color} strokeWidth="3" strokeLinecap="round"
         initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
         transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
       />
-      {/* Left leaf */}
       <motion.path d="M40 50C36 44 26 43 24 48C22 53 30 56 40 50Z"
         fill={color} opacity="0.9"
         initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 0.9 }}
         transition={{ delay: 0.7, type: 'spring', stiffness: 220, damping: 16 }}
         style={{ transformOrigin: '40px 50px' }}
       />
-      {/* Right leaf */}
       <motion.path d="M40 38C44 32 54 31 56 36C58 41 50 44 40 38Z"
         fill={color} opacity="0.9"
         initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 0.9 }}
         transition={{ delay: 0.9, type: 'spring', stiffness: 220, damping: 16 }}
         style={{ transformOrigin: '40px 38px' }}
       />
-      {/* Tiny bud */}
       <motion.circle cx="40" cy="26" r="5" fill={color}
         initial={{ scale: 0 }} animate={{ scale: 1 }}
         transition={{ delay: 1.1, type: 'spring', stiffness: 300, damping: 14 }}
+        style={{ transformOrigin: '40px 26px' }}
       />
     </svg>
   )
 }
 
-/* 13. MoonCrescent — already handled by MoonIcon, this is PulseRings */
+/* 13. PulseRings — ripple rings emanating outward
+   FIX: add transformBox fill-box + transformOrigin center so scale goes from circle's center */
 export function PulseRings({ size = 44, color = '#E8705A', style = {} }) {
   return (
     <svg width={size} height={size} viewBox="0 0 44 44" fill="none"
       style={{ overflow: 'visible', ...style }}>
-      <circle cx="22" cy="22" r="8"
-        fill={color} opacity="0.9" />
+      <circle cx="22" cy="22" r="8" fill={color} opacity="0.9" />
       <circle cx="22" cy="22" r="8"
         fill="none" stroke={color} strokeWidth="2" opacity="0.6"
-        style={{ animation: 'svgRipple1 2.2s ease-out infinite' }} />
+        style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'svgRipple1 2.2s ease-out infinite' }} />
       <circle cx="22" cy="22" r="8"
         fill="none" stroke={color} strokeWidth="1.5" opacity="0.4"
-        style={{ animation: 'svgRipple2 2.2s ease-out infinite 0.7s' }} />
+        style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'svgRipple2 2.2s ease-out infinite 0.7s' }} />
     </svg>
   )
 }
@@ -281,16 +290,24 @@ export function BubblesFloat({ size = 36, color = '#A8D5A2', style = {} }) {
   )
 }
 
-/* 15. HealingOrb — morphing blob with orbiting dot */
+/* 15. HealingOrb — pulsing orb with orbiting dot
+   FIX: border-radius has no effect on SVG circles. Use Framer Motion scale+opacity
+   pulse for the blob effect instead */
 export function HealingOrb({ size = 44, color = '#C9A8F5', style = {} }) {
   return (
     <svg width={size} height={size} viewBox="0 0 44 44" fill="none"
       style={{ overflow: 'visible', ...style }}>
-      <circle cx="22" cy="22" r="14" fill={color} opacity="0.25"
-        style={{ animation: 'svgBlobMorph 4s ease-in-out infinite' }} />
-      <circle cx="22" cy="22" r="8" fill={color} opacity="0.7" />
-      <circle cx="22" cy="22" r="4" fill={color} />
-      {/* Orbiting dot */}
+      <motion.circle cx="22" cy="22" r="18" fill={color} opacity="0.2"
+        animate={{ scale: [1, 1.25, 1], opacity: [0.2, 0.08, 0.2] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: '22px 22px' }}
+      />
+      <motion.circle cx="22" cy="22" r="11" fill={color} opacity="0.5"
+        animate={{ scale: [1, 1.1, 1] }}
+        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+        style={{ transformOrigin: '22px 22px' }}
+      />
+      <circle cx="22" cy="22" r="6" fill={color} />
       <circle cx="22" cy="8" r="3" fill={color}
         style={{ transformOrigin: '22px 22px', animation: 'svgOrbitDot 2s linear infinite' }} />
     </svg>
