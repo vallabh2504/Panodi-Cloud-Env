@@ -239,16 +239,13 @@ export default function SplashScreen({ onEnter, theme }) {
 
         {/* Stars */}
         <motion.div {...fadeUp(0.7)} style={{
-          textAlign: 'center', padding: '8px 16px 4px',
+          textAlign: 'center', padding: '10px 16px 6px',
           background: tc.reviewBg, borderRadius: 14,
         }}>
-          <p style={{ fontSize: 11.5, color: tc.subtitle, marginBottom: 5, lineHeight: 1.5 }}>
-            Trusted by thousands on their journey to lasting relief.
+          <p style={{ fontSize: 13, marginBottom: 4 }}>🌿</p>
+          <p style={{ fontSize: 11.5, color: tc.subtitle, lineHeight: 1.55, margin: 0 }}>
+            Built with love for your healing journey. Your data stays private, always.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginBottom: 3 }}>
-            {[1,2,3,4,5].map(i => <span key={i} style={{ fontSize: 16, color: tc.starColor }}>★</span>)}
-          </div>
-          <p style={{ fontSize: 12, fontWeight: 700, color: tc.headline }}>4.8 · 10K+ reviews</p>
         </motion.div>
       </div>
     </div>

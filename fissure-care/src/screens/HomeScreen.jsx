@@ -542,7 +542,7 @@ export default function HomeScreen({ onNavigate, theme }) {
 
   const lastBlood = useMemo(() => {
     let days = 0
-    for (let i = 1; i <= 30; i++) {
+    for (let i = 1; i <= 90; i++) {
       const d = new Date(); d.setDate(d.getDate() - i)
       const stored = localStorage.getItem('fissurecare_log_' + d.toISOString().split('T')[0])
       const l = stored ? JSON.parse(stored) : null
@@ -637,7 +637,7 @@ export default function HomeScreen({ onNavigate, theme }) {
           { icon: '🍌', label: 'Fruits', value: log?.fruitsEaten?.length || 0, sub: 'eaten' },
           { icon: '🛁', label: 'Sitz baths', value: log?.sitzBaths?.length || 0, sub: 'today' },
           { icon: '💛', label: 'Pain', value: log?.bowelMovements?.[0]?.painLevel ?? '–', sub: '/10' },
-          { icon: '🩸', label: 'Blood-free', value: lastBlood, sub: 'days' },
+          { icon: '🩸', label: 'Blood-free', value: lastBlood >= 90 ? '90+' : lastBlood, sub: 'days' },
         ].map((card, i) => (
           <motion.div
             key={i}

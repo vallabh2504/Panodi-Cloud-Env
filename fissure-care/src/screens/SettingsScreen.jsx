@@ -13,10 +13,12 @@ async function requestNotificationPermission() {
 }
 
 export default function SettingsScreen({ theme, themeId, onThemeChange }) {
-  const [settings, setSettings] = useState({ userName: '', waterGoal: 8, fiberGoal: 25, darkMode: false, remindersEnabled: false })
+  const [settings, setSettings] = useState({ userName: '', waterGoal: 8, fiberGoal: 25, remindersEnabled: false })
   const [saved, setSaved] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const [notifStatus, setNotifStatus] = useState('unknown')
+  const [notifDeniedMsg, setNotifDeniedMsg] = useState('')
+  const [clipMsg, setClipMsg] = useState('')
 
   useEffect(() => {
     setSettings(getSettings())
@@ -32,10 +34,11 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
       const status = await requestNotificationPermission()
       setNotifStatus(status)
       if (status !== 'granted') {
-        alert('Notification permission was not granted. Please enable notifications in your browser settings.')
+        setNotifDeniedMsg('Permission not granted. Please enable notifications in your browser/OS settings.')
         return
       }
     }
+    setNotifDeniedMsg('')
     setSettings(s => ({ ...s, remindersEnabled: enabled }))
   }
 
@@ -58,14 +61,16 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
     const logs = await getAllLogs()
     const data = JSON.stringify({ logs, exportedAt: new Date().toISOString() }, null, 2)
     await navigator.clipboard.writeText(data)
-    alert('Data copied to clipboard!')
+    setClipMsg('Copied to clipboard!')
+    setTimeout(() => setClipMsg(''), 2500)
   }
 
   const resetData = () => {
     const keys = Object.keys(localStorage).filter(k => k.startsWith('fissurecare_'))
     keys.forEach(k => localStorage.removeItem(k))
     setShowReset(false)
-    alert('All data has been reset.')
+    setSaved(false)
+    setSettings({ userName: '', waterGoal: 8, fiberGoal: 25, remindersEnabled: false })
   }
 
   const InputRow = ({ label, children }) => (
@@ -207,7 +212,7 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
                   {settings.remindersEnabled ? 'Reminders Enabled' : 'Enable Reminders'}
                 </p>
                 <p style={{ fontSize: 12, color: theme.textMuted, lineHeight: 1.5 }}>
-                  Gentle nudges for hydration, fruit intake, and evening logging when the app is open.
+                  Push notifications at 9am (fiber tip), noon (hydration), and 8pm (log reminder) — fires when the app is open near those times.
                 </p>
               </div>
               <motion.button
@@ -226,7 +231,10 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
                 />
               </motion.button>
             </div>
-            {notifStatus === 'denied' && (
+            {notifDeniedMsg && (
+              <p style={{ fontSize: 11, color: '#E85A5A', marginTop: 8 }}>{notifDeniedMsg}</p>
+            )}
+            {notifStatus === 'denied' && !notifDeniedMsg && (
               <p style={{ fontSize: 11, color: '#E85A5A', marginTop: 8 }}>
                 Notifications are blocked. Please enable them in your browser/OS settings.
               </p>
@@ -259,6 +267,9 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
           }}>
             Copy Data to Clipboard
           </button>
+          {clipMsg && (
+            <p style={{ fontSize: 12, color: theme.wellnessHigh, textAlign: 'center', fontWeight: 600 }}>{clipMsg}</p>
+          )}
           <button onClick={() => setShowReset(true)} style={{
             padding: '14px', background: theme.card, border: '1.5px solid #F48585', borderRadius: 14,
             color: '#E85A5A', fontSize: 14, fontWeight: 600, cursor: 'pointer',

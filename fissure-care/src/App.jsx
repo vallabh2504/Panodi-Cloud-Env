@@ -117,7 +117,7 @@ export default function App() {
         >
           <OfflineBanner />
           {activeTab === 'home' && <HomeScreen onNavigate={setActiveTab} theme={theme} />}
-          {activeTab === 'log' && <LogScreen onNavigate={setActiveTab} onLogSaved={handleLogSaved} />}
+          {activeTab === 'log' && <LogScreen onNavigate={setActiveTab} onLogSaved={handleLogSaved} theme={theme} />}
           {activeTab === 'insights' && <InsightsScreen theme={theme} />}
           {activeTab === 'meds' && <MedsScreen theme={theme} />}
           {activeTab === 'wisdom' && <WisdomScreen theme={theme} />}

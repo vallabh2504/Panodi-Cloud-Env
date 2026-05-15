@@ -39,7 +39,7 @@ export function analyzeFoodOutcomes(logs) {
 
   const results = {}
   for (const [food, data] of Object.entries(foodMap)) {
-    if (data.count >= 3) {
+    if (data.count >= 2) {
       results[food] = {
         avgPain: parseFloat((data.totalPain / data.count).toFixed(1)),
         avgBristol: data.bristolCount ? parseFloat((data.totalBristol / data.bristolCount).toFixed(1)) : null,
@@ -53,7 +53,7 @@ export function analyzeFoodOutcomes(logs) {
 }
 
 export function getDailyInsight(logs) {
-  if (logs.length < 4) return null
+  if (logs.length < 2) return null
   const sorted = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date))
   const yesterday = sorted[1]
   if (!yesterday) return null

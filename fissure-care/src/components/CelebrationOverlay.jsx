@@ -56,7 +56,9 @@ export default function CelebrationOverlay({ celebration, onDismiss }) {
 
   useEffect(() => {
     if (!celebration) return
-    const timer = setTimeout(onDismiss, 3500)
+    // Give milestone moments more time to be savoured / screenshotted
+    const ms = ['fireworks', 'mega'].includes(celebration.type) ? 6500 : 3500
+    const timer = setTimeout(onDismiss, ms)
     return () => clearTimeout(timer)
   }, [celebration, onDismiss])
 

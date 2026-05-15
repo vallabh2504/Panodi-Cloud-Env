@@ -61,7 +61,6 @@ export function getSettings() {
     userName: '',
     waterGoal: 8,
     fiberGoal: 25,
-    darkMode: false
   }
 }
 

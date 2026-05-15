@@ -9,11 +9,16 @@ import { AlertTriangle } from 'lucide-react'
 
 const TABS = ['Week', 'Month', '3 Months']
 
-function ChartCard({ title, subtitle, children }) {
+function ChartCard({ title, subtitle, children, theme }) {
   return (
-    <div style={{ margin: '0 16px 16px', background: '#fff', borderRadius: 20, padding: '16px', border: '1px solid #F0E0DA' }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#3D2B2B', marginBottom: 2 }}>{title}</p>
-      {subtitle && <p style={{ fontSize: 12, color: '#8C7070', marginBottom: 12 }}>{subtitle}</p>}
+    <div style={{
+      margin: '0 16px 16px',
+      background: theme.card,
+      borderRadius: 20, padding: '16px',
+      border: `1px solid ${theme.cardBorder}`,
+    }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: theme.text, marginBottom: 2 }}>{title}</p>
+      {subtitle && <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>{subtitle}</p>}
       {children}
     </div>
   )
@@ -60,7 +65,6 @@ function generateReport(logs, isEmergency) {
 }
 
 function checkEmergencyCondition(logs) {
-  // Check if last 2+ consecutive logs have high pain (>=7) OR bleeding
   const sorted = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date))
   let consecutive = 0
   for (const l of sorted) {
@@ -76,7 +80,7 @@ function checkEmergencyCondition(logs) {
   return false
 }
 
-export default function InsightsScreen() {
+export default function InsightsScreen({ theme }) {
   const [tab, setTab] = useState('Week')
   const [logs, setLogs] = useState([])
 
@@ -115,11 +119,13 @@ export default function InsightsScreen() {
   const bristolData = Object.entries(bristolCounts).map(([type, count]) => ({ name: `Type ${type}`, value: count }))
   const COLORS = ['#F48585', '#F5A68A', '#F5C67A', '#A8D5A2', '#C9A8F5', '#F5C67A', '#F48585']
 
+  // Blood-free streak — look back up to 90 days
   let bloodFreeDays = 0
-  for (const l of [...logs]) {
+  for (const l of logs.slice(0, 90)) {
     if (l.bowelMovements?.some(bm => bm.bloodPresent)) break
     bloodFreeDays++
   }
+  const bloodFreeCapped = bloodFreeDays >= 90
 
   const avgScore = scoreData.length ? Math.round(scoreData.reduce((s, d) => s + d.score, 0) / scoreData.length) : 0
 
@@ -134,11 +140,18 @@ export default function InsightsScreen() {
     URL.revokeObjectURL(url)
   }
 
+  const p = theme?.primary || '#E8705A'
+  const card = theme?.card || '#fff'
+  const border = theme?.cardBorder || '#F0E0DA'
+  const text = theme?.text || '#3D2B2B'
+  const muted = theme?.textMuted || '#8C7070'
+  const header = theme?.headerGradient || 'linear-gradient(135deg, #FFF0EB, #FFF8F5)'
+
   return (
     <div>
-      <div style={{ padding: '20px 20px 16px', background: 'linear-gradient(135deg, #FFF0EB, #FFF8F5)', borderBottom: '1px solid #F0E0DA' }}>
-        <p style={{ fontSize: 20, fontWeight: 700, color: '#E8705A' }}>Your Insights</p>
-        <p style={{ fontSize: 13, color: '#8C7070' }}>Track your healing journey over time</p>
+      <div style={{ padding: '20px 20px 16px', background: header, borderBottom: `1px solid ${border}` }}>
+        <p style={{ fontSize: 20, fontWeight: 700, color: p }}>Your Insights</p>
+        <p style={{ fontSize: 13, color: muted }}>Track your healing journey over time</p>
       </div>
 
       {/* Tabs */}
@@ -146,8 +159,8 @@ export default function InsightsScreen() {
         {TABS.map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             flex: 1, padding: '8px', borderRadius: 12, border: 'none', cursor: 'pointer',
-            background: tab === t ? '#E8705A' : '#F0E0DA',
-            color: tab === t ? '#fff' : '#8C7070',
+            background: tab === t ? p : border,
+            color: tab === t ? '#fff' : muted,
             fontWeight: tab === t ? 700 : 400, fontSize: 13, transition: 'all 0.2s'
           }}>{t}</button>
         ))}
@@ -156,8 +169,8 @@ export default function InsightsScreen() {
       {!logs.length ? (
         <div style={{ textAlign: 'center', padding: '60px 32px' }}>
           <p style={{ fontSize: 40, marginBottom: 12 }}>🌱</p>
-          <p style={{ fontSize: 16, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>No logs yet</p>
-          <p style={{ fontSize: 14, color: '#8C7070' }}>Start logging your daily entries to see insights and trends here.</p>
+          <p style={{ fontSize: 16, fontWeight: 600, color: text, marginBottom: 8 }}>No logs yet</p>
+          <p style={{ fontSize: 14, color: muted }}>Start logging your daily entries to see insights and trends here.</p>
         </div>
       ) : (
         <>
@@ -201,33 +214,34 @@ export default function InsightsScreen() {
           </AnimatePresence>
 
           {/* Score Summary */}
-          <div style={{ margin: '0 16px 16px', background: 'linear-gradient(135deg, #FFF0EB, #FFF8F5)', borderRadius: 20, padding: '16px', border: '1px solid #F0E0DA' }}>
-            <p style={{ fontSize: 13, color: '#8C7070' }}>{tab} average score</p>
-            <p style={{ fontSize: 42, fontWeight: 800, fontFamily: 'Nunito', color: '#E8705A' }}>{avgScore}</p>
-            <p style={{ fontSize: 13, color: '#8C7070' }}>
+          <div style={{ margin: '0 16px 16px', background: header, borderRadius: 20, padding: '16px', border: `1px solid ${border}` }}>
+            <p style={{ fontSize: 13, color: muted }}>{tab} average score</p>
+            <p style={{ fontSize: 42, fontWeight: 800, fontFamily: 'Nunito', color: p }}>{avgScore}</p>
+            <p style={{ fontSize: 13, color: muted }}>
               {avgScore >= 70 ? "You're doing great! Keep it up." : avgScore >= 40 ? 'Making progress — every day counts.' : 'Keep going, healing takes time.'}
             </p>
             {bloodFreeDays > 0 && (
-              <div style={{ marginTop: 10, background: '#F0FFF5', borderRadius: 12, padding: '8px 12px' }}>
-                <p style={{ fontSize: 13, color: '#5A9E5A', fontWeight: 600 }}>
-                  {bloodFreeDays} {bloodFreeDays === 1 ? 'day' : 'days'} without bleeding! {bloodFreeDays >= 7 ? 'Incredible healing!' : 'Great progress!'}
+              <div style={{ marginTop: 10, background: theme?.wellnessHigh ? theme.wellnessHigh + '20' : '#F0FFF5', borderRadius: 12, padding: '8px 12px' }}>
+                <p style={{ fontSize: 13, color: theme?.wellnessHigh || '#5A9E5A', fontWeight: 600 }}>
+                  {bloodFreeCapped ? '90+ days' : `${bloodFreeDays} ${bloodFreeDays === 1 ? 'day' : 'days'}`} without bleeding!{' '}
+                  {bloodFreeDays >= 30 ? '🎉 Incredible healing!' : bloodFreeDays >= 7 ? 'Great progress!' : 'Keep it going!'}
                 </p>
               </div>
             )}
           </div>
 
           {/* Pain Chart */}
-          <ChartCard title="Pain Levels" subtitle={`Your discomfort score over the last ${tab.toLowerCase()}`}>
+          <ChartCard theme={theme} title="Pain Levels" subtitle={`Your discomfort score over the last ${tab.toLowerCase()}`}>
             <ResponsiveContainer width="100%" height={140}>
               <LineChart data={painData}>
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-                <YAxis domain={[0, 10]} tick={{ fontSize: 10 }} width={20} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: muted }} width={20} />
                 <Tooltip formatter={v => [`${v}/10`, 'Pain']} />
-                <Line type="monotone" dataKey="pain" stroke="#E8705A" strokeWidth={2.5}
-                  dot={{ fill: '#E8705A', r: 3 }} connectNulls />
+                <Line type="monotone" dataKey="pain" stroke={p} strokeWidth={2.5}
+                  dot={{ fill: p, r: 3 }} connectNulls />
               </LineChart>
             </ResponsiveContainer>
-            <p style={{ fontSize: 12, color: '#8C7070', marginTop: 8 }}>
+            <p style={{ fontSize: 12, color: muted, marginTop: 8 }}>
               {painData.length >= 2 && painData[painData.length - 1].pain < painData[0].pain
                 ? 'Trending down — great progress!'
                 : painData.length >= 2 && painData[painData.length - 1].pain > painData[0].pain
@@ -237,40 +251,44 @@ export default function InsightsScreen() {
           </ChartCard>
 
           {/* Blood Incidents */}
-          <ChartCard title="Bleeding Incidents" subtitle="Days with vs. without bleeding">
+          <ChartCard theme={theme} title="Bleeding Incidents" subtitle="Days with vs. without bleeding">
             <ResponsiveContainer width="100%" height={100}>
               <BarChart data={bloodData}>
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
                 <YAxis domain={[0, 1]} tick={{ fontSize: 10 }} width={15} hide />
                 <Tooltip formatter={v => [v ? 'Yes' : 'None', 'Bleeding']} />
                 <Bar dataKey="blood" fill="#F48585" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-            <p style={{ fontSize: 12, color: '#8C7070', marginTop: 8 }}>
-              {bloodFreeDays > 0 ? `Last bleeding: ${bloodFreeDays} day${bloodFreeDays !== 1 ? 's' : ''} ago` : 'Log daily to track bleeding patterns.'}
+            <p style={{ fontSize: 12, color: muted, marginTop: 8 }}>
+              {bloodFreeDays > 0
+                ? bloodFreeCapped
+                  ? 'No bleeding recorded in the last 90 days! 🌟'
+                  : `Last bleeding: ${bloodFreeDays} day${bloodFreeDays !== 1 ? 's' : ''} ago`
+                : 'Log daily to track bleeding patterns.'}
             </p>
           </ChartCard>
 
           {/* Hydration vs Bristol */}
-          <ChartCard title="Water Intake & Stool Quality" subtitle="How hydration affects consistency">
+          <ChartCard theme={theme} title="Water Intake & Stool Quality" subtitle="How hydration affects consistency">
             <ResponsiveContainer width="100%" height={140}>
               <LineChart data={waterData}>
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-                <YAxis yAxisId="water" orientation="left" domain={[0, 8]} tick={{ fontSize: 10 }} width={20} />
-                <YAxis yAxisId="bristol" orientation="right" domain={[1, 7]} tick={{ fontSize: 10 }} width={20} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
+                <YAxis yAxisId="water" orientation="left" domain={[0, 8]} tick={{ fontSize: 10, fill: muted }} width={20} />
+                <YAxis yAxisId="bristol" orientation="right" domain={[1, 7]} tick={{ fontSize: 10, fill: muted }} width={20} />
                 <Tooltip />
                 <Line yAxisId="water" type="monotone" dataKey="water" stroke="#A8D5A2" strokeWidth={2} name="Water (glasses)" dot={false} connectNulls />
                 <Line yAxisId="bristol" type="monotone" dataKey="bristol" stroke="#C9A8F5" strokeWidth={2} name="Bristol type" dot={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
-            <p style={{ fontSize: 12, color: '#8C7070', marginTop: 4 }}>
+            <p style={{ fontSize: 12, color: muted, marginTop: 4 }}>
               <span style={{ color: '#A8D5A2' }}>— Water</span> &nbsp; <span style={{ color: '#C9A8F5' }}>— Stool type</span>
             </p>
           </ChartCard>
 
           {/* Bristol Distribution */}
           {bristolData.length > 0 && (
-            <ChartCard title="Stool Type Distribution" subtitle="Your most common type — aim for Type 4">
+            <ChartCard theme={theme} title="Stool Type Distribution" subtitle="Your most common type — aim for Type 4">
               <ResponsiveContainer width="100%" height={160}>
                 <PieChart>
                   <Pie data={bristolData} cx="50%" cy="50%" outerRadius={60} dataKey="value"
@@ -284,26 +302,26 @@ export default function InsightsScreen() {
           )}
 
           {/* Wellness Score Trend */}
-          <ChartCard title="Wellness Score Trend" subtitle="Your daily score over time">
+          <ChartCard theme={theme} title="Wellness Score Trend" subtitle="Your daily score over time">
             <ResponsiveContainer width="100%" height={120}>
               <LineChart data={scoreData}>
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} width={25} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: muted }} width={25} />
                 <Tooltip />
-                <Line type="monotone" dataKey="score" stroke="#A8D5A2" strokeWidth={2.5} dot={{ fill: '#A8D5A2', r: 3 }} connectNulls />
+                <Line type="monotone" dataKey="score" stroke={theme?.wellnessHigh || '#A8D5A2'} strokeWidth={2.5} dot={{ fill: theme?.wellnessHigh || '#A8D5A2', r: 3 }} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Standard Doctor's Report */}
+          {/* Doctor's Report */}
           <div style={{ padding: '0 16px 32px' }}>
             <button
               onClick={() => downloadReport(false)}
               style={{
                 width: '100%', padding: '16px',
-                background: 'linear-gradient(135deg, #C9A8F5, #B08AE8)',
+                background: theme?.ctaGradient || 'linear-gradient(135deg, #C9A8F5, #B08AE8)',
                 border: 'none', borderRadius: 20, color: '#fff', fontSize: 15, fontWeight: 700,
-                cursor: 'pointer', boxShadow: '0 4px 16px rgba(201,168,245,0.35)'
+                cursor: 'pointer', boxShadow: `0 4px 16px ${theme?.ctaShadow || 'rgba(201,168,245,0.35)'}`,
               }}
             >
               Generate Doctor's Report (14 days)

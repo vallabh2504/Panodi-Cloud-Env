@@ -273,9 +273,9 @@ function StepHeader({ step, total, stepData, theme }) {
 }
 
 /* ── Main LogScreen ── */
-export default function LogScreen({ onNavigate, onLogSaved }) {
+export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) {
   const today = new Date().toISOString().split('T')[0]
-  const theme = getTheme()
+  const theme = themeProp || getTheme()
   const name = (() => { try { return JSON.parse(localStorage.getItem('fissurecare_settings') || '{}').userName || 'Bujji' } catch { return 'Bujji' } })()
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -283,6 +283,7 @@ export default function LogScreen({ onNavigate, onLogSaved }) {
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState(1)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [avoidWarning, setAvoidWarning] = useState(null)
   const dragStartX = useRef(0)
 
@@ -313,10 +314,13 @@ export default function LogScreen({ onNavigate, onLogSaved }) {
   }
 
   const handleSave = async () => {
+    if (saving || saved) return
+    setSaving(true)
     hapticSuccess()
     const updated = { ...log, hydration: { ...log.hydration, waterMl: log.hydration.waterGlasses * 250 } }
     await saveLog(today, updated)
     setSaved(true)
+    setSaving(false)
     if (onLogSaved) onLogSaved(updated)
     setTimeout(() => { setSaved(false); onNavigate('home') }, 2200)
   }
