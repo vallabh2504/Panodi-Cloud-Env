@@ -13,39 +13,43 @@ export function analyzeFoodOutcomes(logs) {
   const foodMap = {}
   const sorted = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date))
 
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const day = sorted[i]
-    const next = sorted[i + 1]
-    const d1 = new Date(day.date), d2 = new Date(next.date)
-    if ((d2 - d1) / (1000 * 60 * 60 * 24) !== 1) continue
+  for (let lag = 1; lag <= 3; lag++) {
+    for (let i = 0; i < sorted.length - lag; i++) {
+      const day = sorted[i]
+      const target = sorted[i + lag]
+      const d1 = new Date(day.date), d2 = new Date(target.date)
+      if (Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) !== lag) continue
 
-    const nextPain = next.bowelMovements?.[0]?.painLevel ?? next.dailySymptoms?.restingPain ?? null
-    const nextBristol = next.bowelMovements?.[0]?.bristolType ?? null
-    if (nextPain === null) continue
+      const nextPain = target.bowelMovements?.[0]?.painLevel ?? target.dailySymptoms?.restingPain ?? null
+      const nextBristol = target.bowelMovements?.[0]?.bristolType ?? null
+      if (nextPain === null) continue
 
-    const foods = [
-      ...(day.fruitsEaten || []),
-      ...(day.fiberFoods || []).map(f => 'fiber_' + f),
-      ...(day.avoidFoods || []).map(f => 'avoid_' + f),
-    ]
+      const foods = [
+        ...(day.fruitsEaten || []),
+        ...(day.fiberFoods || []).map(f => 'fiber_' + f),
+        ...(day.avoidFoods || []).map(f => 'avoid_' + f),
+      ]
 
-    for (const food of foods) {
-      if (!foodMap[food]) foodMap[food] = { totalPain: 0, count: 0, totalBristol: 0, bristolCount: 0 }
-      foodMap[food].totalPain += nextPain
-      foodMap[food].count++
-      if (nextBristol) { foodMap[food].totalBristol += nextBristol; foodMap[food].bristolCount++ }
+      for (const food of foods) {
+        if (!foodMap[food]) foodMap[food] = { totalPain: 0, count: 0, totalBristol: 0, bristolCount: 0 }
+        foodMap[food].totalPain += nextPain
+        foodMap[food].count++
+        if (nextBristol) { foodMap[food].totalBristol += nextBristol; foodMap[food].bristolCount++ }
+      }
     }
   }
 
   const results = {}
   for (const [food, data] of Object.entries(foodMap)) {
-    if (data.count >= 2) {
+    if (data.count >= 5) {
+      const avgPain = parseFloat((data.totalPain / data.count).toFixed(1))
       results[food] = {
-        avgPain: parseFloat((data.totalPain / data.count).toFixed(1)),
+        avgPain,
         avgBristol: data.bristolCount ? parseFloat((data.totalBristol / data.bristolCount).toFixed(1)) : null,
         count: data.count,
         name: FOOD_NAMES[food] || food,
         isTrigger: food.startsWith('avoid_'),
+        confidence: data.count >= 10 ? 'high' : data.count >= 7 ? 'medium' : 'low',
       }
     }
   }
@@ -53,7 +57,7 @@ export function analyzeFoodOutcomes(logs) {
 }
 
 export function getDailyInsight(logs) {
-  if (logs.length < 2) return null
+  if (logs.length < 3) return null
   const sorted = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date))
   const yesterday = sorted[1]
   if (!yesterday) return null
