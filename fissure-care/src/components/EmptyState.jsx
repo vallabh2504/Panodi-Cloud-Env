@@ -1,13 +1,9 @@
 import { motion } from 'framer-motion'
+import { SeedlingGrow } from './AnimatedSVGs'
 
 const STATES = {
   noLogs: {
-    illustration: (
-      <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-        <circle cx="60" cy="60" r="54" fill="#FFF0EB" />
-        <text x="60" y="75" fontSize="52" textAnchor="middle">🌱</text>
-      </svg>
-    ),
+    illustration: <SeedlingGrow size={110} color="#A8D5A2" />,
     title: 'Your journey starts here',
     subtitle: 'Log your first day and watch your healing garden grow, Bujji 🌸',
     cta: 'Log Today',

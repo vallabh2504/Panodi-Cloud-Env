@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Bookmark, Heart } from 'lucide-react'
 import { WISDOM, CATEGORIES, getDailyTip, getBookmarkedTips, toggleBookmark } from '../lib/wisdom'
+import { HealingLeaf } from '../components/AnimatedSVGs'
 
 function TipCard({ tip, bookmarked, onBookmark, theme }) {
   const cat = CATEGORIES[tip.category]
@@ -111,9 +112,12 @@ export default function WisdomScreen({ theme }) {
           border: `1.5px solid ${primary}35`,
         }}
       >
-        <p style={{ fontSize: 11, fontWeight: 700, color: primary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
-          ✨ Tip for you today, {name}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <HealingLeaf size={18} color={primary} />
+          <p style={{ fontSize: 11, fontWeight: 700, color: primary, textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
+            ✨ Tip for you today, {name}
+          </p>
+        </div>
         <p style={{ fontSize: 16, fontWeight: 700, color: text, marginBottom: 8, lineHeight: 1.35 }}>
           {dailyTip.emoji} {dailyTip.title}
         </p>

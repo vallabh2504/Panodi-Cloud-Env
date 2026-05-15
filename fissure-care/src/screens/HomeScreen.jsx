@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { PlusCircle, Flame, Sparkles, Timer, X, Music, Lightbulb, Bell } from 'lucide-react'
+import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell } from 'lucide-react'
 import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings } from '../lib/storage'
 import { getDailyInsight } from '../lib/correlations'
+import { FlameIcon, SunIcon, MoonIcon, WaveBar } from '../components/AnimatedSVGs'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -577,9 +578,12 @@ export default function HomeScreen({ onNavigate, theme }) {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           style={{ position: 'relative', zIndex: 2, padding: '28px 20px 50px' }}
         >
-          <p style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, marginBottom: 4, letterSpacing: '-0.3px' }}>
-            {greeting}, {name}!
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <p style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, margin: 0, letterSpacing: '-0.3px' }}>
+              {greeting}, {name}!
+            </p>
+            {hour < 17 ? <SunIcon size={22} color={theme.primary} /> : <MoonIcon size={22} color={theme.accent || '#C9A8F5'} />}
+          </div>
           <p style={{ fontSize: 15, color: theme.textMuted, lineHeight: 1.5 }}>
             {log
               ? <span>You logged today — <span style={{ fontWeight: 600, color: theme.text }}>you're doing great 💛</span></span>
@@ -674,12 +678,7 @@ export default function HomeScreen({ onNavigate, theme }) {
               display: 'flex', alignItems: 'center', gap: 12,
             }}
           >
-            <motion.div
-              animate={{ rotate: [0, -10, 10, -10, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3 }}
-            >
-              <Flame size={24} color={theme.primary} />
-            </motion.div>
+            <FlameIcon size={24} color={theme.primary} />
             <div>
               <p style={{ fontSize: 15, fontWeight: 700, color: theme.text }}>Day {streak} of your healing journey</p>
               <p style={{ fontSize: 12, color: theme.textMuted }}>
@@ -758,6 +757,8 @@ export default function HomeScreen({ onNavigate, theme }) {
           </div>
         </motion.div>
       )}
+
+      <WaveBar color={theme.primary} opacity={0.15} style={{ margin: '12px 0' }} />
 
       {/* ── Tip of the day ── */}
       <motion.div

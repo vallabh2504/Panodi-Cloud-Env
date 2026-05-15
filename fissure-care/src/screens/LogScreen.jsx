@@ -4,6 +4,7 @@ import { Plus, Minus, ChevronDown, ChevronUp, Check, ArrowLeft, ArrowRight } fro
 import { saveLog, getLog } from '../lib/storage'
 import { hapticLight, hapticMedium, hapticSuccess, hapticSelect } from '../lib/haptics'
 import { getTheme } from '../lib/themes'
+import { HeartPulse, SteamWisps, CheckDrawn } from '../components/AnimatedSVGs'
 
 const BRISTOL = [
   { type: 1, emoji: '🪨', label: 'Hard lumps', desc: 'Very hard, separate', color: '#F48585' },
@@ -366,10 +367,9 @@ export default function LogScreen({ onNavigate, onLogSaved }) {
       case 'welcome':
         return (
           <div style={{ padding: '28px 20px' }}>
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-              style={{ fontSize: 64, textAlign: 'center', marginBottom: 20 }}>
-              💛
-            </motion.div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              <HeartPulse size={72} color={theme.primary} />
+            </div>
             <h2 style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, textAlign: 'center', marginBottom: 10 }}>
               {greeting}, {name}!
             </h2>
@@ -548,7 +548,10 @@ export default function LogScreen({ onNavigate, onLogSaved }) {
             <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Almost there, {name}! 🛁</p>
             <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20 }}>Self-care tracking — every sitz bath matters so much</p>
 
-            <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, marginBottom: 10 }}>Sitz baths today ({log.sitzBaths.length}):</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, margin: 0 }}>Sitz baths today ({log.sitzBaths.length}):</p>
+              {log.sitzBaths.length > 0 && <SteamWisps size={28} color="#A8D5A2" />}
+            </div>
             {log.sitzBaths.map((bath, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '12px', background: '#F0FFF5', borderRadius: 14, border: '1px solid #A8D5A2' }}>
@@ -656,10 +659,10 @@ export default function LogScreen({ onNavigate, onLogSaved }) {
                     boxShadow: '0 6px 24px rgba(168,213,162,0.4)',
                   }}
                 >
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }}>
-                    <Check size={26} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                    <CheckDrawn size={28} color="#fff" />
                     All saved, {name}! 💛 Every log is a step toward healing.
-                  </motion.div>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.button

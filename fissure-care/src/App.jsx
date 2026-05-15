@@ -104,7 +104,7 @@ export default function App() {
           transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
           style={{ position: 'fixed', inset: 0, zIndex: 1000 }}
         >
-          <SplashScreen onEnter={handleEnter} />
+          <SplashScreen onEnter={handleEnter} theme={theme} />
         </motion.div>
       ) : (
         <motion.div

@@ -107,3 +107,77 @@ button:active {
   max-width: 430px;
   margin: 0 auto;
 }
+
+/* ── Animated SVG Keyframes ── */
+@keyframes svgFlameDance {
+  0%, 100% { transform: scaleX(1) rotate(-2deg); }
+  25% { transform: scaleX(1.06) rotate(2deg); }
+  50% { transform: scaleX(0.96) rotate(-1deg); }
+  75% { transform: scaleX(1.04) rotate(3deg); }
+}
+@keyframes svgSunSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes svgMoonGlow {
+  0%, 100% { filter: drop-shadow(0 0 3px currentColor); opacity: 0.9; }
+  50% { filter: drop-shadow(0 0 10px currentColor); opacity: 1; }
+}
+@keyframes svgSteam1 {
+  0% { transform: translateY(0) translateX(0); opacity: 0.8; }
+  100% { transform: translateY(-22px) translateX(3px); opacity: 0; }
+}
+@keyframes svgSteam2 {
+  0% { transform: translateY(0) translateX(0); opacity: 0.7; }
+  100% { transform: translateY(-20px) translateX(-4px); opacity: 0; }
+}
+@keyframes svgSteam3 {
+  0% { transform: translateY(0) translateX(0); opacity: 0.6; }
+  100% { transform: translateY(-24px) translateX(2px); opacity: 0; }
+}
+@keyframes svgStarA {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.5); opacity: 0.3; }
+}
+@keyframes svgStarB {
+  0%, 100% { transform: scale(0.6); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+@keyframes svgWaveShift {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes svgLeafSway {
+  0%, 100% { transform: rotate(-4deg); transform-origin: bottom center; }
+  50% { transform: rotate(4deg); transform-origin: bottom center; }
+}
+@keyframes svgRipple1 {
+  0% { transform: scale(0.8); opacity: 0.9; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+@keyframes svgRipple2 {
+  0% { transform: scale(0.8); opacity: 0.7; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+@keyframes svgBubble1 {
+  0% { transform: translateY(0); opacity: 0.8; }
+  100% { transform: translateY(-32px); opacity: 0; }
+}
+@keyframes svgBubble2 {
+  0% { transform: translateY(0); opacity: 0.6; }
+  100% { transform: translateY(-28px); opacity: 0; }
+}
+@keyframes svgBubble3 {
+  0% { transform: translateY(0); opacity: 0.7; }
+  100% { transform: translateY(-36px); opacity: 0; }
+}
+@keyframes svgBlobMorph {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50% { border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%; }
+  75% { border-radius: 60% 40% 60% 30% / 70% 30% 60% 40%; }
+}
+@keyframes svgOrbitDot {
+  from { transform: rotate(0deg) translateX(14px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(14px) rotate(-360deg); }
+}

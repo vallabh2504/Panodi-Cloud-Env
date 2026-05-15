@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BloomFlower, StarField } from './AnimatedSVGs'
 
 function ConfettiCanvas({ colors }) {
   const canvasRef = useRef(null)
@@ -89,16 +90,24 @@ export default function CelebrationOverlay({ celebration, onDismiss }) {
             }}
             onClick={e => e.stopPropagation()}
           >
-            <motion.div
-              animate={celebration.type === 'bounce'
-                ? { y: [0, -20, 0, -10, 0] }
-                : { rotate: [0, -10, 10, -5, 5, 0], scale: [1, 1.2, 1] }
-              }
-              transition={{ duration: 1, repeat: 2 }}
-              style={{ fontSize: 64, marginBottom: 16, display: 'block' }}
-            >
-              {config.emoji}
-            </motion.div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              {['confetti', 'fireworks', 'mega'].includes(celebration.type) ? (
+                <BloomFlower size={72} color="#E8705A" />
+              ) : celebration.type === 'stars' ? (
+                <StarField size={72} color="#F5C67A" />
+              ) : (
+                <motion.div
+                  animate={celebration.type === 'bounce'
+                    ? { y: [0, -20, 0, -10, 0] }
+                    : { rotate: [0, -10, 10, -5, 5, 0], scale: [1, 1.2, 1] }
+                  }
+                  transition={{ duration: 1, repeat: 2 }}
+                  style={{ fontSize: 64 }}
+                >
+                  {config.emoji}
+                </motion.div>
+              )}
+            </div>
             <p style={{
               fontSize: 20, fontWeight: 800, fontFamily: 'Nunito',
               color: '#3D2B2B', lineHeight: 1.4, marginBottom: 8,
