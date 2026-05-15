@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { getThemeId, saveThemeId, themes } from './lib/themes'
 import { getStreak } from './lib/storage'
 import { checkAndClaimCelebrations } from './lib/celebrations'
@@ -8,6 +9,7 @@ import InsightsScreen from './screens/InsightsScreen'
 import MedsScreen from './screens/MedsScreen'
 import SettingsScreen from './screens/SettingsScreen'
 import WisdomScreen from './screens/WisdomScreen'
+import SplashScreen from './screens/SplashScreen'
 import BottomNav from './components/BottomNav'
 import OfflineBanner from './components/OfflineBanner'
 import CelebrationOverlay from './components/CelebrationOverlay'
@@ -61,12 +63,21 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home')
   const [themeId, setThemeId] = useState(getThemeId())
   const [celebration, setCelebration] = useState(null)
+  const [showSplash, setShowSplash] = useState(
+    () => !localStorage.getItem('fissurecare_launched')
+  )
 
   const theme = themes[themeId] || themes.cherry
 
   useEffect(() => {
     scheduleHealingReminders()
   }, [])
+
+  const handleEnter = (tab = 'home') => {
+    localStorage.setItem('fissurecare_launched', '1')
+    setShowSplash(false)
+    setActiveTab(tab)
+  }
 
   const handleThemeChange = (id) => {
     saveThemeId(id)
@@ -84,16 +95,37 @@ export default function App() {
   const handleDismissCelebration = () => setCelebration(null)
 
   return (
-    <div className="min-h-dvh" style={{ background: theme.background, paddingBottom: '80px', transition: 'background 0.5s ease' }}>
-      <OfflineBanner />
-      {activeTab === 'home' && <HomeScreen onNavigate={setActiveTab} theme={theme} />}
-      {activeTab === 'log' && <LogScreen onNavigate={setActiveTab} onLogSaved={handleLogSaved} />}
-      {activeTab === 'insights' && <InsightsScreen theme={theme} />}
-      {activeTab === 'meds' && <MedsScreen theme={theme} />}
-      {activeTab === 'wisdom' && <WisdomScreen theme={theme} />}
-      {activeTab === 'settings' && <SettingsScreen theme={theme} themeId={themeId} onThemeChange={handleThemeChange} />}
-      <BottomNav activeTab={activeTab} onNavigate={setActiveTab} theme={theme} />
-      <CelebrationOverlay celebration={celebration} onDismiss={handleDismissCelebration} />
-    </div>
+    <AnimatePresence mode="wait">
+      {showSplash ? (
+        <motion.div
+          key="splash"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0, y: -30, scale: 0.97 }}
+          transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+          style={{ position: 'fixed', inset: 0, zIndex: 1000 }}
+        >
+          <SplashScreen onEnter={handleEnter} />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="app"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="min-h-dvh"
+          style={{ background: theme.background, paddingBottom: '80px', transition: 'background 0.5s ease' }}
+        >
+          <OfflineBanner />
+          {activeTab === 'home' && <HomeScreen onNavigate={setActiveTab} theme={theme} />}
+          {activeTab === 'log' && <LogScreen onNavigate={setActiveTab} onLogSaved={handleLogSaved} />}
+          {activeTab === 'insights' && <InsightsScreen theme={theme} />}
+          {activeTab === 'meds' && <MedsScreen theme={theme} />}
+          {activeTab === 'wisdom' && <WisdomScreen theme={theme} />}
+          {activeTab === 'settings' && <SettingsScreen theme={theme} themeId={themeId} onThemeChange={handleThemeChange} />}
+          <BottomNav activeTab={activeTab} onNavigate={setActiveTab} theme={theme} />
+          <CelebrationOverlay celebration={celebration} onDismiss={handleDismissCelebration} />
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
