@@ -60,7 +60,8 @@ const STEPS = [
   { id: 'movements', emoji: '🚽', label: 'Movements' },
   { id: 'symptoms', emoji: '🌡️', label: 'Symptoms' },
   { id: 'hydration', emoji: '💧', label: 'Hydration' },
-  { id: 'food', emoji: '🍎', label: 'Food' },
+  { id: 'food', emoji: '🍎', label: 'Healing Foods' },
+  { id: 'avoid', emoji: '⚠️', label: 'Watch Out' },
   { id: 'selfcare', emoji: '🛁', label: 'Self-Care' },
   { id: 'journal', emoji: '📝', label: 'Journal' },
 ]
@@ -106,14 +107,14 @@ function Toggle({ value, onChange, labelYes = 'Yes', labelNo = 'No', theme }) {
 function Stepper({ value, onChange, min = 0, max = 10, theme }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <motion.button whileTap={{ scale: 0.92 }} onClick={() => { hapticSelect(); onChange(Math.max(min, value - 1)) }} style={{
+      <motion.button whileTap={{ scale: 0.92 }} aria-label="Decrease" onClick={() => { hapticSelect(); onChange(Math.max(min, value - 1)) }} style={{
         width: 40, height: 40, borderRadius: 14, border: `1px solid ${theme.cardBorder}`,
         background: theme.card, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
         <Minus size={16} color={theme.textMuted} />
       </motion.button>
       <span style={{ fontSize: 24, fontWeight: 800, fontFamily: 'Nunito', minWidth: 36, textAlign: 'center', color: theme.text }}>{value}</span>
-      <motion.button whileTap={{ scale: 0.92 }} onClick={() => { hapticSelect(); onChange(Math.min(max, value + 1)) }} style={{
+      <motion.button whileTap={{ scale: 0.92 }} aria-label="Increase" onClick={() => { hapticSelect(); onChange(Math.min(max, value + 1)) }} style={{
         width: 40, height: 40, borderRadius: 14, border: 'none',
         background: theme.primary, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
@@ -123,7 +124,7 @@ function Stepper({ value, onChange, min = 0, max = 10, theme }) {
   )
 }
 
-function BMCard({ bm, index, onUpdate, onDelete, theme }) {
+function BMCard({ bm, index, onUpdate, onSoftDelete, theme }) {
   const [expanded, setExpanded] = useState(true)
   return (
     <motion.div
@@ -131,10 +132,14 @@ function BMCard({ bm, index, onUpdate, onDelete, theme }) {
       animate={{ opacity: 1, y: 0 }}
       style={{ marginBottom: 12, background: theme.card, borderRadius: 20, border: `1px solid ${theme.cardBorder}`, overflow: 'hidden' }}
     >
-      <button onClick={() => { hapticLight(); setExpanded(!expanded) }} style={{
-        width: '100%', padding: '14px 16px', background: 'none', border: 'none',
-        cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-      }}>
+      <button
+        onClick={() => { hapticLight(); setExpanded(!expanded) }}
+        aria-label={expanded ? 'Collapse movement entry' : 'Expand movement entry'}
+        style={{
+          width: '100%', padding: '14px 16px', background: 'none', border: 'none',
+          cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 18 }}>🚽</span>
           <div style={{ textAlign: 'left' }}>
@@ -218,7 +223,7 @@ function BMCard({ bm, index, onUpdate, onDelete, theme }) {
             <Toggle value={bm.spasm} onChange={v => onUpdate({ ...bm, spasm: v })} theme={theme} />
           </div>
 
-          <motion.button whileTap={{ scale: 0.95 }} onClick={onDelete} style={{
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => onSoftDelete(bm)} aria-label="Remove movement entry" style={{
             width: '100%', marginTop: 14, padding: '10px',
             borderRadius: 12, border: `1px solid ${theme.cardBorder}`,
             background: '#FFF0F0', color: '#F48585', fontSize: 13, fontWeight: 600, cursor: 'pointer'
@@ -235,6 +240,7 @@ function WaterTracker({ glasses, onChange, goal = 8, theme }) {
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
         {Array.from({ length: goal }).map((_, i) => (
           <motion.button key={i} whileTap={{ scale: 0.9 }}
+            aria-label={i < glasses ? `Remove glass ${i + 1}` : `Add glass ${i + 1}`}
             onClick={() => { hapticSelect(); onChange(i < glasses ? i : i + 1) }}
             style={{
               fontSize: 26, background: 'none', border: 'none', cursor: 'pointer',
@@ -314,7 +320,16 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   const [avoidWarning, setAvoidWarning] = useState(null)
   const dragStartX = useRef(0)
 
-  const [log, setLog] = useState({
+  // P1-A: Undo snackbar state
+  const [pendingDelete, setPendingDelete] = useState(null) // { id, bm, timeoutId }
+
+  // P1-B: Draft save ref
+  const draftTimerRef = useRef(null)
+
+  // P1-B: Draft banner state
+  const [showDraftBanner, setShowDraftBanner] = useState(false)
+
+  const emptyLog = {
     date: today,
     bowelMovements: [],
     dailySymptoms: { restingPain: 0, itchingBurning: 0, sittingDiscomfort: 0, overallComfort: null, stressLevel: 0, sleepQuality: 5 },
@@ -327,10 +342,38 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
     avoidFoods: [],
     activity: { walking: false, walkingMinutes: 0, yoga: false },
     selfCare: { topicalApplied: false, warmCompress: false, emotionalWellbeing: null, notes: '' }
-  })
+  }
 
+  const [log, setLog] = useState(emptyLog)
+
+  // P1-B: Auto-draft save effect
   useEffect(() => {
-    getLog(today).then(existing => { if (existing) setLog(existing) })
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+    draftTimerRef.current = setTimeout(() => {
+      if (!saved) {
+        localStorage.setItem('fissurecare_draft_' + today, JSON.stringify({ log, step }))
+      }
+    }, 800)
+    return () => clearTimeout(draftTimerRef.current)
+  }, [log, step, saved, today])
+
+  // P1-B: Load existing log or draft on mount
+  useEffect(() => {
+    getLog(today).then(existing => {
+      if (existing) {
+        setLog(existing)
+      } else {
+        const draft = localStorage.getItem('fissurecare_draft_' + today)
+        if (draft) {
+          try {
+            const { log: draftLog, step: draftStep } = JSON.parse(draft)
+            setLog(draftLog)
+            setStep(draftStep || 0)
+            setShowDraftBanner(true)
+          } catch {}
+        }
+      }
+    })
   }, [today])
 
   const goNext = () => {
@@ -346,6 +389,8 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
     hapticSuccess()
     const updated = { ...log, hydration: { ...log.hydration, waterMl: log.hydration.waterGlasses * 250 } }
     await saveLog(today, updated)
+    // P1-B: Clear draft on successful save
+    localStorage.removeItem('fissurecare_draft_' + today)
     setSaved(true)
     setSaving(false)
     if (onLogSaved) onLogSaved(updated)
@@ -357,6 +402,24 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
     const now = new Date()
     const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
     setLog(l => ({ ...l, bowelMovements: [...l.bowelMovements, { id: Date.now(), time, painLevel: 0, bloodPresent: false, spasm: false }] }))
+  }
+
+  // P1-A: Soft delete handler
+  const handleSoftDelete = (bm) => {
+    hapticMedium()
+    if (pendingDelete?.timeoutId) clearTimeout(pendingDelete.timeoutId)
+    // Immediately hide it from the list
+    setLog(l => ({ ...l, bowelMovements: l.bowelMovements.filter(b => b.id !== bm.id) }))
+    const timeoutId = setTimeout(() => setPendingDelete(null), 5000)
+    setPendingDelete({ id: bm.id, bm, timeoutId })
+  }
+
+  // P1-A: Undo delete handler
+  const handleUndoDelete = () => {
+    if (!pendingDelete) return
+    clearTimeout(pendingDelete.timeoutId)
+    setLog(l => ({ ...l, bowelMovements: [...l.bowelMovements, pendingDelete.bm] }))
+    setPendingDelete(null)
   }
 
   const toggleFruit = (id) => {
@@ -398,6 +461,26 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
       case 'welcome':
         return (
           <div style={{ padding: '28px 20px' }}>
+            {/* P1-B: Draft resume banner */}
+            {showDraftBanner && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                style={{
+                  background: theme.tipBg, border: `1px solid ${theme.tipBorder}`,
+                  borderRadius: 14, padding: '10px 14px', marginBottom: 16,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}
+              >
+                <p style={{ fontSize: 13, color: theme.text, fontWeight: 600 }}>📋 Resuming where you left off</p>
+                <button onClick={() => {
+                  setShowDraftBanner(false)
+                  setLog({ date: today, bowelMovements: [], dailySymptoms: { restingPain: 0, itchingBurning: 0, sittingDiscomfort: 0, overallComfort: null, stressLevel: 0, sleepQuality: 5 }, medications: [], topicalOintment: { name: '', timesApplied: 0 }, sitzBaths: [], hydration: { waterGlasses: 0, waterMl: 0, coconutWater: false, coffee: false, alcohol: false }, fruitsEaten: [], fiberFoods: [], avoidFoods: [], activity: { walking: false, walkingMinutes: 0, yoga: false }, selfCare: { topicalApplied: false, warmCompress: false, emotionalWellbeing: null, notes: '' } })
+                }}
+                  style={{ fontSize: 12, color: theme.textMuted, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                  Start fresh
+                </button>
+              </motion.div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
               <HeartPulse size={72} color={theme.primary} />
             </div>
@@ -413,7 +496,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
             }}>
               <p style={{ fontSize: 13, fontWeight: 600, color: theme.primary, marginBottom: 4 }}>📅 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
               <p style={{ fontSize: 13, color: theme.textMuted, lineHeight: 1.6 }}>
-                7 quick steps · about 2 minutes · everything stays private
+                8 quick steps · about 2 minutes · everything stays private
               </p>
             </div>
             <p style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginTop: 16 }}>
@@ -431,7 +514,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
             {log.bowelMovements.map((bm, i) => (
               <BMCard key={bm.id} bm={bm} index={i} theme={theme}
                 onUpdate={updated => setLog(l => ({ ...l, bowelMovements: l.bowelMovements.map(b => b.id === bm.id ? updated : b) }))}
-                onDelete={() => setLog(l => ({ ...l, bowelMovements: l.bowelMovements.filter(b => b.id !== bm.id) }))}
+                onSoftDelete={handleSoftDelete}
               />
             ))}
             {log.bowelMovements.length === 0 && (
@@ -511,12 +594,12 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
           </div>
         )
 
-      /* ── Step 5: Food ── */
+      /* ── Step 5: Healing Foods ── */
       case 'food':
         return (
           <div style={{ padding: '20px' }}>
-            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>What did you eat today? 🍎</p>
-            <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16 }}>Tap everything you had. This helps find your patterns 💡</p>
+            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>What healing foods did you have today? 🍎</p>
+            <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16 }}>Tap everything you had. These foods support your recovery 💡</p>
             <p style={{ fontSize: 12, fontWeight: 700, color: theme.primary, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Healing fruits 🌟</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
               {FRUITS.map(fruit => (
@@ -578,7 +661,15 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
                 </>
               )
             })()}
-            <p style={{ fontSize: 12, fontWeight: 700, color: '#F5A68A', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Foods to avoid ⚠️</p>
+          </div>
+        )
+
+      /* ── Step 6: Watch Out (Avoid Foods) ── */
+      case 'avoid':
+        return (
+          <div style={{ padding: '20px' }}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Anything to note? ⚠️</p>
+            <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16 }}>These foods can slow healing — just tracking, no judgment 💛</p>
             <AnimatePresence>
               {avoidWarning && (
                 <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -603,7 +694,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
           </div>
         )
 
-      /* ── Step 6: Self-Care ── */
+      /* ── Step 7: Self-Care ── */
       case 'selfcare':
         return (
           <div style={{ padding: '20px' }}>
@@ -624,6 +715,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
                   style={{ width: 52, padding: '4px 8px', borderRadius: 8, border: '1px solid #A8D5A2', fontSize: 13, textAlign: 'center', color: theme.text }} />
                 <span style={{ fontSize: 12, color: theme.textMuted }}>min</span>
                 <button onClick={() => setLog(l => ({ ...l, sitzBaths: l.sitzBaths.filter((_, j) => j !== i) }))}
+                  aria-label="Remove movement entry"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F48585', fontSize: 18 }}>✕</button>
               </motion.div>
             ))}
@@ -678,7 +770,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
           </div>
         )
 
-      /* ── Step 7: Journal & Save ── */
+      /* ── Step 8: Journal & Save ── */
       case 'journal':
         return (
           <div style={{ padding: '20px' }}>
@@ -731,6 +823,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
                   key="save"
                   whileTap={{ scale: 0.97 }}
                   onClick={handleSave}
+                  aria-label="Save today's log"
                   style={{
                     width: '100%', padding: '18px', background: theme.ctaGradient,
                     border: 'none', borderRadius: 20, color: '#fff', fontSize: 17, fontWeight: 700,
@@ -754,6 +847,29 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: theme.background, maxWidth: 430, margin: '0 auto' }}>
+      {/* P1-A: Undo snackbar */}
+      <AnimatePresence>
+        {pendingDelete && (
+          <motion.div
+            initial={{ y: -60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -60, opacity: 0 }}
+            style={{
+              position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
+              width: '100%', maxWidth: 430, zIndex: 300,
+              background: '#3D2B2B', padding: '14px 20px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}
+          >
+            <p style={{ color: '#fff', fontSize: 13, fontWeight: 500 }}>Movement entry removed</p>
+            <button onClick={handleUndoDelete} style={{
+              background: 'none', border: '1.5px solid #F5C67A', borderRadius: 10,
+              color: '#F5C67A', fontSize: 13, fontWeight: 700, padding: '6px 14px', cursor: 'pointer',
+            }}>Undo</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <StepHeader step={step} total={STEPS.length} stepData={STEPS[step]} theme={theme} />
 
       {/* Swipeable content area */}
@@ -793,6 +909,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
           whileTap={{ scale: 0.95 }}
           onClick={goPrev}
           disabled={step === 0}
+          aria-label="Previous step"
           style={{
             flex: 1, padding: '14px', borderRadius: 16,
             background: step === 0 ? theme.cardBorder : theme.card,
@@ -808,6 +925,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={goNext}
+            aria-label="Next step"
             style={{
               flex: 2, padding: '14px', borderRadius: 16,
               background: theme.ctaGradient,
@@ -822,6 +940,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleSave}
+            aria-label="Save today's log"
             style={{
               flex: 2, padding: '14px', borderRadius: 16,
               background: 'linear-gradient(135deg, #A8D5A2, #7BC97B)',

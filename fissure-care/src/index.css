@@ -39,6 +39,15 @@ body {
   --text: #3D2B2B;
   --text-muted: #8C7070;
   --border: #F0E0DA;
+
+  /* Type scale */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-display: 26px;
+  --text-hero: 38px;
 }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -175,4 +184,24 @@ button:active {
 @keyframes svgOrbitDot {
   from { transform: rotate(0deg) translateX(14px) rotate(0deg); }
   to { transform: rotate(360deg) translateX(14px) rotate(-360deg); }
+}
+
+/* Focus-visible ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--focus-color, #E8705A);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Reduced motion — applies to ALL Framer Motion + CSS animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

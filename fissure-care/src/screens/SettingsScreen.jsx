@@ -17,6 +17,7 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
   const [settings, setSettings] = useState({ userName: '', waterGoal: 8, fiberGoal: 25, remindersEnabled: false })
   const [saved, setSaved] = useState(false)
   const [showReset, setShowReset] = useState(false)
+  const [resetCountdown, setResetCountdown] = useState(0)
   const [notifStatus, setNotifStatus] = useState('unknown')
   const [notifDeniedMsg, setNotifDeniedMsg] = useState('')
   const [clipMsg, setClipMsg] = useState('')
@@ -191,6 +192,16 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
     setSettings({ userName: '', waterGoal: 8, fiberGoal: 25, remindersEnabled: false })
   }
 
+  const startResetCountdown = () => {
+    setResetCountdown(3)
+    const interval = setInterval(() => {
+      setResetCountdown(c => {
+        if (c <= 1) { clearInterval(interval); resetData(); return 0 }
+        return c - 1
+      })
+    }, 1000)
+  }
+
   const InputRow = ({ label, children }) => (
     <div style={{ marginBottom: 16 }}>
       <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 8 }}>{label}</p>
@@ -225,6 +236,7 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
                   key={t.id}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => onThemeChange(t.id)}
+                  aria-label={isActive ? `${t.name} theme selected` : `Select ${t.name} theme`}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 14,
                     padding: '14px 16px', borderRadius: 16,
@@ -273,6 +285,10 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => onThemeChange(t.id)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Select ${t.id} theme`}
+                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onThemeChange(t.id)}
                 style={{
                   width: t.id === themeId ? 28 : 12, height: 12, borderRadius: 6,
                   background: `linear-gradient(90deg, ${t.primary}, ${t.primaryLight})`,

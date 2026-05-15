@@ -84,6 +84,9 @@ export default function CelebrationOverlay({ celebration, onDismiss }) {
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 280, damping: 20 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={celebration?.title}
             style={{
               position: 'relative', zIndex: 1,
               background: '#fff', borderRadius: 28, padding: '36px 28px',
@@ -110,10 +113,13 @@ export default function CelebrationOverlay({ celebration, onDismiss }) {
                 </motion.div>
               )}
             </div>
-            <p style={{
-              fontSize: 20, fontWeight: 800, fontFamily: 'Nunito',
-              color: '#3D2B2B', lineHeight: 1.4, marginBottom: 8,
-            }}>
+            <p
+              aria-live="assertive"
+              style={{
+                fontSize: 20, fontWeight: 800, fontFamily: 'Nunito',
+                color: '#3D2B2B', lineHeight: 1.4, marginBottom: 8,
+              }}
+            >
               {celebration.title}
             </p>
             <p style={{ fontSize: 13, color: '#8C7070', marginBottom: 24 }}>
