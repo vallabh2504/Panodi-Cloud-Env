@@ -454,12 +454,20 @@ export default function SettingsScreen({ theme, themeId, onThemeChange }) {
               This will permanently delete all your logs, medications and settings. This cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowReset(false)} style={{
+              <button onClick={() => { setShowReset(false); setResetCountdown(0) }} style={{
                 flex: 1, padding: '14px', background: theme.cardBorder, border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: theme.text,
               }}>Cancel</button>
-              <button onClick={resetData} style={{
-                flex: 1, padding: '14px', background: '#F48585', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff',
-              }}>Yes, Reset</button>
+              <button
+                onClick={startResetCountdown}
+                disabled={resetCountdown > 0}
+                aria-label={resetCountdown > 0 ? `Resetting in ${resetCountdown} seconds` : 'Confirm reset all data'}
+                style={{
+                  flex: 1, padding: '14px', background: resetCountdown > 0 ? '#F8A0A0' : '#F48585',
+                  border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 600,
+                  cursor: resetCountdown > 0 ? 'default' : 'pointer', color: '#fff',
+                }}>
+                {resetCountdown > 0 ? `Resetting in ${resetCountdown}…` : 'Yes, Reset'}
+              </button>
             </div>
           </motion.div>
         </div>
