@@ -92,14 +92,31 @@ export function getStreak() {
 
 export function calcWellnessScore(log) {
   if (!log) return 0
-  const water = ((log.hydration?.waterGlasses || 0) / 8) * 25
-  const fruits = Math.min((log.fruitsEaten?.length || 0) / 3, 1) * 20
-  const sitz = Math.min((log.sitzBaths?.length || 0) / 2, 1) * 20
+  // Evidence-based weights: fiber/hydration most impactful, pain inversion key
+  const water = ((log.hydration?.waterGlasses || 0) / 8) * 20   // was 25
+  const fruits = Math.min((log.fruitsEaten?.length || 0) / 3, 1) * 15  // was 20
+  const fiber = Math.min((log.fiberFoods?.length || 0) / 3, 1) * 15   // NEW: fiber gets own weight
+  const sitz = Math.min((log.sitzBaths?.length || 0) / 2, 1) * 15     // was 20
   const avgPain = log.bowelMovements?.length
     ? log.bowelMovements.reduce((s, bm) => s + (bm.painLevel || 0), 0) / log.bowelMovements.length
     : (log.dailySymptoms?.restingPain || 0)
-  const pain = ((10 - avgPain) / 10) * 20
+  const pain = ((10 - avgPain) / 10) * 25                        // was 20 — pain is critical
   const bmTypes = log.bowelMovements?.map(bm => bm.bristolType) || []
-  const bm = bmTypes.includes(4) ? 15 : bmTypes.some(t => t === 3 || t === 5) ? 10 : bmTypes.length ? 5 : 0
-  return Math.round(Math.min(water + fruits + sitz + pain + bm, 100))
+  const bm = bmTypes.includes(4) ? 10 : bmTypes.some(t => t === 3 || t === 5) ? 7 : bmTypes.length ? 3 : 0  // was 15→10
+  return Math.round(Math.min(water + fruits + fiber + sitz + pain + bm, 100))
+}
+
+export function getHealingDayFreezes() {
+  const data = localStorage.getItem('fissurecare_freezes')
+  return data ? JSON.parse(data) : { used: 0, lastReset: new Date().toISOString().slice(0, 7) }
+}
+
+export function useHealingDayFreeze() {
+  const f = getHealingDayFreezes()
+  const thisMonth = new Date().toISOString().slice(0, 7)
+  if (f.lastReset !== thisMonth) { f.used = 0; f.lastReset = thisMonth }
+  if (f.used >= 2) return false
+  f.used++
+  localStorage.setItem('fissurecare_freezes', JSON.stringify(f))
+  return true
 }

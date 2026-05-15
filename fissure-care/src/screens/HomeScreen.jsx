@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell } from 'lucide-react'
-import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings } from '../lib/storage'
+import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings, getHealingDayFreezes, useHealingDayFreeze } from '../lib/storage'
 import { getDailyInsight } from '../lib/correlations'
 import { FlameIcon, SunIcon, MoonIcon, WaveBar } from '../components/AnimatedSVGs'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
@@ -137,6 +137,19 @@ function WellnessRing({ score, theme }) {
 
 /* ── Healing Garden Flowers ── */
 function HealingGardenFlowers({ bloodFreeDays, theme }) {
+  const [freezeToast, setFreezeToast] = useState(null)
+  const freezeData = getHealingDayFreezes()
+  const freezesLeft = 2 - freezeData.used
+  const showFreezeBtn = bloodFreeDays > 0 && freezesLeft > 0
+
+  const handleFreeze = () => {
+    const ok = useHealingDayFreeze()
+    if (ok) {
+      setFreezeToast('Streak protected! 🧊')
+      setTimeout(() => setFreezeToast(null), 2500)
+    }
+  }
+
   if (bloodFreeDays < 1) return null
   const count = Math.min(bloodFreeDays, 14)
   const flowers = Array.from({ length: count }, (_, i) => ({
@@ -154,9 +167,26 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
         border: `1px solid ${theme.tipBorder}`,
       }}
     >
-      <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, marginBottom: 4 }}>
-        Your Healing Garden
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>
+          Your Healing Garden
+        </p>
+        {showFreezeBtn && (
+          <button
+            onClick={handleFreeze}
+            style={{
+              fontSize: 11, padding: '4px 10px', borderRadius: 10,
+              background: 'transparent', border: `1px solid ${theme.cardBorder}`,
+              color: theme.textMuted, cursor: 'pointer', fontWeight: 600,
+            }}
+          >
+            🧊 Freeze streak
+          </button>
+        )}
+      </div>
+      {freezeToast && (
+        <p style={{ fontSize: 12, color: '#5BAFD6', fontWeight: 600, marginBottom: 6 }}>{freezeToast}</p>
+      )}
       <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 10 }}>
         {bloodFreeDays} consecutive blood-free {bloodFreeDays === 1 ? 'day' : 'days'} — each flower is a victory
       </p>
