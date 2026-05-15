@@ -31,12 +31,16 @@ const FRUITS = [
 ]
 
 const FIBER_FOODS = [
-  { id: 'oats', emoji: '🌾', name: 'Oats / Dalia' },
-  { id: 'brown_rice', emoji: '🍚', name: 'Brown rice' },
-  { id: 'lentils', emoji: '🍲', name: 'Lentils / Dal' },
-  { id: 'spinach', emoji: '🥬', name: 'Spinach' },
-  { id: 'carrots', emoji: '🥕', name: 'Carrots' },
-  { id: 'isabgol', emoji: '🌿', name: 'Isabgol husk' },
+  { id: 'oats', emoji: '🌾', name: 'Oats / Dalia', grams: 4 },
+  { id: 'brown_rice', emoji: '🍚', name: 'Brown rice', grams: 3 },
+  { id: 'lentils', emoji: '🍲', name: 'Lentils / Dal', grams: 5 },
+  { id: 'spinach', emoji: '🥬', name: 'Spinach', grams: 2 },
+  { id: 'carrots', emoji: '🥕', name: 'Carrots', grams: 3 },
+  { id: 'isabgol', emoji: '🌿', name: 'Isabgol husk', grams: 7 },
+  { id: 'whole_wheat', emoji: '🍞', name: 'Whole wheat bread', grams: 3 },
+  { id: 'broccoli', emoji: '🥦', name: 'Broccoli', grams: 3 },
+  { id: 'flaxseeds', emoji: '🫘', name: 'Flaxseeds', grams: 3 },
+  { id: 'chickpeas', emoji: '🟡', name: 'Chickpeas', grams: 6 },
 ]
 
 const AVOID_FOODS = [
@@ -136,7 +140,7 @@ function BMCard({ bm, index, onUpdate, onDelete, theme }) {
           <div style={{ textAlign: 'left' }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: theme.text }}>Movement #{index + 1}</p>
             <p style={{ fontSize: 12, color: theme.textMuted }}>
-              {bm.time || 'Now'} · Pain {bm.painLevel}/10 · {bm.bloodPresent ? '🩸 Blood' : 'No blood'}
+              {bm.time || 'Now'} · Pain {bm.painLevel}/10 · {bm.bloodPresent ? '🩸 Blood' : 'No blood'}{bm.straining && bm.straining !== 'none' ? ` · Straining: ${bm.straining.charAt(0).toUpperCase() + bm.straining.slice(1)}` : ''}
             </p>
           </div>
         </div>
@@ -166,6 +170,29 @@ function BMCard({ bm, index, onUpdate, onDelete, theme }) {
               {BRISTOL.find(b => b.type === bm.bristolType)?.desc}
             </p>
           )}
+
+          <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 8 }}>Straining?</p>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            {[
+              { value: 'none', label: 'None 😌' },
+              { value: 'some', label: 'Some 😤' },
+              { value: 'significant', label: 'Significant 😣' },
+            ].map(opt => (
+              <motion.button key={opt.value} whileTap={{ scale: 0.94 }} onClick={() => { hapticSelect(); onUpdate({ ...bm, straining: opt.value }) }} style={{
+                flex: 1, padding: '9px', borderRadius: 12, cursor: 'pointer',
+                border: `2px solid ${bm.straining === opt.value ? theme.primary : theme.cardBorder}`,
+                background: bm.straining === opt.value ? theme.primary + '18' : theme.card,
+                fontSize: 12, fontWeight: 600, color: bm.straining === opt.value ? theme.primary : theme.text
+              }}>
+                {opt.label}
+              </motion.button>
+            ))}
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 8 }}>Urgency?</p>
+            <Toggle value={bm.urgent} onChange={v => onUpdate({ ...bm, urgent: v })} labelYes="Urgent 🏃" labelNo="Normal 🚶" theme={theme} />
+          </div>
 
           <PainSlider value={bm.painLevel || 0} onChange={v => onUpdate({ ...bm, painLevel: v })} label="Pain during this movement:" theme={theme} />
 
@@ -508,18 +535,49 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
               ))}
             </div>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#A8D5A2', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Fiber-rich foods</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-              {FIBER_FOODS.map(f => (
-                <motion.button key={f.id} whileTap={{ scale: 0.94 }} onClick={() => toggleFiber(f.id)} style={{
-                  padding: '8px 14px', borderRadius: 20, cursor: 'pointer',
-                  border: `1.5px solid ${log.fiberFoods.includes(f.id) ? '#A8D5A2' : theme.cardBorder}`,
-                  background: log.fiberFoods.includes(f.id) ? '#F0FFF5' : theme.card,
-                  fontSize: 13, color: theme.text, display: 'flex', alignItems: 'center', gap: 5
-                }}>
-                  <span>{f.emoji}</span> {f.name}
-                </motion.button>
-              ))}
-            </div>
+            {(() => {
+              const totalFiber = log.fiberFoods.reduce((sum, id) => {
+                const food = FIBER_FOODS.find(f => f.id === id)
+                return sum + (food ? food.grams : 0)
+              }, 0)
+              const fiberGoal = 25
+              const badgeColor = totalFiber >= fiberGoal ? '#A8D5A2' : totalFiber >= 15 ? '#F5C67A' : '#F48585'
+              const badgeBg = totalFiber >= fiberGoal ? '#F0FFF5' : totalFiber >= 15 ? '#FFF8E8' : '#FFF0F0'
+              return (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <div style={{
+                      padding: '6px 14px', borderRadius: 20,
+                      background: badgeBg, border: `1.5px solid ${badgeColor}`,
+                      fontSize: 13, fontWeight: 700, color: badgeColor
+                    }}>
+                      Fiber today: {totalFiber}g / {fiberGoal}g goal
+                    </div>
+                  </div>
+                  <div style={{ background: theme.cardBorder, borderRadius: 8, height: 8, overflow: 'hidden', marginBottom: 14 }}>
+                    <motion.div
+                      animate={{ width: `${Math.min((totalFiber / fiberGoal) * 100, 100)}%` }}
+                      transition={{ duration: 0.3 }}
+                      style={{ height: '100%', background: `linear-gradient(90deg, ${badgeColor}, ${badgeColor}cc)`, borderRadius: 8 }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+                    {FIBER_FOODS.map(f => (
+                      <motion.button key={f.id} whileTap={{ scale: 0.94 }} onClick={() => toggleFiber(f.id)} style={{
+                        padding: '8px 12px', borderRadius: 16, cursor: 'pointer',
+                        border: `2px solid ${log.fiberFoods.includes(f.id) ? theme.primary : theme.cardBorder}`,
+                        background: log.fiberFoods.includes(f.id) ? theme.primary + '12' : theme.card,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 72
+                      }}>
+                        <span style={{ fontSize: 20 }}>{f.emoji}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: theme.text, textAlign: 'center' }}>{f.name}</span>
+                        <span style={{ fontSize: 10, color: theme.textMuted }}>+{f.grams}g</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </>
+              )
+            })()}
             <p style={{ fontSize: 12, fontWeight: 700, color: '#F5A68A', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Foods to avoid ⚠️</p>
             <AnimatePresence>
               {avoidWarning && (

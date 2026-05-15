@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
+import { analyzeFoodOutcomes } from '../lib/correlations'
 
 const TABS = ['Week', 'Month', '3 Months']
 
@@ -78,6 +79,205 @@ function checkEmergencyCondition(logs) {
     }
   }
   return false
+}
+
+const CONFIDENCE_STYLE = {
+  high: { background: '#D1FAE5', color: '#065F46', label: 'High evidence' },
+  medium: { background: '#DBEAFE', color: '#1E40AF', label: 'Medium evidence' },
+  low: { background: '#FEF3C7', color: '#92400E', label: 'Low evidence' },
+}
+
+function FoodCorrelationSection({ logs, theme }) {
+  const p = theme?.primary || '#E8705A'
+  const card = theme?.card || '#fff'
+  const border = theme?.cardBorder || '#F0E0DA'
+  const text = theme?.text || '#3D2B2B'
+  const muted = theme?.textMuted || '#8C7070'
+
+  const results = useMemo(() => analyzeFoodOutcomes(logs), [logs])
+  const entries = Object.entries(results)
+
+  return (
+    <div style={{ margin: '0 16px 16px', background: card, borderRadius: 20, padding: '16px', border: `1px solid ${border}` }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: text, marginBottom: 2 }}>Food Outcome Correlations</p>
+      <p style={{ fontSize: 12, color: muted, marginBottom: 12 }}>24h–72h lag window analysis</p>
+      {entries.length === 0 ? (
+        <p style={{ fontSize: 13, color: muted, fontStyle: 'italic', textAlign: 'center', padding: '8px 0' }}>
+          Log at least 5 days with the same food to see personalized insights.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {entries.map(([key, data]) => {
+            const cs = CONFIDENCE_STYLE[data.confidence] || CONFIDENCE_STYLE.low
+            return (
+              <div key={key} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: data.isTrigger ? '#FFF5F5' : '#F0FFF5',
+                borderRadius: 12, padding: '10px 12px',
+                border: `1px solid ${data.isTrigger ? '#FFCDD2' : '#C8E6C9'}`,
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: text, marginBottom: 2 }}>{data.name}</p>
+                  <p style={{ fontSize: 12, color: muted }}>
+                    Avg pain: {data.avgPain}/10 &middot; {data.count} observations
+                    {data.avgBristol ? ` · Bristol ${data.avgBristol}` : ''}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0, marginLeft: 8 }}>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+                    background: cs.background, color: cs.color,
+                  }}>{cs.label}</span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+                    background: data.isTrigger ? '#FFCDD2' : '#C8E6C9',
+                    color: data.isTrigger ? '#B71C1C' : '#1B5E20',
+                  }}>{data.isTrigger ? 'Trigger' : 'Helper'}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CalendarHeatmap({ logs, theme }) {
+  const [selectedDay, setSelectedDay] = useState(null)
+
+  const card = theme?.card || '#fff'
+  const border = theme?.cardBorder || '#F0E0DA'
+  const text = theme?.text || '#3D2B2B'
+  const muted = theme?.textMuted || '#8C7070'
+  const wellnessHigh = theme?.wellnessHigh || '#A8D5A2'
+
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  const monthName = now.toLocaleString('en', { month: 'long' })
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const firstDayOfWeek = new Date(year, month, 1).getDay() // 0=Sun
+
+  // Build a map from YYYY-MM-DD -> log data
+  const logMap = useMemo(() => {
+    const map = {}
+    for (const log of logs) {
+      map[log.date] = log
+    }
+    return map
+  }, [logs])
+
+  // Build 35-cell grid (5 weeks * 7 days)
+  const cells = []
+  for (let i = 0; i < 35; i++) {
+    const dayNum = i - firstDayOfWeek + 1
+    if (dayNum < 1 || dayNum > daysInMonth) {
+      cells.push({ dayNum: null, dateStr: null })
+    } else {
+      const mm = String(month + 1).padStart(2, '0')
+      const dd = String(dayNum).padStart(2, '0')
+      const dateStr = `${year}-${mm}-${dd}`
+      cells.push({ dayNum, dateStr })
+    }
+  }
+
+  function getCellColor(dateStr) {
+    if (!dateStr) return 'transparent'
+    const log = logMap[dateStr]
+    if (!log) return border
+    const pain = log.bowelMovements?.[0]?.painLevel ?? log.dailySymptoms?.restingPain ?? null
+    const hasBlood = log.bowelMovements?.some(bm => bm.bloodPresent) || false
+    if (hasBlood || (pain !== null && pain >= 7)) return '#F48585'
+    if (pain !== null && pain >= 4) return '#F5C67A'
+    if (pain !== null && pain <= 3) return wellnessHigh
+    return border
+  }
+
+  const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
+  const selectedLog = selectedDay ? logMap[selectedDay] : null
+  const selectedPain = selectedLog
+    ? (selectedLog.bowelMovements?.[0]?.painLevel ?? selectedLog.dailySymptoms?.restingPain ?? null)
+    : null
+  const selectedBlood = selectedLog
+    ? (selectedLog.bowelMovements?.some(bm => bm.bloodPresent) || false)
+    : false
+
+  return (
+    <div style={{ margin: '0 16px 16px', background: card, borderRadius: 20, padding: '16px', border: `1px solid ${border}` }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: text, marginBottom: 2 }}>Symptom Calendar</p>
+      <p style={{ fontSize: 12, color: muted, marginBottom: 12 }}>{monthName} {year}</p>
+
+      {/* Day of week headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 36px)', gap: 4, marginBottom: 4 }}>
+        {DAYS_OF_WEEK.map(d => (
+          <div key={d} style={{ width: 36, textAlign: 'center', fontSize: 10, fontWeight: 600, color: muted }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 36px)', gap: 4 }}>
+        {cells.map((cell, idx) => {
+          const color = getCellColor(cell.dateStr)
+          const isSelected = selectedDay === cell.dateStr
+          const hasData = cell.dateStr && logMap[cell.dateStr]
+          return (
+            <div
+              key={idx}
+              onClick={() => {
+                if (!hasData) return
+                setSelectedDay(isSelected ? null : cell.dateStr)
+              }}
+              style={{
+                width: 36, height: 36, borderRadius: 8,
+                background: color,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: hasData ? 'pointer' : 'default',
+                border: isSelected ? `2px solid ${text}` : '2px solid transparent',
+                boxSizing: 'border-box',
+                opacity: cell.dayNum === null ? 0 : 1,
+              }}
+            >
+              {cell.dayNum !== null && (
+                <span style={{ fontSize: 11, fontWeight: 600, color: color === border ? muted : '#fff' }}>
+                  {cell.dayNum}
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Tooltip / selected day info */}
+      {selectedDay && selectedLog && (
+        <div style={{
+          marginTop: 10, background: border, borderRadius: 12, padding: '10px 14px',
+        }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: text, marginBottom: 2 }}>{selectedDay}</p>
+          <p style={{ fontSize: 12, color: muted }}>
+            Pain: {selectedPain !== null ? `${selectedPain}/10` : 'Not recorded'} &nbsp;&middot;&nbsp;
+            Blood: {selectedBlood ? 'Yes' : 'No'}
+          </p>
+        </div>
+      )}
+
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: 12, marginTop: 14, flexWrap: 'wrap' }}>
+        {[
+          { color: wellnessHigh, label: 'Pain ≤3, no blood' },
+          { color: '#F5C67A', label: 'Pain 4–6' },
+          { color: '#F48585', label: 'Blood or pain ≥7' },
+          { color: border, label: 'No data' },
+        ].map(({ color, label }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 12, height: 12, borderRadius: 3, background: color, border: `1px solid ${border}` }} />
+            <span style={{ fontSize: 10, color: muted }}>{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function InsightsScreen({ theme }) {
@@ -312,6 +512,12 @@ export default function InsightsScreen({ theme }) {
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
+
+          {/* Symptom Calendar */}
+          <CalendarHeatmap logs={logs} theme={theme} />
+
+          {/* Food Outcome Correlations */}
+          <FoodCorrelationSection logs={logs} theme={theme} />
 
           {/* Doctor's Report */}
           <div style={{ padding: '0 16px 32px' }}>
