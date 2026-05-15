@@ -13,6 +13,7 @@ import SplashScreen from './screens/SplashScreen'
 import BottomNav from './components/BottomNav'
 import OfflineBanner from './components/OfflineBanner'
 import CelebrationOverlay from './components/CelebrationOverlay'
+import CoachMarks from './components/CoachMarks'
 
 function scheduleHealingReminders() {
   const settings = JSON.parse(localStorage.getItem('fissurecare_settings') || '{}')
@@ -21,38 +22,44 @@ function scheduleHealingReminders() {
 
   const now = new Date()
   const today = now.toISOString().split('T')[0]
-  const hasLoggedToday = !!localStorage.getItem(`fissurecare_log_${today}`)
   const hour = now.getHours()
-  const name = settings.userName || 'Bujji'
+  const name = settings.userName || 'friend'
+  const todayLog = JSON.parse(localStorage.getItem('fissurecare_log_' + today) || 'null')
+  const glasses = todayLog?.hydration?.waterGlasses || 0
+  const hasSitz = (todayLog?.sitzBaths?.length || 0) > 0
+  const hasBM = (todayLog?.bowelMovements?.length || 0) > 0
 
-  if (hour >= 12 && hour < 14 && !hasLoggedToday) {
-    const key = 'fissurecare_nudge_noon_' + today
+  // Hydration nudge: if <2 glasses by 2pm
+  if (hour >= 14 && hour < 15 && glasses < 2) {
+    const key = 'fissurecare_nudge_hydration_' + today
     if (!localStorage.getItem(key)) {
       new Notification('💧 Hydration Check', {
-        body: `${name}, have you had 8 glasses of water today? Staying hydrated is key to healing.`,
-        icon: '/favicon.svg', tag: 'hydration-noon',
+        body: `${name}, you've had ${glasses} glasses so far. Aim for 8 to support healing!`,
+        icon: '/favicon.svg', tag: 'hydration-afternoon',
       })
       localStorage.setItem(key, '1')
     }
   }
 
-  if (hour >= 20 && hour < 22 && !hasLoggedToday) {
+  // Post-BM sitz reminder: if BM logged today but no sitz bath yet, nudge at next hour
+  if (hasBM && !hasSitz && hour >= 8 && hour < 20) {
+    const key = 'fissurecare_nudge_sitz_' + today + '_' + hour
+    if (!localStorage.getItem(key)) {
+      new Notification('🛁 Sitz Bath Reminder', {
+        body: `${name}, a warm sitz bath after your bowel movement helps healing. 15 minutes is all it takes!`,
+        icon: '/favicon.svg', tag: 'sitz-reminder',
+      })
+      localStorage.setItem(key, '1')
+    }
+  }
+
+  // Evening log reminder if no log by 9pm
+  if (hour >= 21 && hour < 22 && !todayLog) {
     const key = 'fissurecare_nudge_evening_' + today
     if (!localStorage.getItem(key)) {
       new Notification('📝 Log Your Day', {
-        body: `${name}, take 2 minutes to log today and track your healing progress 💛`,
+        body: `${name}, take 2 minutes to log today — every entry helps track your healing! 💛`,
         icon: '/favicon.svg', tag: 'log-evening',
-      })
-      localStorage.setItem(key, '1')
-    }
-  }
-
-  if (hour >= 9 && hour < 11 && !hasLoggedToday) {
-    const key = 'fissurecare_nudge_morning_' + today
-    if (!localStorage.getItem(key)) {
-      new Notification('🌸 Good Morning!', {
-        body: `Start your day with papaya or oats, ${name}! Fiber-rich foods accelerate healing.`,
-        icon: '/favicon.svg', tag: 'fruit-morning',
       })
       localStorage.setItem(key, '1')
     }
@@ -66,11 +73,14 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(
     () => !localStorage.getItem('fissurecare_launched')
   )
+  const [showCoachMarks, setShowCoachMarks] = useState(() => !localStorage.getItem('fissurecare_toured'))
 
   const theme = themes[themeId] || themes.cherry
 
   useEffect(() => {
     scheduleHealingReminders()
+    const id = setInterval(scheduleHealingReminders, 60 * 60 * 1000)
+    return () => clearInterval(id)
   }, [])
 
   const handleEnter = (tab = 'home') => {
@@ -124,6 +134,7 @@ export default function App() {
           {activeTab === 'settings' && <SettingsScreen theme={theme} themeId={themeId} onThemeChange={handleThemeChange} />}
           <BottomNav activeTab={activeTab} onNavigate={setActiveTab} theme={theme} />
           <CelebrationOverlay celebration={celebration} onDismiss={handleDismissCelebration} />
+          {showCoachMarks && !showSplash && <CoachMarks onDone={() => { localStorage.setItem('fissurecare_toured', '1'); setShowCoachMarks(false) }} />}
         </motion.div>
       )}
     </AnimatePresence>
