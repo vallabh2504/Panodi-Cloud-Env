@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell } from 'lucide-react'
+import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell, ChevronDown } from 'lucide-react'
 import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings, getHealingDayFreezes, useHealingDayFreeze } from '../lib/storage'
 import { getDailyInsight } from '../lib/correlations'
 import { FlameIcon, SunIcon, MoonIcon, WaveBar } from '../components/AnimatedSVGs'
@@ -200,7 +200,26 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
     }
   }
 
-  if (bloodFreeDays < 1) return null
+  if (bloodFreeDays === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        style={{
+          margin: '16px 16px 0', background: theme.tipBg,
+          borderRadius: 18, padding: '16px',
+          border: `1px solid ${theme.tipBorder}`, textAlign: 'center',
+        }}
+      >
+        <p style={{ fontSize: 28, marginBottom: 8 }}>🌱</p>
+        <p style={{ fontSize: 14, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Your Healing Garden</p>
+        <p style={{ fontSize: 12, color: theme.textMuted, lineHeight: 1.6 }}>
+          Log a blood-free day to plant your first flower. Every blood-free day grows your garden 🌸
+        </p>
+      </motion.div>
+    )
+  }
   const count = Math.min(bloodFreeDays, 14)
   const flowers = Array.from({ length: count }, (_, i) => ({
     emoji: i % 3 === 0 ? '🌺' : i % 3 === 1 ? '🌸' : '🌼',
@@ -586,6 +605,9 @@ export default function HomeScreen({ onNavigate, theme }) {
   const [tip] = useState(tips[new Date().getDay() % tips.length])
   const [mounted, setMounted] = useState(false)
   const [showSitzTimer, setShowSitzTimer] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const [collapsed, setCollapsed] = useState({ progress: false, insights: false })
+  const toggleSection = (key) => setCollapsed(s => ({ ...s, [key]: !s[key] }))
 
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const lowEndDevice = typeof navigator !== 'undefined' && (navigator.deviceMemory !== undefined) && navigator.deviceMemory < 4
@@ -621,6 +643,12 @@ export default function HomeScreen({ onNavigate, theme }) {
     setWeekData(days)
     setTimeout(() => setMounted(true), 100)
   }, [today])
+
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 160)
+    window.addEventListener('scroll', handler, { passive: true })
+    return () => window.removeEventListener('scroll', handler)
+  }, [])
 
   const score = log ? calcWellnessScore(log) : 0
 
@@ -743,66 +771,83 @@ export default function HomeScreen({ onNavigate, theme }) {
         ))}
       </motion.div>
 
-      {/* ── Healing Garden Flowers ── */}
-      <AnimatePresence>
-        {lastBlood > 0 && (
-          <motion.div
-            custom={2} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
-          >
-            <HealingGardenFlowers bloodFreeDays={lastBlood} theme={theme} />
+      {/* ── YOUR PROGRESS section (collapsible) ── */}
+      <div style={{ marginTop: 8 }}>
+        <button
+          onClick={() => toggleSection('progress')}
+          aria-expanded={!collapsed.progress}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            width: '100%', padding: '12px 20px 4px', background: 'none', border: 'none', cursor: 'pointer',
+          }}
+        >
+          <p style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0 }}>
+            Your Progress
+          </p>
+          <motion.div animate={{ rotate: collapsed.progress ? -90 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={16} color={theme.textMuted} />
           </motion.div>
-        )}
-      </AnimatePresence>
-      {/* ── Healing Day Grace Message (0 blood-free days) ── */}
-      {lastBlood === 0 && log && (() => {
-        const freezeData = getHealingDayFreezes()
-        const freezesLeft = 2 - freezeData.used
-        return (
-          <motion.div
-            custom={2} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
-            style={{
-              margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18,
-              padding: '14px 16px', border: `1px solid ${theme.tipBorder}`,
-            }}
-          >
-            <p style={{ fontSize: 13, color: theme.text, lineHeight: 1.6 }}>
-              Every setback is part of healing 💛 — you have <strong>{freezesLeft}</strong> streak {freezesLeft === 1 ? 'freeze' : 'freezes'} left this month
-            </p>
-          </motion.div>
-        )
-      })()}
+        </button>
 
-      {/* ── Streak ── */}
-      <AnimatePresence>
-        {streak > 0 && (
-          <motion.div
-            custom={3} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
-            style={{
-              margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18,
-              padding: '14px 16px', border: `1px solid ${theme.tipBorder}`,
-              display: 'flex', alignItems: 'center', gap: 12,
-            }}
-          >
-            <FlameIcon size={24} color={theme.primary} />
-            <div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: theme.text }}>Day {streak} of your healing journey</p>
-              <p style={{ fontSize: 12, color: theme.textMuted }}>
-                {streak >= 90 ? '90 days — you are incredible' :
-                 streak >= 30 ? '30 days — a full month of self-care' :
-                 streak >= 14 ? '2 weeks — that takes real strength' :
-                 streak >= 7 ? 'One week — you showed up for yourself' : 'Every day counts. Keep going!'}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <AnimatePresence initial={false}>
+          {!collapsed.progress && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden' }}
+            >
+              {/* Healing Garden */}
+              <motion.div custom={2} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}>
+                <HealingGardenFlowers bloodFreeDays={lastBlood} theme={theme} />
+              </motion.div>
 
-      {/* ── Fiber Goal Widget ── */}
-      <motion.div
-        custom={4} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
-      >
-        <FiberGoalWidget log={log} theme={theme} />
-      </motion.div>
+              {/* Healing Day Grace */}
+              {lastBlood === 0 && log && (() => {
+                const freezeData = getHealingDayFreezes()
+                const freezesLeft = 2 - freezeData.used
+                return (
+                  <motion.div
+                    custom={2} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
+                    style={{ margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18, padding: '14px 16px', border: `1px solid ${theme.tipBorder}` }}
+                  >
+                    <p style={{ fontSize: 13, color: theme.text, lineHeight: 1.6 }}>
+                      Every setback is part of healing 💛 — you have <strong>{freezesLeft}</strong> streak {freezesLeft === 1 ? 'freeze' : 'freezes'} left this month
+                    </p>
+                  </motion.div>
+                )
+              })()}
+
+              {/* Streak */}
+              <AnimatePresence>
+                {streak > 0 && (
+                  <motion.div
+                    custom={3} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
+                    style={{ margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18, padding: '14px 16px', border: `1px solid ${theme.tipBorder}`, display: 'flex', alignItems: 'center', gap: 12 }}
+                  >
+                    <FlameIcon size={24} color={theme.primary} />
+                    <div>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: theme.text }}>Day {streak} of your healing journey</p>
+                      <p style={{ fontSize: 12, color: theme.textMuted }}>
+                        {streak >= 90 ? '90 days — you are incredible' :
+                         streak >= 30 ? '30 days — a full month of self-care' :
+                         streak >= 14 ? '2 weeks — that takes real strength' :
+                         streak >= 7 ? 'One week — you showed up for yourself' : 'Every day counts. Keep going!'}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Fiber Goal */}
+              <motion.div custom={4} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}>
+                <FiberGoalWidget log={log} theme={theme} />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* ── CTA Buttons ── */}
       <motion.div
@@ -813,6 +858,7 @@ export default function HomeScreen({ onNavigate, theme }) {
           whileHover={{ scale: 1.02, boxShadow: `0 8px 30px ${theme.ctaShadow}` }}
           whileTap={{ scale: 0.97 }}
           onClick={() => onNavigate('log')}
+          aria-label="Log today's health data"
           style={{
             width: '100%', padding: '18px', background: theme.ctaGradient,
             border: 'none', borderRadius: 20, color: '#fff', fontSize: 17, fontWeight: 700,
@@ -827,6 +873,7 @@ export default function HomeScreen({ onNavigate, theme }) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => setShowSitzTimer(true)}
+          aria-label="Open sitz bath timer"
           style={{
             width: '100%', padding: '15px', background: theme.card,
             border: `2px solid ${theme.primary}40`, borderRadius: 20,
@@ -839,43 +886,103 @@ export default function HomeScreen({ onNavigate, theme }) {
         </motion.button>
       </motion.div>
 
-      {/* ── Sparkline ── */}
-      {weekData.some(d => d.pain !== null) && (
-        <motion.div
-          custom={6} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
+      {/* ── INSIGHTS & TIPS section (collapsible) ── */}
+      <div style={{ marginTop: 8 }}>
+        <button
+          onClick={() => toggleSection('insights')}
+          aria-expanded={!collapsed.insights}
           style={{
-            margin: '16px 16px 0', background: theme.card, borderRadius: 20, padding: '16px',
-            border: `1px solid ${theme.cardBorder}`, boxShadow: `0 2px 10px ${theme.cardShadow}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            width: '100%', padding: '12px 20px 4px', background: 'none', border: 'none', cursor: 'pointer',
           }}
         >
-          <p style={{ fontSize: 13, fontWeight: 600, color: theme.textMuted, marginBottom: 10 }}>Pain this week</p>
-          <ResponsiveContainer width="100%" height={60}>
-            <LineChart data={weekData}>
-              <Line type="monotone" dataKey="pain" stroke={theme.primary} strokeWidth={2.5}
-                dot={{ fill: theme.primary, r: 3, strokeWidth: 0 }} connectNulls />
-            </LineChart>
-          </ResponsiveContainer>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-            {weekData.map((d, i) => (
-              <span key={i} style={{ fontSize: 10, color: theme.textMuted, flex: 1, textAlign: 'center' }}>{d.day}</span>
-            ))}
-          </div>
-        </motion.div>
-      )}
+          <p style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0 }}>
+            Insights & Tips
+          </p>
+          <motion.div animate={{ rotate: collapsed.insights ? -90 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={16} color={theme.textMuted} />
+          </motion.div>
+        </button>
 
-      <WaveBar color={theme.primary} opacity={0.15} style={{ margin: '12px 0' }} />
+        <AnimatePresence initial={false}>
+          {!collapsed.insights && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden' }}
+            >
+              {weekData.some(d => d.pain !== null) && (
+                <motion.div
+                  custom={6} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
+                  style={{ margin: '16px 16px 0', background: theme.card, borderRadius: 20, padding: '16px', border: `1px solid ${theme.cardBorder}`, boxShadow: `0 2px 10px ${theme.cardShadow}` }}
+                >
+                  <p style={{ fontSize: 13, fontWeight: 600, color: theme.textMuted, marginBottom: 10 }}>Pain this week</p>
+                  <ResponsiveContainer width="100%" height={60}>
+                    <LineChart data={weekData}>
+                      <Line type="monotone" dataKey="pain" stroke={theme.primary} strokeWidth={2.5}
+                        dot={{ fill: theme.primary, r: 3, strokeWidth: 0 }} connectNulls />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                    {weekData.map((d, i) => (
+                      <span key={i} style={{ fontSize: 10, color: theme.textMuted, flex: 1, textAlign: 'center' }}>{d.day}</span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
-      {/* ── Tip of the day ── */}
-      <motion.div
-        custom={7} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
-        style={{
-          margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18,
-          padding: '16px', border: `1px solid ${theme.tipBorder}`,
-        }}
-      >
-        <p style={{ fontSize: 12, fontWeight: 600, color: theme.primary, marginBottom: 6 }}>Tip of the day</p>
-        <p style={{ fontSize: 13, color: theme.text, lineHeight: 1.6 }}>{tip}</p>
-      </motion.div>
+              <WaveBar color={theme.primary} opacity={0.15} style={{ margin: '12px 0' }} />
+
+              <motion.div
+                custom={7} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
+                style={{ margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18, padding: '16px', border: `1px solid ${theme.tipBorder}` }}
+              >
+                <p style={{ fontSize: 12, fontWeight: 600, color: theme.primary, marginBottom: 6 }}>Tip of the day</p>
+                <p style={{ fontSize: 13, color: theme.text, lineHeight: 1.6 }}>{tip}</p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── Sticky Log Pill (appears when scrolled) ── */}
+      <AnimatePresence>
+        {scrolled && !log && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            style={{
+              position: 'fixed',
+              bottom: 'calc(80px + env(safe-area-inset-bottom))',
+              left: '50%', transform: 'translateX(-50%)',
+              zIndex: 50, width: 'calc(100% - 32px)', maxWidth: 398,
+            }}
+          >
+            <button
+              onClick={() => onNavigate('log')}
+              aria-label="Log today's health data"
+              style={{
+                width: '100%', padding: '14px 20px',
+                background: theme.ctaGradient, border: 'none', borderRadius: 20,
+                color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                boxShadow: `0 6px 24px ${theme.ctaShadow}`,
+              }}
+            >
+              📋 Log today's check-in
+              {streak > 0 && (
+                <span style={{ background: 'rgba(255,255,255,0.22)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>
+                  🔥 {streak}
+                </span>
+              )}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Sitz Timer Modal ── */}
       <AnimatePresence>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, createContext } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getThemeId, saveThemeId, themes } from './lib/themes'
 import { getStreak } from './lib/storage'
@@ -14,6 +14,8 @@ import BottomNav from './components/BottomNav'
 import OfflineBanner from './components/OfflineBanner'
 import CelebrationOverlay from './components/CelebrationOverlay'
 import CoachMarks from './components/CoachMarks'
+
+export const MotionContext = createContext({ reduced: false })
 
 function scheduleHealingReminders() {
   const settings = JSON.parse(localStorage.getItem('fissurecare_settings') || '{}')
@@ -76,6 +78,9 @@ export default function App() {
   const [showCoachMarks, setShowCoachMarks] = useState(() => !localStorage.getItem('fissurecare_toured'))
 
   const theme = themes[themeId] || themes.cherry
+  const reducedMotion = typeof window !== 'undefined'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false
 
   useEffect(() => {
     scheduleHealingReminders()
@@ -105,6 +110,7 @@ export default function App() {
   const handleDismissCelebration = () => setCelebration(null)
 
   return (
+    <MotionContext.Provider value={{ reduced: reducedMotion }}>
     <AnimatePresence mode="wait">
       {showSplash ? (
         <motion.div
@@ -138,5 +144,6 @@ export default function App() {
         </motion.div>
       )}
     </AnimatePresence>
+    </MotionContext.Provider>
   )
 }

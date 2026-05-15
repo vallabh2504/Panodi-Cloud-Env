@@ -37,6 +37,12 @@ export const themes = {
     particleChar: ['🌸', '🌸', '🌸', '💮', '✿'],
     riverColor: 'rgba(168,213,162,0.25)',
     riverHighlight: 'rgba(255,183,197,0.3)',
+    danger: '#E85A5A',
+    dangerBg: '#FFF0F0',
+    dangerBorder: '#F48585',
+    success: '#5A9E5A',
+    successBg: '#F0FFF5',
+    successBorder: '#A8D5A2',
   },
 
   ocean: {
@@ -70,6 +76,12 @@ export const themes = {
     particleChar: ['~', '~', '~', '~', '~'],
     riverColor: 'rgba(59,130,196,0.15)',
     riverHighlight: 'rgba(135,206,235,0.3)',
+    danger: '#E85A5A',
+    dangerBg: '#FFF0F0',
+    dangerBorder: '#F48585',
+    success: '#5A9E5A',
+    successBg: '#F0FFF5',
+    successBorder: '#A8D5A2',
   },
 
   aurora: {
@@ -103,6 +115,12 @@ export const themes = {
     particleChar: ['✦', '✧', '⋆', '★', '✦'],
     riverColor: 'rgba(139,92,246,0.12)',
     riverHighlight: 'rgba(52,211,153,0.2)',
+    danger: '#E85A5A',
+    dangerBg: '#FFF0F0',
+    dangerBorder: '#F48585',
+    success: '#5A9E5A',
+    successBg: '#F0FFF5',
+    successBorder: '#A8D5A2',
   },
 }
 

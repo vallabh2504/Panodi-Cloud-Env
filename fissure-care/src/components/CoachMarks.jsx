@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const STEPS = [
+const FEATURE_STEPS = [
   {
     title: 'Your Wellness Ring',
     body: 'This 0–100 score combines your hydration, fiber, sitz baths, pain level, and stool quality each day.',
@@ -14,7 +14,7 @@ const STEPS = [
   },
   {
     title: 'Daily Log',
-    body: 'Tap the Log tab to check in — it takes 2 minutes and walks you through 7 gentle steps.',
+    body: 'Tap the Log tab to check in — it takes 2 minutes and walks you through 8 gentle steps.',
     emoji: '📋',
   },
   {
@@ -25,7 +25,33 @@ const STEPS = [
 ]
 
 export default function CoachMarks({ onDone }) {
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(0) // step 0 = name capture, 1-4 = feature steps
+  const [nameInput, setNameInput] = useState('')
+
+  const totalSteps = 1 + FEATURE_STEPS.length // name step + 4 feature steps
+  const isNameStep = step === 0
+  const featureStep = FEATURE_STEPS[step - 1]
+
+  const saveName = () => {
+    if (nameInput.trim()) {
+      const settings = JSON.parse(localStorage.getItem('fissurecare_settings') || '{}')
+      settings.userName = nameInput.trim()
+      localStorage.setItem('fissurecare_settings', JSON.stringify(settings))
+    }
+  }
+
+  const handleNext = () => {
+    if (isNameStep) saveName()
+    if (step < totalSteps - 1) {
+      setStep(s => s + 1)
+    } else {
+      onDone()
+    }
+  }
+
+  const handleSkip = () => {
+    onDone()
+  }
 
   return (
     <AnimatePresence>
@@ -52,15 +78,48 @@ export default function CoachMarks({ onDone }) {
             boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
           }}
         >
-          <p style={{ fontSize: 48, marginBottom: 12 }}>{STEPS[step].emoji}</p>
-          <p style={{ fontSize: 18, fontWeight: 800, fontFamily: 'Nunito', color: '#3D2B2B', marginBottom: 8 }}>
-            {STEPS[step].title}
-          </p>
-          <p style={{ fontSize: 14, color: '#8C7070', lineHeight: 1.6, marginBottom: 24 }}>
-            {STEPS[step].body}
-          </p>
+          {isNameStep ? (
+            <>
+              <p style={{ fontSize: 48, marginBottom: 12 }}>👋</p>
+              <p style={{ fontSize: 18, fontWeight: 800, fontFamily: 'Nunito', color: '#3D2B2B', marginBottom: 8 }}>
+                What should we call you?
+              </p>
+              <input
+                type="text"
+                placeholder="Your name"
+                value={nameInput}
+                onChange={e => setNameInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && nameInput.trim() && handleNext()}
+                autoFocus
+                maxLength={30}
+                aria-label="Enter your name"
+                style={{
+                  width: '100%', padding: '14px', borderRadius: 14,
+                  border: '1.5px solid #F0E0DA', fontSize: 16,
+                  textAlign: 'center', fontFamily: 'Inter',
+                  color: '#3D2B2B', marginBottom: 8, boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+              <p style={{ fontSize: 12, color: '#8C7070', marginBottom: 24 }}>
+                Used for your personal greeting — stored on your device only.
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: 48, marginBottom: 12 }}>{featureStep.emoji}</p>
+              <p style={{ fontSize: 18, fontWeight: 800, fontFamily: 'Nunito', color: '#3D2B2B', marginBottom: 8 }}>
+                {featureStep.title}
+              </p>
+              <p style={{ fontSize: 14, color: '#8C7070', lineHeight: 1.6, marginBottom: 24 }}>
+                {featureStep.body}
+              </p>
+            </>
+          )}
+
+          {/* Progress dots */}
           <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 20 }}>
-            {STEPS.map((_, i) => (
+            {Array.from({ length: totalSteps }).map((_, i) => (
               <div key={i} style={{
                 width: i === step ? 24 : 8, height: 8, borderRadius: 4,
                 background: i <= step ? '#E8705A' : '#F0E0DA',
@@ -68,16 +127,29 @@ export default function CoachMarks({ onDone }) {
               }} />
             ))}
           </div>
+
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={onDone} style={{
+            <button onClick={handleSkip} style={{
               flex: 1, padding: '12px', background: '#F5F0F0', border: 'none',
               borderRadius: 14, fontSize: 14, color: '#8C7070', cursor: 'pointer', fontWeight: 600,
-            }}>Skip</button>
-            <button onClick={() => step < STEPS.length - 1 ? setStep(s => s + 1) : onDone()} style={{
-              flex: 2, padding: '12px', background: 'linear-gradient(135deg, #E8705A, #F5A68A)',
-              border: 'none', borderRadius: 14, fontSize: 14, color: '#fff', cursor: 'pointer', fontWeight: 700,
             }}>
-              {step < STEPS.length - 1 ? 'Next →' : 'Get Started 💛'}
+              {isNameStep ? 'Skip for now' : 'Skip'}
+            </button>
+            <button
+              onClick={handleNext}
+              disabled={isNameStep && nameInput.trim() === ''}
+              style={{
+                flex: 2, padding: '12px',
+                background: isNameStep && nameInput.trim() === ''
+                  ? '#F0E0DA'
+                  : 'linear-gradient(135deg, #E8705A, #F5A68A)',
+                border: 'none', borderRadius: 14, fontSize: 14,
+                color: isNameStep && nameInput.trim() === '' ? '#C4A0A0' : '#fff',
+                cursor: isNameStep && nameInput.trim() === '' ? 'default' : 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              {step < totalSteps - 1 ? 'Next →' : 'Get Started 💛'}
             </button>
           </div>
         </motion.div>
