@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { PlusCircle, Flame, Sparkles, Timer, X, Music } from 'lucide-react'
-import { getLog, getStreak, calcWellnessScore, getSettings } from '../lib/storage'
+import { PlusCircle, Flame, Sparkles, Timer, X, Music, Lightbulb, Bell } from 'lucide-react'
+import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings } from '../lib/storage'
+import { getDailyInsight } from '../lib/correlations'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -421,11 +422,86 @@ function SitzTimerModal({ onClose, theme }) {
   )
 }
 
+/* ── Reminder Banner (unlogged by 8pm) ── */
+function ReminderBanner({ name, onLog, theme }) {
+  const [dismissed, setDismissed] = useState(() => {
+    const d = localStorage.getItem('fissurecare_reminder_dismissed')
+    return d === new Date().toISOString().split('T')[0]
+  })
+
+  if (dismissed) return null
+
+  return (
+    <motion.div
+      initial={{ y: -60, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: -60, opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+      style={{
+        margin: '16px 16px 0', borderRadius: 18, padding: '14px 16px',
+        background: `linear-gradient(135deg, ${theme.primary}18, ${theme.primary}08)`,
+        border: `1.5px solid ${theme.primary}40`,
+        display: 'flex', alignItems: 'flex-start', gap: 12,
+      }}
+    >
+      <Bell size={20} color={theme.primary} style={{ flexShrink: 0, marginTop: 2 }} />
+      <div style={{ flex: 1 }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: theme.text, marginBottom: 4 }}>
+          Hey {name}, we haven't heard from you today 💛
+        </p>
+        <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 10 }}>How are you feeling? A quick log helps track your healing.</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <motion.button whileTap={{ scale: 0.95 }} onClick={onLog} style={{
+            padding: '8px 16px', background: theme.ctaGradient, border: 'none',
+            borderRadius: 12, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          }}>
+            Log Now
+          </motion.button>
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => {
+            setDismissed(true)
+            localStorage.setItem('fissurecare_reminder_dismissed', new Date().toISOString().split('T')[0])
+          }} style={{
+            padding: '8px 14px', background: 'transparent', border: `1px solid ${theme.cardBorder}`,
+            borderRadius: 12, color: theme.textMuted, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+          }}>
+            Later
+          </motion.button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+/* ── Insight Card ── */
+function InsightCard({ insight, theme }) {
+  if (!insight) return null
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
+      style={{
+        margin: '16px 16px 0', borderRadius: 18, padding: '14px 16px',
+        background: theme.tipBg, border: `1px solid ${theme.tipBorder}`,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+        <Lightbulb size={16} color={theme.primary} />
+        <p style={{ fontSize: 12, fontWeight: 700, color: theme.primary, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+          Pattern detected
+        </p>
+      </div>
+      <p style={{ fontSize: 13, color: theme.text, lineHeight: 1.65 }}>{insight}</p>
+    </motion.div>
+  )
+}
+
 /* ── Main V2 HomeScreen ── */
 export default function HomeScreen({ onNavigate, theme }) {
   const [log, setLog] = useState(null)
   const [streak, setStreak] = useState(0)
   const [weekData, setWeekData] = useState([])
+  const [insight, setInsight] = useState(null)
   const [tip] = useState(tips[new Date().getDay() % tips.length])
   const [mounted, setMounted] = useState(false)
   const [showSitzTimer, setShowSitzTimer] = useState(false)
@@ -437,9 +513,17 @@ export default function HomeScreen({ onNavigate, theme }) {
   const greetingEmoji = greetingEmojis[theme.id] || '🌸'
   const greeting = hour < 12 ? `Good morning ${greetingEmoji}` : hour < 17 ? `Good afternoon ${greetingEmoji}` : `Good evening ${greetingEmoji}`
 
+  const settings = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('fissurecare_settings') || '{}') } catch { return {} }
+  }, [])
+  const name = settings.userName || 'Bujji'
+
   useEffect(() => {
     getLog(today).then(setLog)
     setStreak(getStreak())
+    getAllLogs().then(logs => {
+      setInsight(getDailyInsight(logs))
+    })
     const days = []
     for (let i = 6; i >= 0; i--) {
       const d = new Date(); d.setDate(d.getDate() - i)
@@ -454,10 +538,6 @@ export default function HomeScreen({ onNavigate, theme }) {
   }, [today])
 
   const score = log ? calcWellnessScore(log) : 0
-  const settings = useMemo(() => {
-    try { return JSON.parse(localStorage.getItem('fissurecare_settings') || '{}') } catch { return {} }
-  }, [])
-  const name = settings.userName || ''
 
   const lastBlood = useMemo(() => {
     let days = 0
@@ -470,6 +550,8 @@ export default function HomeScreen({ onNavigate, theme }) {
     }
     return days
   }, [today])
+
+  const showReminder = hour >= 20 && !log
 
   const fadeUp = {
     hidden: { opacity: 0, y: 20 },
@@ -496,16 +578,26 @@ export default function HomeScreen({ onNavigate, theme }) {
           style={{ position: 'relative', zIndex: 2, padding: '28px 20px 50px' }}
         >
           <p style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, marginBottom: 4, letterSpacing: '-0.3px' }}>
-            {greeting}
+            {greeting}, {name}!
           </p>
-          {name
-            ? <p style={{ fontSize: 15, color: theme.textMuted, lineHeight: 1.5 }}>
-                Hi <span style={{ fontWeight: 600, color: theme.text }}>{name}</span> — how are you feeling today?
-              </p>
-            : <p style={{ fontSize: 15, color: theme.textMuted }}>Take it gently today</p>
-          }
+          <p style={{ fontSize: 15, color: theme.textMuted, lineHeight: 1.5 }}>
+            {log
+              ? <span>You logged today — <span style={{ fontWeight: 600, color: theme.text }}>you're doing great 💛</span></span>
+              : 'How are you feeling today? Take it gently.'
+            }
+          </p>
         </motion.div>
       </div>
+
+      {/* ── Evening reminder banner ── */}
+      <AnimatePresence>
+        {showReminder && (
+          <ReminderBanner name={name} onLog={() => onNavigate('log')} theme={theme} />
+        )}
+      </AnimatePresence>
+
+      {/* ── Correlation insight ── */}
+      {insight && <InsightCard insight={insight} theme={theme} />}
 
       {/* ── Wellness Score Card ── */}
       <motion.div

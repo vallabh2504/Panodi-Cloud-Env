@@ -1,0 +1,6 @@
+export const hapticLight = () => navigator.vibrate?.(10)
+export const hapticMedium = () => navigator.vibrate?.(25)
+export const hapticSuccess = () => navigator.vibrate?.([10, 50, 10])
+export const hapticError = () => navigator.vibrate?.([50, 30, 50])
+export const hapticCelebration = () => navigator.vibrate?.([30, 20, 30, 20, 100])
+export const hapticSelect = () => navigator.vibrate?.(8)

@@ -50,3 +50,60 @@ body, div, nav, button, input {
   transition-duration: 0.3s;
   transition-timing-function: ease;
 }
+
+/* Global button press state — Feature #4 */
+button:active {
+  transform: scale(0.97);
+  transition: transform 80ms ease !important;
+}
+
+/* Skeleton shimmer — Feature #1 */
+@keyframes shimmer {
+  0% { background-position: -400% 0; }
+  100% { background-position: 400% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0e0da 25%,
+    #fff8f5 50%,
+    #f0e0da 75%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.6s infinite ease-in-out;
+  border-radius: 12px;
+}
+
+/* Pulsing hotspot ring */
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Offline / celebration slide-in */
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Score ring draw-in */
+@keyframes drawIn {
+  from { stroke-dashoffset: 330; }
+}
+
+/* Fruit bounce on select */
+@keyframes fruitBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+/* Safe area bottom padding utility */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Max-width container utility */
+.app-container {
+  max-width: 430px;
+  margin: 0 auto;
+}

@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, Minus, ChevronDown, ChevronUp, Check, ArrowLeft, ArrowRight } from 'lucide-react'
 import { saveLog, getLog } from '../lib/storage'
-import { ChevronDown, ChevronUp, Plus, Minus, Check } from 'lucide-react'
+import { hapticLight, hapticMedium, hapticSuccess, hapticSelect } from '../lib/haptics'
+import { getTheme } from '../lib/themes'
 
-// Bristol stool types
 const BRISTOL = [
   { type: 1, emoji: '🪨', label: 'Hard lumps', desc: 'Very hard, separate', color: '#F48585' },
   { type: 2, emoji: '🌰', label: 'Lumpy', desc: 'Sausage-shaped, lumpy', color: '#F5A68A' },
@@ -19,10 +21,10 @@ const FRUITS = [
   { id: 'grapes', emoji: '🍇', name: 'Grapes', benefit: 'Natural softener' },
   { id: 'watermelon', emoji: '🍉', name: 'Watermelon', benefit: 'Hydrates gut' },
   { id: 'chikoo', emoji: '🟤', name: 'Chikoo', benefit: 'High fiber' },
-  { id: 'jamun', emoji: '🫐', name: 'Jamun', benefit: 'Reduces inflammation' },
+  { id: 'jamun', emoji: '🫐', name: 'Jamun', benefit: 'Anti-inflammatory' },
   { id: 'apple', emoji: '🍎', name: 'Apple', benefit: 'Gentle fiber' },
   { id: 'pear', emoji: '🍐', name: 'Pear', benefit: 'High fiber+sorbitol' },
-  { id: 'kiwi', emoji: '🥝', name: 'Kiwi', benefit: 'Laxative effect' },
+  { id: 'kiwi', emoji: '🥝', name: 'Kiwi', benefit: 'Natural laxative' },
   { id: 'mango', emoji: '🥭', name: 'Mango', benefit: 'Gut motility' },
   { id: 'guava', emoji: '💚', name: 'Guava', benefit: 'Very high fiber' },
 ]
@@ -37,215 +39,252 @@ const FIBER_FOODS = [
 ]
 
 const AVOID_FOODS = [
-  { id: 'spicy', emoji: '🌶️', name: 'Spicy food', tip: 'Spicy food can irritate the area — try a soothing meal tonight 💛' },
+  { id: 'spicy', emoji: '🌶️', name: 'Spicy food', tip: 'Spicy food can irritate the area — try something soothing tonight 💛' },
   { id: 'fried', emoji: '🍟', name: 'Fried food', tip: 'Fried foods slow digestion. Try steamed or boiled alternatives 💛' },
   { id: 'red_meat', emoji: '🥩', name: 'Red meat', tip: 'Red meat is hard to digest. Lentils or eggs are gentler options 💛' },
-  { id: 'alcohol', emoji: '🍺', name: 'Alcohol', tip: 'Alcohol dehydrates you and can irritate the gut lining 💛' },
-  { id: 'coffee', emoji: '☕', name: 'Coffee/strong tea', tip: 'Caffeine can cause urgency. Herbal tea is a gentler choice 💛' },
-  { id: 'salty', emoji: '🧂', name: 'Very salty food', tip: 'Too much salt leads to dehydration. Drink extra water today 💛' },
-  { id: 'white_bread', emoji: '🍞', name: 'White bread/maida', tip: 'Refined carbs can harden stools. Try brown bread or oats instead 💛' },
+  { id: 'alcohol', emoji: '🍺', name: 'Alcohol', tip: 'Alcohol dehydrates and can irritate the gut lining 💛' },
+  { id: 'coffee', emoji: '☕', name: 'Coffee / tea', tip: 'Caffeine causes urgency. Herbal tea is a gentler choice 💛' },
+  { id: 'salty', emoji: '🧂', name: 'Very salty', tip: 'Too much salt leads to dehydration. Drink extra water today 💛' },
+  { id: 'white_bread', emoji: '🍞', name: 'White bread', tip: 'Refined carbs can harden stools. Try whole grain instead 💛' },
 ]
 
 const EMOTIONS = ['😊', '🥰', '😌', '😐', '😔', '😣', '😢', '😤']
 
-function SectionHeader({ emoji, title, description }) {
-  return (
-    <div style={{ padding: '20px 20px 12px', borderBottom: '1px solid #F0E0DA' }}>
-      <p style={{ fontSize: 16, fontWeight: 700, color: '#3D2B2B' }}>{emoji} {title}</p>
-      {description && <p style={{ fontSize: 12, color: '#8C7070', marginTop: 2 }}>{description}</p>}
-    </div>
-  )
-}
+const STEPS = [
+  { id: 'welcome', emoji: '💛', label: 'Check In' },
+  { id: 'movements', emoji: '🚽', label: 'Movements' },
+  { id: 'symptoms', emoji: '🌡️', label: 'Symptoms' },
+  { id: 'hydration', emoji: '💧', label: 'Hydration' },
+  { id: 'food', emoji: '🍎', label: 'Food' },
+  { id: 'selfcare', emoji: '🛁', label: 'Self-Care' },
+  { id: 'journal', emoji: '📝', label: 'Journal' },
+]
 
-function PainSlider({ value, onChange, label }) {
+function PainSlider({ value, onChange, label, theme }) {
   const emoji = value <= 0 ? '😊' : value <= 3 ? '🙂' : value <= 6 ? '😐' : value <= 9 ? '😣' : '😭'
   return (
-    <div style={{ padding: '12px 20px' }}>
-      {label && <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>{label}</p>}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <input type="range" min={0} max={10} value={value} onChange={e => onChange(Number(e.target.value))}
-          style={{ flex: 1, accentColor: '#E8705A', height: 6 }} />
-        <div style={{ minWidth: 50, textAlign: 'center' }}>
-          <div style={{ fontSize: 22 }}>{emoji}</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#3D2B2B' }}>{value}</div>
+    <div style={{ marginBottom: 20 }}>
+      {label && <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 10 }}>{label}</p>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <input type="range" min={0} max={10} value={value}
+          onChange={e => { hapticSelect(); onChange(Number(e.target.value)) }}
+          style={{ flex: 1, accentColor: theme.primary, height: 6 }} />
+        <div style={{ minWidth: 52, textAlign: 'center' }}>
+          <motion.div key={emoji} initial={{ scale: 1.4 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 18 }}>
+            <span style={{ fontSize: 24 }}>{emoji}</span>
+          </motion.div>
+          <span style={{ fontSize: 14, fontWeight: 700, color: theme.text }}>{value}</span>
         </div>
       </div>
     </div>
   )
 }
 
-function Toggle({ value, onChange, labelYes = 'Yes', labelNo = 'No' }) {
+function Toggle({ value, onChange, labelYes = 'Yes', labelNo = 'No', theme }) {
   return (
     <div style={{ display: 'flex', gap: 8 }}>
       {[true, false].map(v => (
-        <button key={String(v)} onClick={() => onChange(v)} style={{
-          flex: 1, padding: '10px', borderRadius: 12, border: `2px solid ${value === v ? '#E8705A' : '#F0E0DA'}`,
-          background: value === v ? '#FFF0EB' : '#fff', color: value === v ? '#E8705A' : '#8C7070',
-          fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s'
+        <motion.button key={String(v)} whileTap={{ scale: 0.96 }} onClick={() => { hapticSelect(); onChange(v) }} style={{
+          flex: 1, padding: '11px', borderRadius: 14,
+          border: `2px solid ${value === v ? theme.primary : theme.cardBorder}`,
+          background: value === v ? theme.primary + '18' : theme.card,
+          color: value === v ? theme.primary : theme.textMuted,
+          fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all 0.15s'
         }}>
           {v ? labelYes : labelNo}
-        </button>
+        </motion.button>
       ))}
     </div>
   )
 }
 
-function Stepper({ value, onChange, min = 0, max = 10 }) {
+function Stepper({ value, onChange, min = 0, max = 10, theme }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <button onClick={() => onChange(Math.max(min, value - 1))} style={{
-        width: 36, height: 36, borderRadius: 12, border: '1px solid #F0E0DA',
-        background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+      <motion.button whileTap={{ scale: 0.92 }} onClick={() => { hapticSelect(); onChange(Math.max(min, value - 1)) }} style={{
+        width: 40, height: 40, borderRadius: 14, border: `1px solid ${theme.cardBorder}`,
+        background: theme.card, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
-        <Minus size={16} color="#8C7070" />
-      </button>
-      <span style={{ fontSize: 22, fontWeight: 800, fontFamily: 'Nunito', minWidth: 30, textAlign: 'center' }}>{value}</span>
-      <button onClick={() => onChange(Math.min(max, value + 1))} style={{
-        width: 36, height: 36, borderRadius: 12, border: '1px solid #F0E0DA',
-        background: '#E8705A', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+        <Minus size={16} color={theme.textMuted} />
+      </motion.button>
+      <span style={{ fontSize: 24, fontWeight: 800, fontFamily: 'Nunito', minWidth: 36, textAlign: 'center', color: theme.text }}>{value}</span>
+      <motion.button whileTap={{ scale: 0.92 }} onClick={() => { hapticSelect(); onChange(Math.min(max, value + 1)) }} style={{
+        width: 40, height: 40, borderRadius: 14, border: 'none',
+        background: theme.primary, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
         <Plus size={16} color="#fff" />
-      </button>
+      </motion.button>
     </div>
   )
 }
 
-function BMCard({ bm, index, onUpdate, onDelete }) {
+function BMCard({ bm, index, onUpdate, onDelete, theme }) {
   const [expanded, setExpanded] = useState(true)
   return (
-    <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 20, border: '1px solid #F0E0DA', overflow: 'hidden' }}>
-      <button onClick={() => setExpanded(!expanded)} style={{
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ marginBottom: 12, background: theme.card, borderRadius: 20, border: `1px solid ${theme.cardBorder}`, overflow: 'hidden' }}
+    >
+      <button onClick={() => { hapticLight(); setExpanded(!expanded) }} style={{
         width: '100%', padding: '14px 16px', background: 'none', border: 'none',
         cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 18 }}>🚽</span>
           <div style={{ textAlign: 'left' }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#3D2B2B' }}>Movement #{index + 1}</p>
-            <p style={{ fontSize: 12, color: '#8C7070' }}>
-              {bm.time || 'Now'} · Pain: {bm.painLevel}/10 · {bm.bloodPresent ? '🩸 Blood' : 'No blood'}
+            <p style={{ fontSize: 14, fontWeight: 600, color: theme.text }}>Movement #{index + 1}</p>
+            <p style={{ fontSize: 12, color: theme.textMuted }}>
+              {bm.time || 'Now'} · Pain {bm.painLevel}/10 · {bm.bloodPresent ? '🩸 Blood' : 'No blood'}
             </p>
           </div>
         </div>
-        {expanded ? <ChevronUp size={18} color="#8C7070" /> : <ChevronDown size={18} color="#8C7070" />}
+        {expanded ? <ChevronUp size={18} color={theme.textMuted} /> : <ChevronDown size={18} color={theme.textMuted} />}
       </button>
       {expanded && (
-        <div style={{ borderTop: '1px solid #F0E0DA' }}>
-          <div style={{ padding: '12px 16px' }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 10 }}>Time</p>
-            <input type="time" value={bm.time || ''} onChange={e => onUpdate({ ...bm, time: e.target.value })}
-              style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid #F0E0DA', fontSize: 14, color: '#3D2B2B', width: '100%' }} />
+        <div style={{ borderTop: `1px solid ${theme.cardBorder}`, padding: '14px 16px' }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 8 }}>Time of movement:</p>
+          <input type="time" value={bm.time || ''} onChange={e => onUpdate({ ...bm, time: e.target.value })}
+            style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${theme.cardBorder}`, fontSize: 14, color: theme.text, marginBottom: 16, width: '100%', background: theme.card }} />
+
+          <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 10 }}>Stool type — aim for 🍌 Type 4:</p>
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 12, paddingBottom: 4 }} className="scrollbar-hide">
+            {BRISTOL.map(b => (
+              <motion.button key={b.type} whileTap={{ scale: 0.94 }} onClick={() => { hapticSelect(); onUpdate({ ...bm, bristolType: b.type }) }} style={{
+                minWidth: 62, padding: '8px 6px', borderRadius: 14, flexShrink: 0, cursor: 'pointer',
+                border: `2.5px solid ${bm.bristolType === b.type ? b.color : theme.cardBorder}`,
+                background: bm.bristolType === b.type ? b.color + '25' : theme.card,
+              }}>
+                <div style={{ fontSize: 20 }}>{b.emoji}</div>
+                <div style={{ fontSize: 10, color: theme.text, fontWeight: bm.bristolType === b.type ? 700 : 400 }}>Type {b.type}</div>
+              </motion.button>
+            ))}
           </div>
-          <div style={{ padding: '0 16px 12px' }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 10 }}>Stool type — tap to select:</p>
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }} className="scrollbar-hide">
-              {BRISTOL.map(b => (
-                <button key={b.type} onClick={() => onUpdate({ ...bm, bristolType: b.type })} style={{
-                  minWidth: 60, padding: '8px 6px', borderRadius: 12, flexShrink: 0,
-                  border: `2px solid ${bm.bristolType === b.type ? b.color : '#F0E0DA'}`,
-                  background: bm.bristolType === b.type ? b.color + '22' : '#fff', cursor: 'pointer'
+          {bm.bristolType && (
+            <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>
+              {BRISTOL.find(b => b.type === bm.bristolType)?.desc}
+            </p>
+          )}
+
+          <PainSlider value={bm.painLevel || 0} onChange={v => onUpdate({ ...bm, painLevel: v })} label="Pain during this movement:" theme={theme} />
+
+          <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 8 }}>Any bleeding?</p>
+          <Toggle value={bm.bloodPresent} onChange={v => onUpdate({ ...bm, bloodPresent: v })} labelYes="Yes 🩸" labelNo="None 🙏" theme={theme} />
+          {bm.bloodPresent && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+              {['spotting', 'moderate', 'heavy'].map(a => (
+                <motion.button key={a} whileTap={{ scale: 0.94 }} onClick={() => onUpdate({ ...bm, bloodAmount: a })} style={{
+                  flex: 1, padding: '9px', borderRadius: 12, cursor: 'pointer',
+                  border: `2px solid ${bm.bloodAmount === a ? '#F48585' : theme.cardBorder}`,
+                  background: bm.bloodAmount === a ? '#FFF0F0' : theme.card,
+                  fontSize: 12, fontWeight: 600, color: theme.text
                 }}>
-                  <div style={{ fontSize: 20 }}>{b.emoji}</div>
-                  <div style={{ fontSize: 10, color: '#3D2B2B', fontWeight: bm.bristolType === b.type ? 700 : 400 }}>Type {b.type}</div>
-                </button>
+                  {a.charAt(0).toUpperCase() + a.slice(1)}
+                </motion.button>
               ))}
             </div>
-            {bm.bristolType && (
-              <p style={{ fontSize: 12, color: '#8C7070', marginTop: 6 }}>
-                {BRISTOL.find(b => b.type === bm.bristolType)?.desc}
-              </p>
-            )}
+          )}
+
+          <div style={{ marginTop: 14 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 8 }}>Spasms after?</p>
+            <Toggle value={bm.spasm} onChange={v => onUpdate({ ...bm, spasm: v })} theme={theme} />
           </div>
-          <PainSlider value={bm.painLevel || 0} onChange={v => onUpdate({ ...bm, painLevel: v })} label="Pain level during movement:" />
-          <div style={{ padding: '0 16px 12px' }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>Was there any bleeding?</p>
-            <Toggle value={bm.bloodPresent} onChange={v => onUpdate({ ...bm, bloodPresent: v })} labelYes="Yes 🩸" labelNo="None 🙏" />
-            {bm.bloodPresent && (
-              <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
-                {['spotting', 'moderate', 'heavy'].map(a => (
-                  <button key={a} onClick={() => onUpdate({ ...bm, bloodAmount: a })} style={{
-                    flex: 1, padding: '8px', borderRadius: 10,
-                    border: `2px solid ${bm.bloodAmount === a ? '#F48585' : '#F0E0DA'}`,
-                    background: bm.bloodAmount === a ? '#FFF0F0' : '#fff',
-                    fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#3D2B2B'
-                  }}>
-                    {a.charAt(0).toUpperCase() + a.slice(1)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <div style={{ padding: '0 16px 12px' }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>Any spasms?</p>
-            <Toggle value={bm.spasm} onChange={v => onUpdate({ ...bm, spasm: v })} />
-            {bm.spasm && (
-              <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
-                {['<5 min', '5-15 min', '15-30 min', '30+ min'].map(d => (
-                  <button key={d} onClick={() => onUpdate({ ...bm, spasmDuration: d })} style={{
-                    flex: 1, padding: '7px 4px', borderRadius: 10,
-                    border: `2px solid ${bm.spasmDuration === d ? '#C9A8F5' : '#F0E0DA'}`,
-                    background: bm.spasmDuration === d ? '#F5F0FF' : '#fff',
-                    fontSize: 11, fontWeight: 600, cursor: 'pointer', color: '#3D2B2B'
-                  }}>{d}</button>
-                ))}
-              </div>
-            )}
-          </div>
-          <div style={{ padding: '0 16px 12px' }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>Did you strain?</p>
-            <Toggle value={bm.straining} onChange={v => onUpdate({ ...bm, straining: v })} />
-          </div>
-          <div style={{ padding: '0 16px 16px' }}>
-            <textarea placeholder="Any notes about this movement..." value={bm.notes || ''} onChange={e => onUpdate({ ...bm, notes: e.target.value })}
-              style={{
-                width: '100%', padding: '10px 12px', borderRadius: 12, border: '1px solid #F0E0DA',
-                fontSize: 14, color: '#3D2B2B', resize: 'none', minHeight: 60,
-                fontFamily: 'Inter', background: '#FAFAFA'
-              }} rows={2} />
-          </div>
-          <button onClick={onDelete} style={{
-            width: 'calc(100% - 32px)', margin: '0 16px 16px', padding: '10px',
-            borderRadius: 12, border: '1px solid #F0E0DA', background: '#FFF0F0',
-            color: '#F48585', fontSize: 13, fontWeight: 600, cursor: 'pointer'
-          }}>Remove this entry</button>
+
+          <motion.button whileTap={{ scale: 0.95 }} onClick={onDelete} style={{
+            width: '100%', marginTop: 14, padding: '10px',
+            borderRadius: 12, border: `1px solid ${theme.cardBorder}`,
+            background: '#FFF0F0', color: '#F48585', fontSize: 13, fontWeight: 600, cursor: 'pointer'
+          }}>Remove this entry</motion.button>
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
-function WaterTracker({ glasses, onChange, goal = 8 }) {
+function WaterTracker({ glasses, onChange, goal = 8, theme }) {
   return (
-    <div style={{ padding: '12px 20px' }}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+    <div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
         {Array.from({ length: goal }).map((_, i) => (
-          <button key={i} onClick={() => onChange(i < glasses ? i : i + 1)} style={{
-            fontSize: 24, background: 'none', border: 'none', cursor: 'pointer',
-            filter: i < glasses ? 'none' : 'grayscale(100%) opacity(0.3)',
-            transform: i < glasses ? 'scale(1.05)' : 'scale(1)',
-            transition: 'all 0.2s'
-          }}>
+          <motion.button key={i} whileTap={{ scale: 0.9 }}
+            onClick={() => { hapticSelect(); onChange(i < glasses ? i : i + 1) }}
+            style={{
+              fontSize: 26, background: 'none', border: 'none', cursor: 'pointer',
+              filter: i < glasses ? 'none' : 'grayscale(100%) opacity(0.3)',
+              transition: 'all 0.15s'
+            }}>
             {i < glasses ? '🥛' : '🫙'}
-          </button>
+          </motion.button>
         ))}
       </div>
-      <div style={{ background: '#F0E0DA', borderRadius: 8, height: 8, overflow: 'hidden' }}>
-        <div style={{
-          height: '100%', background: 'linear-gradient(90deg, #A8D5A2, #7BC97B)',
-          width: `${Math.min((glasses / goal) * 100, 100)}%`, transition: 'width 0.3s', borderRadius: 8
-        }} />
+      <div style={{ background: theme.cardBorder, borderRadius: 8, height: 10, overflow: 'hidden' }}>
+        <motion.div
+          animate={{ width: `${Math.min((glasses / goal) * 100, 100)}%` }}
+          transition={{ duration: 0.3 }}
+          style={{ height: '100%', background: 'linear-gradient(90deg, #A8D5A2, #7BC97B)', borderRadius: 8 }}
+        />
       </div>
-      <p style={{ fontSize: 12, color: '#8C7070', marginTop: 6 }}>
-        {glasses * 250}ml / {goal * 250}ml · {glasses >= goal ? '🎉 Goal reached!' : `${goal - glasses} more to go!`}
+      <p style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
+        {glasses * 250}ml / {goal * 250}ml · {glasses >= goal ? '🎉 Goal reached!' : `${goal - glasses} more to go`}
       </p>
     </div>
   )
 }
 
-export default function LogScreen({ onNavigate }) {
+function StepHeader({ step, total, stepData, theme }) {
+  const progress = ((step + 1) / total) * 100
+
+  return (
+    <div style={{ padding: '16px 20px 12px', background: theme.headerGradient, borderBottom: `1px solid ${theme.cardBorder}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: theme.textMuted }}>
+          Step {step + 1} of {total}
+        </p>
+        <p style={{ fontSize: 13, fontWeight: 700, color: theme.primary }}>
+          {stepData.emoji} {stepData.label}
+        </p>
+      </div>
+      {/* Progress bar */}
+      <div style={{ background: theme.cardBorder, borderRadius: 6, height: 6, overflow: 'hidden', marginBottom: 10 }}>
+        <motion.div
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          style={{ height: '100%', borderRadius: 6, background: theme.ctaGradient }}
+        />
+      </div>
+      {/* Step dots */}
+      <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+        {STEPS.map((s, i) => (
+          <motion.div
+            key={s.id}
+            animate={{ scale: i === step ? 1.3 : 1, opacity: i <= step ? 1 : 0.35 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            style={{
+              width: i === step ? 18 : 8, height: 8, borderRadius: 4,
+              background: i < step ? theme.wellnessHigh : i === step ? theme.primary : theme.cardBorder,
+              transition: 'width 0.3s ease',
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ── Main LogScreen ── */
+export default function LogScreen({ onNavigate, onLogSaved }) {
   const today = new Date().toISOString().split('T')[0]
+  const theme = getTheme()
+  const name = (() => { try { return JSON.parse(localStorage.getItem('fissurecare_settings') || '{}').userName || 'Bujji' } catch { return 'Bujji' } })()
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+
+  const [step, setStep] = useState(0)
+  const [direction, setDirection] = useState(1)
   const [saved, setSaved] = useState(false)
   const [avoidWarning, setAvoidWarning] = useState(null)
+  const dragStartX = useRef(0)
+
   const [log, setLog] = useState({
     date: today,
     bowelMovements: [],
@@ -257,299 +296,478 @@ export default function LogScreen({ onNavigate }) {
     fruitsEaten: [],
     fiberFoods: [],
     avoidFoods: [],
-    activity: { walking: false, walkingMinutes: 0, yoga: false, exerciseLevel: 'none' },
-    selfCare: { topicalApplied: false, warmCompress: false, dietaryAdherence: null, emotionalWellbeing: null, notes: '' }
+    activity: { walking: false, walkingMinutes: 0, yoga: false },
+    selfCare: { topicalApplied: false, warmCompress: false, emotionalWellbeing: null, notes: '' }
   })
 
   useEffect(() => {
-    getLog(today).then(existing => {
-      if (existing) setLog(existing)
-    })
+    getLog(today).then(existing => { if (existing) setLog(existing) })
   }, [today])
 
+  const goNext = () => {
+    if (step < STEPS.length - 1) { hapticLight(); setDirection(1); setStep(s => s + 1) }
+  }
+  const goPrev = () => {
+    if (step > 0) { hapticLight(); setDirection(-1); setStep(s => s - 1) }
+  }
+
+  const handleSave = async () => {
+    hapticSuccess()
+    const updated = { ...log, hydration: { ...log.hydration, waterMl: log.hydration.waterGlasses * 250 } }
+    await saveLog(today, updated)
+    setSaved(true)
+    if (onLogSaved) onLogSaved(updated)
+    setTimeout(() => { setSaved(false); onNavigate('home') }, 2200)
+  }
+
   const addBM = () => {
+    hapticMedium()
     const now = new Date()
     const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
-    setLog(l => ({ ...l, bowelMovements: [...l.bowelMovements, { id: Date.now(), time, painLevel: 0, bloodPresent: false, spasm: false, straining: false }] }))
-  }
-
-  const updateBM = (id, data) => {
-    setLog(l => ({ ...l, bowelMovements: l.bowelMovements.map(bm => bm.id === id ? data : bm) }))
-  }
-
-  const deleteBM = (id) => {
-    setLog(l => ({ ...l, bowelMovements: l.bowelMovements.filter(bm => bm.id !== id) }))
+    setLog(l => ({ ...l, bowelMovements: [...l.bowelMovements, { id: Date.now(), time, painLevel: 0, bloodPresent: false, spasm: false }] }))
   }
 
   const toggleFruit = (id) => {
-    setLog(l => ({
-      ...l,
-      fruitsEaten: l.fruitsEaten.includes(id) ? l.fruitsEaten.filter(f => f !== id) : [...l.fruitsEaten, id]
-    }))
+    hapticSelect()
+    setLog(l => ({ ...l, fruitsEaten: l.fruitsEaten.includes(id) ? l.fruitsEaten.filter(f => f !== id) : [...l.fruitsEaten, id] }))
   }
-
   const toggleFiber = (id) => {
-    setLog(l => ({
-      ...l,
-      fiberFoods: l.fiberFoods.includes(id) ? l.fiberFoods.filter(f => f !== id) : [...l.fiberFoods, id]
-    }))
+    hapticSelect()
+    setLog(l => ({ ...l, fiberFoods: l.fiberFoods.includes(id) ? l.fiberFoods.filter(f => f !== id) : [...l.fiberFoods, id] }))
   }
-
   const toggleAvoid = (id) => {
+    hapticSelect()
     const food = AVOID_FOODS.find(f => f.id === id)
     if (!log.avoidFoods.includes(id)) {
       setAvoidWarning(food.tip)
       setTimeout(() => setAvoidWarning(null), 4000)
     }
-    setLog(l => ({
-      ...l,
-      avoidFoods: l.avoidFoods.includes(id) ? l.avoidFoods.filter(f => f !== id) : [...l.avoidFoods, id]
-    }))
+    setLog(l => ({ ...l, avoidFoods: l.avoidFoods.includes(id) ? l.avoidFoods.filter(f => f !== id) : [...l.avoidFoods, id] }))
   }
-
-  const handleSave = async () => {
-    const updated = { ...log, hydration: { ...log.hydration, waterMl: log.hydration.waterGlasses * 250 } }
-    await saveLog(today, updated)
-    setSaved(true)
-    setTimeout(() => { setSaved(false); onNavigate('home') }, 2000)
-  }
-
   const addSitzBath = () => {
+    hapticMedium()
     const now = new Date()
     const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
     setLog(l => ({ ...l, sitzBaths: [...l.sitzBaths, { time, durationMinutes: 15 }] }))
   }
 
+  const settings = (() => { try { return JSON.parse(localStorage.getItem('fissurecare_settings') || '{}') } catch { return {} } })()
+  const waterGoal = settings.waterGoal || 8
+
+  const slideVariants = {
+    enter: (dir) => ({ x: dir > 0 ? 320 : -320, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir) => ({ x: dir > 0 ? -320 : 320, opacity: 0 }),
+  }
+
+  const renderStep = () => {
+    switch (STEPS[step].id) {
+      /* ── Step 1: Welcome ── */
+      case 'welcome':
+        return (
+          <div style={{ padding: '28px 20px' }}>
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+              style={{ fontSize: 64, textAlign: 'center', marginBottom: 20 }}>
+              💛
+            </motion.div>
+            <h2 style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, textAlign: 'center', marginBottom: 10 }}>
+              {greeting}, {name}!
+            </h2>
+            <p style={{ fontSize: 15, color: theme.textMuted, textAlign: 'center', lineHeight: 1.7, marginBottom: 24 }}>
+              Let's take 2 minutes to check in on your healing today. Every log is a step forward.
+            </p>
+            <div style={{
+              background: theme.tipBg, borderRadius: 18, padding: '16px 18px',
+              border: `1px solid ${theme.tipBorder}`,
+            }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: theme.primary, marginBottom: 4 }}>📅 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+              <p style={{ fontSize: 13, color: theme.textMuted, lineHeight: 1.6 }}>
+                7 quick steps · about 2 minutes · everything stays private
+              </p>
+            </div>
+            <p style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginTop: 16 }}>
+              Swipe or tap Next to begin 💛
+            </p>
+          </div>
+        )
+
+      /* ── Step 2: Bowel Movements ── */
+      case 'movements':
+        return (
+          <div style={{ padding: '20px' }}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Bowel movements today 🚽</p>
+            <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16, lineHeight: 1.5 }}>Log each movement separately. Aim for Type 4 🍌</p>
+            {log.bowelMovements.map((bm, i) => (
+              <BMCard key={bm.id} bm={bm} index={i} theme={theme}
+                onUpdate={updated => setLog(l => ({ ...l, bowelMovements: l.bowelMovements.map(b => b.id === bm.id ? updated : b) }))}
+                onDelete={() => setLog(l => ({ ...l, bowelMovements: l.bowelMovements.filter(b => b.id !== bm.id) }))}
+              />
+            ))}
+            {log.bowelMovements.length === 0 && (
+              <div style={{ background: theme.tipBg, borderRadius: 16, padding: '16px', border: `1px solid ${theme.tipBorder}`, marginBottom: 16, textAlign: 'center' }}>
+                <p style={{ fontSize: 14, color: theme.textMuted }}>No movements yet today — that's okay 💛</p>
+                <p style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>Add one below if you've already had a movement</p>
+              </div>
+            )}
+            <motion.button whileTap={{ scale: 0.96 }} onClick={addBM} style={{
+              width: '100%', padding: '14px', background: theme.primary + '18', borderRadius: 16,
+              border: `2px dashed ${theme.primary}`, color: theme.primary, fontSize: 15, fontWeight: 600,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+            }}>
+              <Plus size={18} /> Add Bowel Movement
+            </motion.button>
+          </div>
+        )
+
+      /* ── Step 3: Symptoms ── */
+      case 'symptoms':
+        return (
+          <div style={{ padding: '20px' }}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>How are you feeling, {name}? 🌡️</p>
+            <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20 }}>These are separate from movements — your general comfort today</p>
+            <PainSlider value={log.dailySymptoms.restingPain} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, restingPain: v } }))} label="Resting discomfort (when not in the bathroom):" theme={theme} />
+            <PainSlider value={log.dailySymptoms.itchingBurning} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, itchingBurning: v } }))} label="Burning or itching:" theme={theme} />
+            <PainSlider value={log.dailySymptoms.sittingDiscomfort} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, sittingDiscomfort: v } }))} label="Discomfort when sitting:" theme={theme} />
+            <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 12 }}>How was your day overall?</p>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+              {[['😊', 'good', 'Good day!'], ['😐', 'ok', 'Just okay'], ['😣', 'hard_day', 'Hard day']].map(([emoji, val, label]) => (
+                <motion.button key={val} whileTap={{ scale: 0.94 }}
+                  onClick={() => { hapticSelect(); setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, overallComfort: val } })) }} style={{
+                    flex: 1, padding: '12px 8px', borderRadius: 16,
+                    border: `2.5px solid ${log.dailySymptoms.overallComfort === val ? theme.primary : theme.cardBorder}`,
+                    background: log.dailySymptoms.overallComfort === val ? theme.primary + '15' : theme.card,
+                    cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                  }}>
+                  <span style={{ fontSize: 24 }}>{emoji}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: theme.text }}>{label}</span>
+                </motion.button>
+              ))}
+            </div>
+            <PainSlider value={log.dailySymptoms.stressLevel} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, stressLevel: v } }))} label="Stress level today (0 = calm, 10 = very stressed):" theme={theme} />
+            <PainSlider value={log.dailySymptoms.sleepQuality} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, sleepQuality: v } }))} label="Sleep quality last night:" theme={theme} />
+          </div>
+        )
+
+      /* ── Step 4: Hydration ── */
+      case 'hydration':
+        return (
+          <div style={{ padding: '20px' }}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Stay hydrated 💧</p>
+            <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20 }}>Each glass = 250ml. Tap to fill — aim for {waterGoal} glasses!</p>
+            <WaterTracker glasses={log.hydration.waterGlasses}
+              onChange={g => setLog(l => ({ ...l, hydration: { ...l.hydration, waterGlasses: g, waterMl: g * 250 } }))}
+              goal={waterGoal} theme={theme} />
+            <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginTop: 20, marginBottom: 12 }}>Other drinks today:</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {[
+                { key: 'coconutWater', emoji: '🥥', label: 'Coconut water', good: true },
+                { key: 'coffee', emoji: '☕', label: 'Coffee', good: false },
+                { key: 'alcohol', emoji: '🍺', label: 'Alcohol', good: false },
+              ].map(({ key, emoji, label, good }) => (
+                <motion.button key={key} whileTap={{ scale: 0.94 }}
+                  onClick={() => { hapticSelect(); setLog(l => ({ ...l, hydration: { ...l.hydration, [key]: !l.hydration[key] } })) }} style={{
+                    flex: 1, padding: '12px 8px', borderRadius: 16, cursor: 'pointer',
+                    border: `2.5px solid ${log.hydration[key] ? (good ? '#A8D5A2' : '#F48585') : theme.cardBorder}`,
+                    background: log.hydration[key] ? (good ? '#F0FFF0' : '#FFF0F0') : theme.card,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                  }}>
+                  <span style={{ fontSize: 22 }}>{emoji}</span>
+                  <span style={{ fontSize: 10, color: theme.text, fontWeight: 600 }}>{label}</span>
+                  <span style={{ fontSize: 11 }}>{good ? '✅' : '⚠️'}</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        )
+
+      /* ── Step 5: Food ── */
+      case 'food':
+        return (
+          <div style={{ padding: '20px' }}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>What did you eat today? 🍎</p>
+            <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16 }}>Tap everything you had. This helps find your patterns 💡</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: theme.primary, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Healing fruits 🌟</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
+              {FRUITS.map(fruit => (
+                <motion.button key={fruit.id} whileTap={{ scale: 0.92 }} onClick={() => toggleFruit(fruit.id)} style={{
+                  padding: '10px 6px', borderRadius: 14, cursor: 'pointer',
+                  border: `2.5px solid ${log.fruitsEaten.includes(fruit.id) ? '#A8D5A2' : theme.cardBorder}`,
+                  background: log.fruitsEaten.includes(fruit.id) ? '#F0FFF5' : theme.card,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
+                }}>
+                  <motion.span
+                    animate={log.fruitsEaten.includes(fruit.id) ? { scale: [1, 1.2, 1] } : {}}
+                    style={{ fontSize: 22 }}
+                  >{fruit.emoji}</motion.span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: theme.text }}>{fruit.name}</span>
+                </motion.button>
+              ))}
+            </div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#A8D5A2', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Fiber-rich foods</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+              {FIBER_FOODS.map(f => (
+                <motion.button key={f.id} whileTap={{ scale: 0.94 }} onClick={() => toggleFiber(f.id)} style={{
+                  padding: '8px 14px', borderRadius: 20, cursor: 'pointer',
+                  border: `1.5px solid ${log.fiberFoods.includes(f.id) ? '#A8D5A2' : theme.cardBorder}`,
+                  background: log.fiberFoods.includes(f.id) ? '#F0FFF5' : theme.card,
+                  fontSize: 13, color: theme.text, display: 'flex', alignItems: 'center', gap: 5
+                }}>
+                  <span>{f.emoji}</span> {f.name}
+                </motion.button>
+              ))}
+            </div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#F5A68A', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Foods to avoid ⚠️</p>
+            <AnimatePresence>
+              {avoidWarning && (
+                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  style={{ background: '#FFF8E8', borderRadius: 12, padding: '10px 14px', border: '1px solid #F5C67A', marginBottom: 12 }}>
+                  <p style={{ fontSize: 13, color: '#8C7070' }}>{avoidWarning}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+              {AVOID_FOODS.map(food => (
+                <motion.button key={food.id} whileTap={{ scale: 0.92 }} onClick={() => toggleAvoid(food.id)} style={{
+                  padding: '10px 6px', borderRadius: 14, cursor: 'pointer',
+                  border: `2.5px solid ${log.avoidFoods.includes(food.id) ? '#F5C67A' : theme.cardBorder}`,
+                  background: log.avoidFoods.includes(food.id) ? '#FFF8E8' : theme.card,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
+                }}>
+                  <span style={{ fontSize: 22 }}>{food.emoji}</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, color: theme.text, textAlign: 'center' }}>{food.name}</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        )
+
+      /* ── Step 6: Self-Care ── */
+      case 'selfcare':
+        return (
+          <div style={{ padding: '20px' }}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Almost there, {name}! 🛁</p>
+            <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20 }}>Self-care tracking — every sitz bath matters so much</p>
+
+            <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, marginBottom: 10 }}>Sitz baths today ({log.sitzBaths.length}):</p>
+            {log.sitzBaths.map((bath, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '12px', background: '#F0FFF5', borderRadius: 14, border: '1px solid #A8D5A2' }}>
+                <span style={{ fontSize: 20 }}>🛁</span>
+                <span style={{ fontSize: 13, color: theme.text, flex: 1 }}>Bath {i + 1} at {bath.time}</span>
+                <input type="number" value={bath.durationMinutes} min={5} max={60}
+                  onChange={e => setLog(l => ({ ...l, sitzBaths: l.sitzBaths.map((b, j) => j === i ? { ...b, durationMinutes: Number(e.target.value) } : b) }))}
+                  style={{ width: 52, padding: '4px 8px', borderRadius: 8, border: '1px solid #A8D5A2', fontSize: 13, textAlign: 'center', color: theme.text }} />
+                <span style={{ fontSize: 12, color: theme.textMuted }}>min</span>
+                <button onClick={() => setLog(l => ({ ...l, sitzBaths: l.sitzBaths.filter((_, j) => j !== i) }))}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F48585', fontSize: 18 }}>✕</button>
+              </motion.div>
+            ))}
+            <motion.button whileTap={{ scale: 0.95 }} onClick={addSitzBath} style={{
+              padding: '11px 18px', background: '#F0FFF5', border: '1.5px dashed #A8D5A2',
+              borderRadius: 14, color: '#5A9E5A', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20
+            }}>
+              <Plus size={16} /> Log a sitz bath
+            </motion.button>
+
+            <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, marginBottom: 10 }}>Topical ointment:</p>
+            <input placeholder="e.g. Lidocaine, Nifedipine cream..." value={log.topicalOintment.name}
+              onChange={e => setLog(l => ({ ...l, topicalOintment: { ...l.topicalOintment, name: e.target.value } }))}
+              style={{ width: '100%', padding: '11px 14px', borderRadius: 14, border: `1px solid ${theme.cardBorder}`, fontSize: 14, marginBottom: 10, color: theme.text, background: theme.card }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+              <span style={{ fontSize: 13, color: theme.textMuted }}>Times applied:</span>
+              <Stepper value={log.topicalOintment.timesApplied} onChange={v => setLog(l => ({ ...l, topicalOintment: { ...l.topicalOintment, timesApplied: v } }))} max={8} theme={theme} />
+            </div>
+
+            <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, marginBottom: 10 }}>Gentle movement:</p>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+              <motion.button whileTap={{ scale: 0.94 }}
+                onClick={() => { hapticSelect(); setLog(l => ({ ...l, activity: { ...l.activity, walking: !l.activity.walking } })) }}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 16, cursor: 'pointer',
+                  border: `2.5px solid ${log.activity.walking ? '#A8D5A2' : theme.cardBorder}`,
+                  background: log.activity.walking ? '#F0FFF5' : theme.card,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  fontSize: 14, fontWeight: 600, color: theme.text,
+                }}>
+                🚶 Walking
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.94 }}
+                onClick={() => { hapticSelect(); setLog(l => ({ ...l, activity: { ...l.activity, yoga: !l.activity.yoga } })) }}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 16, cursor: 'pointer',
+                  border: `2.5px solid ${log.activity.yoga ? '#C9A8F5' : theme.cardBorder}`,
+                  background: log.activity.yoga ? '#F5F0FF' : theme.card,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  fontSize: 14, fontWeight: 600, color: theme.text,
+                }}>
+                🧘 Yoga
+              </motion.button>
+            </div>
+            {log.activity.walking && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+                <span style={{ fontSize: 13, color: theme.textMuted }}>Minutes walked:</span>
+                <Stepper value={log.activity.walkingMinutes} onChange={v => setLog(l => ({ ...l, activity: { ...l.activity, walkingMinutes: v } }))} min={0} max={120} theme={theme} />
+              </div>
+            )}
+          </div>
+        )
+
+      /* ── Step 7: Journal & Save ── */
+      case 'journal':
+        return (
+          <div style={{ padding: '20px' }}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>A moment just for you 📝</p>
+            <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16 }}>How are you feeling right now?</p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+              {EMOTIONS.map(emoji => (
+                <motion.button key={emoji} whileTap={{ scale: 0.9 }}
+                  onClick={() => { hapticSelect(); setLog(l => ({ ...l, selfCare: { ...l.selfCare, emotionalWellbeing: emoji } })) }} style={{
+                    fontSize: 30,
+                    background: log.selfCare.emotionalWellbeing === emoji ? theme.primary + '18' : 'none',
+                    border: `2px solid ${log.selfCare.emotionalWellbeing === emoji ? theme.primary : 'transparent'}`,
+                    borderRadius: 14, padding: '8px', cursor: 'pointer'
+                  }}>{emoji}</motion.button>
+              ))}
+            </div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 8 }}>
+              Anything on your mind, {name}? (just for you)
+            </p>
+            <textarea
+              placeholder={`What's on your mind, ${name}? What helped today, what felt hard?`}
+              value={log.selfCare.notes}
+              onChange={e => setLog(l => ({ ...l, selfCare: { ...l.selfCare, notes: e.target.value } }))}
+              rows={4}
+              style={{
+                width: '100%', padding: '14px', borderRadius: 16, border: `1px solid ${theme.cardBorder}`,
+                fontSize: 14, color: theme.text, resize: 'none', fontFamily: 'Inter',
+                background: theme.card, lineHeight: 1.7, marginBottom: 24,
+              }}
+            />
+            <AnimatePresence mode="wait">
+              {saved ? (
+                <motion.div
+                  key="saved"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  style={{
+                    padding: '20px', background: 'linear-gradient(135deg, #A8D5A2, #7BC97B)',
+                    borderRadius: 20, color: '#fff', fontSize: 16, fontWeight: 700, textAlign: 'center',
+                    boxShadow: '0 6px 24px rgba(168,213,162,0.4)',
+                  }}
+                >
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }}>
+                    <Check size={26} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+                    All saved, {name}! 💛 Every log is a step toward healing.
+                  </motion.div>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="save"
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleSave}
+                  style={{
+                    width: '100%', padding: '18px', background: theme.ctaGradient,
+                    border: 'none', borderRadius: 20, color: '#fff', fontSize: 17, fontWeight: 700,
+                    cursor: 'pointer', boxShadow: `0 6px 24px ${theme.ctaShadow}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  }}
+                >
+                  <Check size={20} /> Save Today's Log 💛
+                </motion.button>
+              )}
+            </AnimatePresence>
+            <p style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginTop: 10 }}>
+              Saved locally even if you're offline
+            </p>
+          </div>
+        )
+
+      default: return null
+    }
+  }
+
   return (
-    <div>
-      {/* Header */}
-      <div style={{ padding: '20px', background: 'linear-gradient(135deg, #FFF0EB, #FFF8F5)', borderBottom: '1px solid #F0E0DA' }}>
-        <p style={{ fontSize: 20, fontWeight: 700, color: '#E8705A' }}>📝 Today's Log</p>
-        <p style={{ fontSize: 13, color: '#8C7070' }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: theme.background, maxWidth: 430, margin: '0 auto' }}>
+      <StepHeader step={step} total={STEPS.length} stepData={STEPS[step]} theme={theme} />
+
+      {/* Swipeable content area */}
+      <div style={{ flex: 1, overflowY: 'auto', position: 'relative', overflowX: 'hidden' }}
+        onTouchStart={e => { dragStartX.current = e.touches[0].clientX }}
+        onTouchEnd={e => {
+          const dx = e.changedTouches[0].clientX - dragStartX.current
+          if (dx < -60) goNext()
+          else if (dx > 60) goPrev()
+        }}
+      >
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={step}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            style={{ paddingBottom: 100 }}
+          >
+            {renderStep()}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* Section: Bowel Movements */}
-      <SectionHeader emoji="🚽" title="Bowel Movements" description="Log each movement separately" />
-      {log.bowelMovements.map((bm, i) => (
-        <BMCard key={bm.id} bm={bm} index={i} onUpdate={updated => updateBM(bm.id, updated)} onDelete={() => deleteBM(bm.id)} />
-      ))}
-      <div style={{ padding: '0 16px 16px' }}>
-        <button onClick={addBM} style={{
-          width: '100%', padding: '14px', background: '#FFF0EB', borderRadius: 16,
-          border: '2px dashed #E8705A', color: '#E8705A', fontSize: 15, fontWeight: 600,
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-        }}>
-          <Plus size={18} /> Add Bowel Movement
-        </button>
-      </div>
-
-      {/* Section: Daily Symptoms */}
-      <SectionHeader emoji="🌡️" title="How You're Feeling" description="Overall comfort today (separate from movements)" />
-      <PainSlider value={log.dailySymptoms.restingPain} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, restingPain: v } }))} label="Resting discomfort (when not in the bathroom):" />
-      <PainSlider value={log.dailySymptoms.itchingBurning} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, itchingBurning: v } }))} label="Burning or itching around the area:" />
-      <PainSlider value={log.dailySymptoms.sittingDiscomfort} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, sittingDiscomfort: v } }))} label="Discomfort when sitting:" />
-      <div style={{ padding: '0 20px 16px' }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 10 }}>How was your day overall?</p>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {[['😊', 'good', 'Good day!'], ['😐', 'ok', 'Just okay'], ['😣', 'hard_day', 'Hard day']].map(([emoji, val, label]) => (
-            <button key={val} onClick={() => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, overallComfort: val } }))} style={{
-              flex: 1, padding: '12px 8px', borderRadius: 14,
-              border: `2px solid ${log.dailySymptoms.overallComfort === val ? '#E8705A' : '#F0E0DA'}`,
-              background: log.dailySymptoms.overallComfort === val ? '#FFF0EB' : '#fff',
-              cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
-            }}>
-              <span style={{ fontSize: 22 }}>{emoji}</span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#3D2B2B' }}>{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-      <PainSlider value={log.dailySymptoms.stressLevel} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, stressLevel: v } }))} label="Stress or anxiety today:" />
-      <PainSlider value={log.dailySymptoms.sleepQuality} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, sleepQuality: v } }))} label="Sleep quality last night:" />
-
-      {/* Section: Hydration */}
-      <SectionHeader emoji="💧" title="Hydration" description="Each glass = 250ml. Tap to fill!" />
-      <WaterTracker glasses={log.hydration.waterGlasses} onChange={g => setLog(l => ({ ...l, hydration: { ...l.hydration, waterGlasses: g, waterMl: g * 250 } }))} />
-      <div style={{ padding: '0 20px 16px', display: 'flex', gap: 12 }}>
-        {[
-          { key: 'coconutWater', emoji: '🥥', label: 'Coconut water', good: true },
-          { key: 'coffee', emoji: '☕', label: 'Coffee', good: false },
-          { key: 'alcohol', emoji: '🍺', label: 'Alcohol', good: false },
-        ].map(({ key, emoji, label, good }) => (
-          <button key={key} onClick={() => setLog(l => ({ ...l, hydration: { ...l.hydration, [key]: !l.hydration[key] } }))} style={{
-            flex: 1, padding: '10px 6px', borderRadius: 12, cursor: 'pointer',
-            border: `2px solid ${log.hydration[key] ? (good ? '#A8D5A2' : '#F48585') : '#F0E0DA'}`,
-            background: log.hydration[key] ? (good ? '#F0FFF0' : '#FFF0F0') : '#fff',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
-          }}>
-            <span style={{ fontSize: 20 }}>{emoji}</span>
-            <span style={{ fontSize: 10, color: '#3D2B2B', fontWeight: 600 }}>{label}</span>
-            <span style={{ fontSize: 10 }}>{good ? '✅' : '⚠️'}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Section: Fruits */}
-      <SectionHeader emoji="🍎" title="Fruits & Fiber" description="Tap the fruits you had today 🌿" />
-      <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-        {FRUITS.map(fruit => (
-          <button key={fruit.id} onClick={() => toggleFruit(fruit.id)} style={{
-            padding: '10px 6px', borderRadius: 14, cursor: 'pointer',
-            border: `2px solid ${log.fruitsEaten.includes(fruit.id) ? '#A8D5A2' : '#F0E0DA'}`,
-            background: log.fruitsEaten.includes(fruit.id) ? '#F0FFF5' : '#fff',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
-          }}>
-            <span style={{ fontSize: 22 }}>{fruit.emoji}</span>
-            <span style={{ fontSize: 10, fontWeight: 600, color: '#3D2B2B' }}>{fruit.name}</span>
-            <span style={{ fontSize: 9, color: '#8C7070' }}>{fruit.benefit}</span>
-          </button>
-        ))}
-      </div>
-      <div style={{ padding: '0 16px 16px' }}>
-        <p style={{ fontSize: 12, fontWeight: 600, color: '#8C7070', marginBottom: 8 }}>Other fiber-rich foods:</p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {FIBER_FOODS.map(f => (
-            <button key={f.id} onClick={() => toggleFiber(f.id)} style={{
-              padding: '8px 12px', borderRadius: 20, cursor: 'pointer',
-              border: `1.5px solid ${log.fiberFoods.includes(f.id) ? '#A8D5A2' : '#F0E0DA'}`,
-              background: log.fiberFoods.includes(f.id) ? '#F0FFF5' : '#fff',
-              fontSize: 13, color: '#3D2B2B', display: 'flex', alignItems: 'center', gap: 5
-            }}>
-              <span>{f.emoji}</span> {f.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Section: Sitz Baths */}
-      <SectionHeader emoji="🛁" title="Sitz Baths & Care" description="Warm water soaks help so much 💛" />
-      <div style={{ padding: '12px 20px' }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>Sitz baths today ({log.sitzBaths.length}):</p>
-        {log.sitzBaths.map((bath, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '10px 12px', background: '#F0FFF5', borderRadius: 12 }}>
-            <span style={{ fontSize: 18 }}>🛁</span>
-            <span style={{ fontSize: 13, color: '#3D2B2B', flex: 1 }}>Bath {i + 1} at {bath.time}</span>
-            <input type="number" value={bath.durationMinutes} min={5} max={60}
-              onChange={e => setLog(l => ({ ...l, sitzBaths: l.sitzBaths.map((b, j) => j === i ? { ...b, durationMinutes: Number(e.target.value) } : b) }))}
-              style={{ width: 50, padding: '4px 8px', borderRadius: 8, border: '1px solid #A8D5A2', fontSize: 13, textAlign: 'center' }} />
-            <span style={{ fontSize: 12, color: '#8C7070' }}>min</span>
-            <button onClick={() => setLog(l => ({ ...l, sitzBaths: l.sitzBaths.filter((_, j) => j !== i) }))}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F48585', fontSize: 16 }}>✕</button>
-          </div>
-        ))}
-        <button onClick={addSitzBath} style={{
-          padding: '10px 16px', background: '#F0FFF5', border: '1.5px dashed #A8D5A2',
-          borderRadius: 12, color: '#5A9E5A', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 8
-        }}>
-          <Plus size={16} /> Log a sitz bath
-        </button>
-      </div>
-
-      {/* Section: Medications */}
-      <SectionHeader emoji="💊" title="Medications & Ointments" description="Log what you've taken today" />
-      <div style={{ padding: '12px 20px' }}>
-        <div style={{ marginBottom: 16 }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>Topical ointment applied:</p>
-          <input placeholder="e.g. Lidocaine jelly, Nifedipine cream..." value={log.topicalOintment.name}
-            onChange={e => setLog(l => ({ ...l, topicalOintment: { ...l.topicalOintment, name: e.target.value } }))}
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #F0E0DA', marginBottom: 8, fontSize: 14 }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 13, color: '#8C7070' }}>Times applied:</span>
-            <Stepper value={log.topicalOintment.timesApplied} onChange={v => setLog(l => ({ ...l, topicalOintment: { ...l.topicalOintment, timesApplied: v } }))} max={8} />
-          </div>
-        </div>
-        <div style={{ background: '#FFF8E8', borderRadius: 12, padding: '10px 12px', border: '1px solid #F5C67A' }}>
-          <p style={{ fontSize: 11, color: '#8C7070' }}>💛 Always follow your doctor's prescribed dosage. Do not adjust without consulting your healthcare provider.</p>
-        </div>
-      </div>
-
-      {/* Section: Foods to Avoid */}
-      <SectionHeader emoji="⚠️" title="Foods to Avoid" description="Did you have any of these today?" />
-      {avoidWarning && (
-        <div style={{ margin: '0 16px 10px', background: '#FFF8E8', borderRadius: 12, padding: '10px 12px', border: '1px solid #F5C67A' }}>
-          <p style={{ fontSize: 13, color: '#8C7070' }}>{avoidWarning}</p>
-        </div>
-      )}
-      <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-        {AVOID_FOODS.map(food => (
-          <button key={food.id} onClick={() => toggleAvoid(food.id)} style={{
-            padding: '10px 6px', borderRadius: 14, cursor: 'pointer',
-            border: `2px solid ${log.avoidFoods.includes(food.id) ? '#F5C67A' : '#F0E0DA'}`,
-            background: log.avoidFoods.includes(food.id) ? '#FFF8E8' : '#fff',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
-          }}>
-            <span style={{ fontSize: 22 }}>{food.emoji}</span>
-            <span style={{ fontSize: 9, fontWeight: 600, color: '#3D2B2B', textAlign: 'center' }}>{food.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Section: Activity */}
-      <SectionHeader emoji="🚶" title="Gentle Movement" description="Even a short walk helps!" />
-      <div style={{ padding: '12px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 18 }}>🚶</span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#3D2B2B' }}>Walking today?</span>
-          </div>
-          <Toggle value={log.activity.walking} onChange={v => setLog(l => ({ ...l, activity: { ...l.activity, walking: v } }))} />
-        </div>
-        {log.activity.walking && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, color: '#8C7070' }}>Minutes walked:</span>
-            <Stepper value={log.activity.walkingMinutes} onChange={v => setLog(l => ({ ...l, activity: { ...l.activity, walkingMinutes: v } }))} min={0} max={120} />
-          </div>
-        )}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 18 }}>🧘</span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#3D2B2B' }}>Gentle yoga/stretching?</span>
-          </div>
-          <Toggle value={log.activity.yoga} onChange={v => setLog(l => ({ ...l, activity: { ...l.activity, yoga: v } }))} />
-        </div>
-      </div>
-
-      {/* Section: Self Care & Journal */}
-      <SectionHeader emoji="💛" title="Self-Care & Journal" description="A moment to check in with yourself" />
-      <div style={{ padding: '12px 20px' }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 10 }}>How are you feeling right now?</p>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
-          {EMOTIONS.map(emoji => (
-            <button key={emoji} onClick={() => setLog(l => ({ ...l, selfCare: { ...l.selfCare, emotionalWellbeing: emoji } }))} style={{
-              fontSize: 28, background: log.selfCare.emotionalWellbeing === emoji ? '#FFF0EB' : 'none',
-              border: `2px solid ${log.selfCare.emotionalWellbeing === emoji ? '#E8705A' : 'transparent'}`,
-              borderRadius: 14, padding: '6px 8px', cursor: 'pointer', transition: 'all 0.2s'
-            }}>{emoji}</button>
-          ))}
-        </div>
-        <p style={{ fontSize: 13, fontWeight: 600, color: '#3D2B2B', marginBottom: 8 }}>Any notes or thoughts? (Just for you)</p>
-        <textarea placeholder="Write how you're feeling, what helped, what didn't..." value={log.selfCare.notes}
-          onChange={e => setLog(l => ({ ...l, selfCare: { ...l.selfCare, notes: e.target.value } }))}
-          rows={4} style={{
-            width: '100%', padding: '12px', borderRadius: 14, border: '1px solid #F0E0DA',
-            fontSize: 14, color: '#3D2B2B', resize: 'none', fontFamily: 'Inter', background: '#FAFAFA', lineHeight: 1.6
-          }} />
-      </div>
-
-      {/* Save Button */}
-      <div style={{ padding: '16px 20px 32px' }}>
-        {saved ? (
-          <div style={{
-            padding: '18px', background: 'linear-gradient(135deg, #A8D5A2, #7BC97B)',
-            borderRadius: 20, color: '#fff', fontSize: 16, fontWeight: 700, textAlign: 'center'
-          }}>
-            <Check size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-            All saved! 💛 Every entry is a step toward healing.
-          </div>
+      {/* Bottom navigation */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: 430,
+        background: theme.navBg, borderTop: `1px solid ${theme.navBorder}`,
+        padding: '12px 20px', display: 'flex', gap: 12, zIndex: 10,
+        paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+        boxShadow: `0 -4px 20px ${theme.cardShadow}`,
+      }}>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={goPrev}
+          disabled={step === 0}
+          style={{
+            flex: 1, padding: '14px', borderRadius: 16,
+            background: step === 0 ? theme.cardBorder : theme.card,
+            border: `1.5px solid ${theme.cardBorder}`,
+            color: step === 0 ? theme.textMuted : theme.text,
+            fontSize: 15, fontWeight: 600, cursor: step === 0 ? 'default' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+        >
+          <ArrowLeft size={18} /> Back
+        </motion.button>
+        {step < STEPS.length - 1 ? (
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={goNext}
+            style={{
+              flex: 2, padding: '14px', borderRadius: 16,
+              background: theme.ctaGradient,
+              border: 'none', color: '#fff', fontSize: 15, fontWeight: 700,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: `0 4px 16px ${theme.ctaShadow}`,
+            }}
+          >
+            Next <ArrowRight size={18} />
+          </motion.button>
         ) : (
-          <button onClick={handleSave} style={{
-            width: '100%', padding: '18px', background: 'linear-gradient(135deg, #E8705A, #F5A68A)',
-            border: 'none', borderRadius: 20, color: '#fff', fontSize: 17, fontWeight: 700,
-            cursor: 'pointer', boxShadow: '0 6px 24px rgba(232,112,90,0.35)'
-          }}>
-            ✅ Save Today's Log
-          </button>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSave}
+            style={{
+              flex: 2, padding: '14px', borderRadius: 16,
+              background: 'linear-gradient(135deg, #A8D5A2, #7BC97B)',
+              border: 'none', color: '#fff', fontSize: 15, fontWeight: 700,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: '0 4px 16px rgba(168,213,162,0.4)',
+            }}
+          >
+            <Check size={18} /> Save Log 💛
+          </motion.button>
         )}
       </div>
     </div>
