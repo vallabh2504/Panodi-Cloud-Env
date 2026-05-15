@@ -115,22 +115,72 @@ function FlowingRiver({ theme }) {
 
 /* ── Wellness Ring ── */
 function WellnessRing({ score, theme }) {
+  const [showScoreInfo, setShowScoreInfo] = useState(false)
   const radius = 52, stroke = 8
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (score / 100) * circumference
   const color = score >= 70 ? theme.wellnessHigh : score >= 40 ? theme.wellnessLow : '#F48585'
   return (
-    <div style={{ position: 'relative', width: 140, height: 140, margin: '0 auto' }}>
-      <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={70} cy={70} r={radius} fill="none" stroke={theme.cardBorder} strokeWidth={stroke} />
-        <circle cx={70} cy={70} r={radius} fill="none" stroke={color} strokeWidth={stroke}
-          strokeDasharray={circumference} strokeDashoffset={offset}
-          strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s ease' }} />
-      </svg>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: 32, fontWeight: 800, fontFamily: 'Nunito', color: theme.text }}>{score}</span>
-        <span style={{ fontSize: 11, color: theme.textMuted }}>of 100</span>
+    <div>
+      <div style={{ position: 'relative', width: 140, height: 140, margin: '0 auto' }}>
+        <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx={70} cy={70} r={radius} fill="none" stroke={theme.cardBorder} strokeWidth={stroke} />
+          <circle cx={70} cy={70} r={radius} fill="none" stroke={color} strokeWidth={stroke}
+            strokeDasharray={circumference} strokeDashoffset={offset}
+            strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s ease' }} />
+        </svg>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontSize: 32, fontWeight: 800, fontFamily: 'Nunito', color: theme.text }}>{score}</span>
+          <span style={{ fontSize: 11, color: theme.textMuted }}>of 100</span>
+        </div>
       </div>
+      <button
+        onClick={() => setShowScoreInfo(s => !s)}
+        style={{
+          display: 'block', margin: '8px auto 0', background: 'none', border: 'none',
+          fontSize: 12, color: theme.textMuted, cursor: 'pointer', textDecoration: 'underline dotted',
+        }}
+      >
+        ℹ️ How is this calculated?
+      </button>
+      <AnimatePresence>
+        {showScoreInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              marginTop: 10, background: theme.tipBg, border: `1px solid ${theme.tipBorder}`,
+              borderRadius: 14, padding: '12px 14px', position: 'relative',
+            }}
+          >
+            <button
+              onClick={() => setShowScoreInfo(false)}
+              style={{
+                position: 'absolute', top: 8, right: 10, background: 'none', border: 'none',
+                fontSize: 14, color: theme.textMuted, cursor: 'pointer', lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+            <p style={{ fontSize: 12, fontWeight: 700, color: theme.text, marginBottom: 8 }}>Score Breakdown</p>
+            {[
+              ['💧 Water', '20 pts'],
+              ['🍌 Fruits', '15 pts'],
+              ['🌾 Fiber', '15 pts'],
+              ['🛁 Sitz Baths', '15 pts'],
+              ['😌 Low Pain', '25 pts'],
+              ['💩 Good Bristol', '10 pts'],
+            ].map(([label, pts]) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 12, color: theme.text }}>{label}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: theme.primary }}>{pts}</span>
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -537,6 +587,10 @@ export default function HomeScreen({ onNavigate, theme }) {
   const [mounted, setMounted] = useState(false)
   const [showSitzTimer, setShowSitzTimer] = useState(false)
 
+  const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const lowEndDevice = typeof navigator !== 'undefined' && (navigator.deviceMemory !== undefined) && navigator.deviceMemory < 4
+  const useAnimations = !reducedMotion && !lowEndDevice
+
   const today = new Date().toISOString().split('T')[0]
   const hour = new Date().getHours()
 
@@ -600,8 +654,11 @@ export default function HomeScreen({ onNavigate, theme }) {
         background: theme.headerGradient,
         borderRadius: '0 0 28px 28px',
       }}>
-        <FallingParticles theme={theme} />
-        <FlowingRiver theme={theme} />
+        {!useAnimations && (
+          <div style={{ position: 'absolute', inset: 0, background: theme.headerGradient }} />
+        )}
+        {useAnimations && <FallingParticles theme={theme} />}
+        {useAnimations && <FlowingRiver theme={theme} />}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -696,6 +753,24 @@ export default function HomeScreen({ onNavigate, theme }) {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* ── Healing Day Grace Message (0 blood-free days) ── */}
+      {lastBlood === 0 && log && (() => {
+        const freezeData = getHealingDayFreezes()
+        const freezesLeft = 2 - freezeData.used
+        return (
+          <motion.div
+            custom={2} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
+            style={{
+              margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18,
+              padding: '14px 16px', border: `1px solid ${theme.tipBorder}`,
+            }}
+          >
+            <p style={{ fontSize: 13, color: theme.text, lineHeight: 1.6 }}>
+              Every setback is part of healing 💛 — you have <strong>{freezesLeft}</strong> streak {freezesLeft === 1 ? 'freeze' : 'freezes'} left this month
+            </p>
+          </motion.div>
+        )
+      })()}
 
       {/* ── Streak ── */}
       <AnimatePresence>
