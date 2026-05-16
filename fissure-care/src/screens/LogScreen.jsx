@@ -395,14 +395,42 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   useEffect(() => {
     getLog(today).then(existing => {
       if (existing) {
-        setLog(existing)
+        setLog(prev => ({
+          ...prev,
+          ...existing,
+          dailySymptoms: { ...prev.dailySymptoms, ...(existing.dailySymptoms || {}) },
+          hydration: { ...prev.hydration, ...(existing.hydration || {}) },
+          topicalOintment: { ...prev.topicalOintment, ...(existing.topicalOintment || {}) },
+          activity: { ...prev.activity, ...(existing.activity || {}) },
+          selfCare: { ...prev.selfCare, ...(existing.selfCare || {}) },
+          bowelMovements: existing.bowelMovements || [],
+          sitzBaths: existing.sitzBaths || [],
+          medications: existing.medications || [],
+          fruitsEaten: existing.fruitsEaten || [],
+          fiberFoods: existing.fiberFoods || [],
+          avoidFoods: existing.avoidFoods || [],
+        }))
       } else {
         const draft = localStorage.getItem('fissurecare_draft_' + today)
         if (draft) {
           try {
             const { log: draftLog, step: draftStep } = JSON.parse(draft)
-            setLog(draftLog)
-            setStep(draftStep || 0)
+            setLog(prev => ({
+              ...prev,
+              ...(draftLog || {}),
+              dailySymptoms: { ...prev.dailySymptoms, ...(draftLog?.dailySymptoms || {}) },
+              hydration: { ...prev.hydration, ...(draftLog?.hydration || {}) },
+              topicalOintment: { ...prev.topicalOintment, ...(draftLog?.topicalOintment || {}) },
+              activity: { ...prev.activity, ...(draftLog?.activity || {}) },
+              selfCare: { ...prev.selfCare, ...(draftLog?.selfCare || {}) },
+              bowelMovements: draftLog?.bowelMovements || [],
+              sitzBaths: draftLog?.sitzBaths || [],
+              medications: draftLog?.medications || [],
+              fruitsEaten: draftLog?.fruitsEaten || [],
+              fiberFoods: draftLog?.fiberFoods || [],
+              avoidFoods: draftLog?.avoidFoods || [],
+            }))
+            setStep(Math.min(draftStep || 0, STEPS.length - 1))
             setShowDraftBanner(true)
           } catch {}
         }
@@ -476,7 +504,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   const toggleAvoid = (id) => {
     haptics.tap()
     const food = AVOID_FOODS.find(f => f.id === id)
-    if (!log.avoidFoods.includes(id)) {
+    if (!(log.avoidFoods || []).includes(id)) {
       setAvoidWarning(food.tip)
       setTimeout(() => setAvoidWarning(null), 4000)
     }
@@ -554,13 +582,13 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
           <div style={{ padding: '20px' }}>
             <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Bowel movements today 🚽</p>
             <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16, lineHeight: 1.5 }}>Log each movement separately. Aim for Type 4 🍌</p>
-            {log.bowelMovements.map((bm, i) => (
+            {( log.bowelMovements || []).map((bm, i) => (
               <BMCard key={bm.id} bm={bm} index={i} theme={theme}
                 onUpdate={updated => setLog(l => ({ ...l, bowelMovements: l.bowelMovements.map(b => b.id === bm.id ? updated : b) }))}
                 onSoftDelete={handleSoftDelete}
               />
             ))}
-            {log.bowelMovements.length === 0 && (
+            {(log.bowelMovements || []).length === 0 && (
               <div style={{ background: theme.tipBg, borderRadius: 16, padding: '16px', border: `1px solid ${theme.tipBorder}`, marginBottom: 16, textAlign: 'center' }}>
                 <p style={{ fontSize: 14, color: theme.textMuted }}>No movements yet today — that's okay 💛</p>
                 <p style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>Add one below if you've already had a movement</p>
@@ -654,12 +682,12 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
               {FRUITS.map(fruit => (
                 <motion.button key={fruit.id} whileTap={{ scale: 0.92 }} onClick={() => toggleFruit(fruit.id)} style={{
                   padding: '10px 6px', borderRadius: 14, cursor: 'pointer',
-                  border: `2.5px solid ${log.fruitsEaten.includes(fruit.id) ? '#A8D5A2' : theme.cardBorder}`,
-                  background: log.fruitsEaten.includes(fruit.id) ? '#F0FFF5' : theme.card,
+                  border: `2.5px solid ${(log.fruitsEaten || []).includes(fruit.id) ? '#A8D5A2' : theme.cardBorder}`,
+                  background: (log.fruitsEaten || []).includes(fruit.id) ? '#F0FFF5' : theme.card,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
                 }}>
                   <motion.span
-                    animate={log.fruitsEaten.includes(fruit.id) ? { scale: [1, 1.2, 1] } : {}}
+                    animate={(log.fruitsEaten || []).includes(fruit.id) ? { scale: [1, 1.2, 1] } : {}}
                     style={{ fontSize: 22 }}
                   >{fruit.emoji}</motion.span>
                   <span style={{ fontSize: 10, fontWeight: 600, color: theme.text }}>{fruit.name}</span>
@@ -668,7 +696,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
             </div>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#A8D5A2', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Fiber-rich foods</p>
             {(() => {
-              const totalFiber = log.fiberFoods.reduce((sum, id) => {
+              const totalFiber = (log.fiberFoods || []).reduce((sum, id) => {
                 const food = FIBER_FOODS.find(f => f.id === id)
                 return sum + (food ? food.grams : 0)
               }, 0)
@@ -702,8 +730,8 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
                     {FIBER_FOODS.map(f => (
                       <motion.button key={f.id} whileTap={{ scale: 0.94 }} onClick={() => toggleFiber(f.id)} style={{
                         padding: '8px 12px', borderRadius: 16, cursor: 'pointer',
-                        border: `2px solid ${log.fiberFoods.includes(f.id) ? theme.primary : theme.cardBorder}`,
-                        background: log.fiberFoods.includes(f.id) ? theme.primary + '12' : theme.card,
+                        border: `2px solid ${(log.fiberFoods || []).includes(f.id) ? theme.primary : theme.cardBorder}`,
+                        background: (log.fiberFoods || []).includes(f.id) ? theme.primary + '12' : theme.card,
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 72
                       }}>
                         <span style={{ fontSize: 20 }}>{f.emoji}</span>
@@ -736,8 +764,8 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
               {AVOID_FOODS.map(food => (
                 <motion.button key={food.id} whileTap={{ scale: 0.92 }} onClick={() => toggleAvoid(food.id)} style={{
                   padding: '10px 6px', borderRadius: 14, cursor: 'pointer',
-                  border: `2.5px solid ${log.avoidFoods.includes(food.id) ? '#F5C67A' : theme.cardBorder}`,
-                  background: log.avoidFoods.includes(food.id) ? '#FFF8E8' : theme.card,
+                  border: `2.5px solid ${(log.avoidFoods || []).includes(food.id) ? '#F5C67A' : theme.cardBorder}`,
+                  background: (log.avoidFoods || []).includes(food.id) ? '#FFF8E8' : theme.card,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
                 }}>
                   <span style={{ fontSize: 22 }}>{food.emoji}</span>
@@ -756,10 +784,10 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
             <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20 }}>Self-care tracking — every sitz bath matters so much</p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, margin: 0 }}>Sitz baths today ({log.sitzBaths.length}):</p>
-              {log.sitzBaths.length > 0 && <SteamWisps size={28} color="#A8D5A2" />}
+              <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, margin: 0 }}>Sitz baths today ({(log.sitzBaths || []).length}):</p>
+              {(log.sitzBaths || []).length > 0 && <SteamWisps size={28} color="#A8D5A2" />}
             </div>
-            {log.sitzBaths.map((bath, i) => (
+            {(log.sitzBaths || []).map((bath, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '12px', background: '#F0FFF5', borderRadius: 14, border: '1px solid #A8D5A2' }}>
                 <span style={{ fontSize: 20 }}>🛁</span>
