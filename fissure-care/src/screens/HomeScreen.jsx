@@ -124,7 +124,13 @@ function WellnessRing({ score, theme }) {
   return (
     <div>
       <div style={{ position: 'relative', width: 140, height: 140, margin: '0 auto' }}>
-        <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}>
+        <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}
+          role="progressbar"
+          aria-valuenow={score}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Wellness score: ${score} out of 100`}
+        >
           <circle cx={70} cy={70} r={radius} fill="none" stroke={theme.cardBorder} strokeWidth={stroke} />
           <circle cx={70} cy={70} r={radius} fill="none" stroke={color} strokeWidth={stroke}
             strokeDasharray={circumference} strokeDashoffset={offset}
@@ -593,7 +599,9 @@ export default function HomeScreen({ onNavigate, theme }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const toggleSection = (key) => setCollapsed(s => ({ ...s, [key]: !s[key] }))
 
-  const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const [reducedMotion, setReducedMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
   const lowEndDevice = typeof navigator !== 'undefined' && (navigator.deviceMemory !== undefined) && navigator.deviceMemory < 4
   const useAnimations = !reducedMotion && !lowEndDevice
 
@@ -647,19 +655,35 @@ export default function HomeScreen({ onNavigate, theme }) {
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const handler = (e) => setReducedMotion(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
   const score = log ? calcWellnessScore(log) : 0
 
-  const lastBlood = useMemo(() => {
-    let days = 0
-    for (let i = 1; i <= 90; i++) {
-      const d = new Date(); d.setDate(d.getDate() - i)
-      const stored = localStorage.getItem('fissurecare_log_' + d.toISOString().split('T')[0])
-      const l = stored ? JSON.parse(stored) : null
-      if (l?.bowelMovements?.some(bm => bm.bloodPresent)) return days
-      days++
-    }
-    return days
-  }, [today])
+  const [bloodFreeDays, setBloodFreeDays] = useState(0)
+
+  useEffect(() => {
+    getAllLogs().then(logs => {
+      let count = 0
+      const todayDate = new Date()
+      for (let i = 1; i <= 90; i++) {
+        const d = new Date(todayDate)
+        d.setDate(d.getDate() - i)
+        const key = d.toISOString().split('T')[0]
+        const entry = logs[key]
+        if (!entry) break
+        if (entry.symptoms?.bleeding) break
+        count++
+      }
+      setBloodFreeDays(count)
+    })
+  }, [today, log])
+
+  const lastBlood = bloodFreeDays
 
   const showReminder = hour >= 20 && !log
 
@@ -683,7 +707,7 @@ export default function HomeScreen({ onNavigate, theme }) {
   return (
     <div style={{ padding: '0 0 16px' }}>
       {/* ── Animated Hero Header ── */}
-      <div style={{
+      <div className="parallax-container" style={{
         position: 'relative', overflow: 'hidden', minHeight: 180,
         background: theme.headerGradient,
         borderRadius: '0 0 28px 28px',
@@ -691,9 +715,10 @@ export default function HomeScreen({ onNavigate, theme }) {
         {!useAnimations && (
           <div style={{ position: 'absolute', inset: 0, background: theme.headerGradient }} />
         )}
-        {useAnimations && <FallingParticles theme={theme} />}
-        {useAnimations && <FlowingRiver theme={theme} />}
+        {useAnimations && <div className="parallax-back" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}><FallingParticles theme={theme} /></div>}
+        {useAnimations && <div className="parallax-mid" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}><FlowingRiver theme={theme} /></div>}
         <motion.div
+          className="parallax-front"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
@@ -727,6 +752,7 @@ export default function HomeScreen({ onNavigate, theme }) {
       {/* ── Wellness Score Card ── */}
       <motion.div
         custom={0} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
+        className="glass-card tilt-card"
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{
