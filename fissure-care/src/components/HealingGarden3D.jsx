@@ -1,10 +1,10 @@
 import { useRef, useEffect, useMemo, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 
 /* ── Flower mesh geometry constants ── */
-const SPHERE_ARGS = [0.18, 10, 10]
+const TORUS_ARGS = [0.13, 0.055, 8, 6]
 const CYLINDER_ARGS = [0.02, 0.03, 0.6, 6]
 
 /* ── Particle system for newest flower burst ── */
@@ -27,13 +27,15 @@ function FlowerBurst({ position, active }) {
     stateRef.current.t = 0
   }, [position[0], position[1], position[2]])
 
+  const dummyRef = useRef(new THREE.Object3D())
+
   useFrame((_, delta) => {
     if (!active || !meshRef.current) return
     const state = stateRef.current
     state.t += delta
     if (state.t > 0.8) return
 
-    const dummy = new THREE.Object3D()
+    const dummy = dummyRef.current
     state.particles.forEach((p, i) => {
       p.x += p.vx
       p.y += p.vy
@@ -64,7 +66,9 @@ function FlowerBurst({ position, active }) {
 function FlowerField({ count, theme, burstIndex }) {
   const headRef = useRef(null)
   const stemRef = useRef(null)
+  const centerRef = useRef(null)
   const clockRef = useRef(0)
+  const dummyRef = useRef(new THREE.Object3D())
 
   // Pre-compute flower positions and colors
   const flowers = useMemo(() => {
@@ -107,11 +111,13 @@ function FlowerField({ count, theme, burstIndex }) {
     stemRef.current.instanceMatrix.needsUpdate = true
   }, [flowers])
 
+  const { invalidate } = useThree()
+
   // Wind animation
   useFrame(({ clock }) => {
     if (!headRef.current || !stemRef.current) return
     const t = clock.elapsedTime
-    const dummy = new THREE.Object3D()
+    const dummy = dummyRef.current
 
     flowers.forEach((f, i) => {
       const sway = Math.sin(t * 0.7 + i * 0.4) * 0.06
@@ -126,6 +132,7 @@ function FlowerField({ count, theme, burstIndex }) {
       dummy.scale.set(1, 1, 1)
       dummy.updateMatrix()
       headRef.current.setMatrixAt(i, dummy.matrix)
+      if (centerRef.current) centerRef.current.setMatrixAt(i, dummy.matrix)
 
       // Stem sways
       dummy.position.set(
@@ -141,6 +148,8 @@ function FlowerField({ count, theme, burstIndex }) {
 
     headRef.current.instanceMatrix.needsUpdate = true
     stemRef.current.instanceMatrix.needsUpdate = true
+    if (centerRef.current) centerRef.current.instanceMatrix.needsUpdate = true
+    invalidate()
   })
 
   // Newest flower position for burst
@@ -151,9 +160,13 @@ function FlowerField({ count, theme, burstIndex }) {
 
   return (
     <>
-      <instancedMesh ref={headRef} args={[null, null, count]}>
-        <sphereGeometry args={SPHERE_ARGS} />
+      <instancedMesh ref={headRef} args={[null, null, count]} frustumCulled={false}>
+        <torusGeometry args={TORUS_ARGS} />
         <meshStandardMaterial metalness={0.1} roughness={0.5} />
+      </instancedMesh>
+      <instancedMesh ref={centerRef} args={[null, null, count]} frustumCulled={false}>
+        <circleGeometry args={[0.06, 8]} />
+        <meshStandardMaterial color="#FFD700" metalness={0.2} roughness={0.4} />
       </instancedMesh>
       <instancedMesh ref={stemRef} args={[null, null, count]}>
         <cylinderGeometry args={CYLINDER_ARGS} />
@@ -226,7 +239,7 @@ export default function HealingGarden3D({ bloodFreeDays = 0, theme = {} }) {
         style={{ width: '100%', height: 200, borderRadius: 16 }}
         camera={{ position: [0, 2.5, 5], fov: 45 }}
         gl={{ alpha: true }}
-        frameloop="always"
+        frameloop="demand"
       >
         <GardenScene bloodFreeDays={bloodFreeDays} theme={theme} burstIndex={burstIndex} />
       </Canvas>
