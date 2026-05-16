@@ -3,44 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BloomFlower, StarField } from './AnimatedSVGs'
 const Confetti3D = lazy(() => import('./Confetti3D'))
 
-function ConfettiCanvas({ colors }) {
-  const canvasRef = useRef(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    canvas.width = canvas.offsetWidth
-    canvas.height = canvas.offsetHeight
-    const pieces = Array.from({ length: 60 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height - canvas.height,
-      size: 6 + Math.random() * 8,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      speedX: (Math.random() - 0.5) * 3,
-      speedY: 2 + Math.random() * 4,
-      rotation: Math.random() * 360,
-      rotSpeed: (Math.random() - 0.5) * 8,
-    }))
-
-    let raf
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (const p of pieces) {
-        p.y += p.speedY; p.x += p.speedX; p.rotation += p.rotSpeed
-        if (p.y > canvas.height + 20) p.y = -20
-        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180)
-        ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size)
-        ctx.restore()
-      }
-      raf = requestAnimationFrame(draw)
-    }
-    draw()
-    return () => cancelAnimationFrame(raf)
-  }, [colors])
-
-  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
-}
 
 const CONFIGS = {
   confetti: { colors: ['#E8705A', '#F5C67A', '#A8D5A2', '#C9A8F5', '#F5A68A'], emoji: '🎉' },
@@ -54,6 +16,7 @@ const CONFIGS = {
 
 export default function CelebrationOverlay({ celebration, onDismiss }) {
   const config = CONFIGS[celebration?.type] || CONFIGS.confetti
+  const overlayRef = useRef(null)
 
   useEffect(() => {
     if (!celebration) return
@@ -63,10 +26,35 @@ export default function CelebrationOverlay({ celebration, onDismiss }) {
     return () => clearTimeout(timer)
   }, [celebration, onDismiss])
 
+  useEffect(() => {
+    if (!celebration) return
+    // Focus the overlay when it opens
+    const el = overlayRef.current
+    if (!el) return
+    const focusable = el.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])')
+    if (focusable.length) focusable[0].focus()
+
+    const handleKeyDown = (e) => {
+      if (e.key !== 'Tab') return
+      const focusableArr = Array.from(el.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])'))
+      if (!focusableArr.length) return
+      const first = focusableArr[0]
+      const last = focusableArr[focusableArr.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [celebration])
+
   return (
     <AnimatePresence>
       {celebration && (
         <motion.div
+          ref={overlayRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -82,7 +70,6 @@ export default function CelebrationOverlay({ celebration, onDismiss }) {
           <Suspense fallback={null}>
             <Confetti3D colors={celebration?.confettiColors || config.colors} />
           </Suspense>
-          <ConfettiCanvas colors={config.colors} />
           <motion.div
             initial={{ scale: 0.5, y: 40 }}
             animate={{ scale: 1, y: 0 }}
