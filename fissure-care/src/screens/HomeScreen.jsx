@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import HealingGarden3D from '../components/HealingGarden3D'
 import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell, ChevronDown } from 'lucide-react'
 import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings, getHealingDayFreezes, useHealingDayFreeze } from '../lib/storage'
 import { getDailyInsight } from '../lib/correlations'
@@ -220,11 +221,6 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
       </motion.div>
     )
   }
-  const count = Math.min(bloodFreeDays, 14)
-  const flowers = Array.from({ length: count }, (_, i) => ({
-    emoji: i % 3 === 0 ? '🌺' : i % 3 === 1 ? '🌸' : '🌼',
-    delay: i * 0.06,
-  }))
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -259,24 +255,7 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
       <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 10 }}>
         {bloodFreeDays} consecutive blood-free {bloodFreeDays === 1 ? 'day' : 'days'} — each flower is a victory
       </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-        {flowers.map((f, i) => (
-          <motion.span
-            key={i}
-            initial={{ scale: 0, rotate: -20 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: f.delay, type: 'spring', stiffness: 260, damping: 18 }}
-            style={{ fontSize: 22 }}
-          >
-            {f.emoji}
-          </motion.span>
-        ))}
-        {bloodFreeDays > 14 && (
-          <span style={{ fontSize: 12, color: theme.textMuted, alignSelf: 'center', marginLeft: 4 }}>
-            +{bloodFreeDays - 14} more
-          </span>
-        )}
-      </div>
+      <HealingGarden3D bloodFreeDays={bloodFreeDays} theme={theme} />
     </motion.div>
   )
 }
@@ -607,6 +586,9 @@ export default function HomeScreen({ onNavigate, theme }) {
   const [showSitzTimer, setShowSitzTimer] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [collapsed, setCollapsed] = useState({ progress: false, insights: false })
+  const [displayedGreeting, setDisplayedGreeting] = useState('')
+  const greetingRef = useRef(null)
+  const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const toggleSection = (key) => setCollapsed(s => ({ ...s, [key]: !s[key] }))
 
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -624,6 +606,19 @@ export default function HomeScreen({ onNavigate, theme }) {
     try { return JSON.parse(localStorage.getItem('fissurecare_settings') || '{}') } catch { return {} }
   }, [])
   const name = settings.userName || 'Bujji'
+
+  const fullGreeting = `${greeting}, ${name}!`
+
+  useEffect(() => {
+    setDisplayedGreeting('')
+    let idx = 0
+    const interval = setInterval(() => {
+      idx++
+      setDisplayedGreeting(fullGreeting.slice(0, idx))
+      if (idx >= fullGreeting.length) clearInterval(interval)
+    }, 40)
+    return () => clearInterval(interval)
+  }, [fullGreeting])
 
   useEffect(() => {
     getLog(today).then(setLog)
@@ -674,6 +669,15 @@ export default function HomeScreen({ onNavigate, theme }) {
     })
   }
 
+  const handleTouchMove = (e) => {
+    const touch = e.touches[0]
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = ((touch.clientY - rect.top) / rect.height - 0.5) * 12
+    const y = ((touch.clientX - rect.left) / rect.width - 0.5) * -12
+    setTilt({ x, y })
+  }
+  const handleTouchEnd = () => setTilt({ x: 0, y: 0 })
+
   return (
     <div style={{ padding: '0 0 16px' }}>
       {/* ── Animated Hero Header ── */}
@@ -694,8 +698,8 @@ export default function HomeScreen({ onNavigate, theme }) {
           style={{ position: 'relative', zIndex: 2, padding: '28px 20px 50px' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <p style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, margin: 0, letterSpacing: '-0.3px' }}>
-              {greeting}, {name}!
+            <p ref={greetingRef} style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, margin: 0, letterSpacing: '-0.3px' }}>
+              {displayedGreeting}
             </p>
             {hour < 17 ? <SunIcon size={22} color={theme.primary} /> : <MoonIcon size={22} color={theme.accent || '#C9A8F5'} />}
           </div>
@@ -721,12 +725,22 @@ export default function HomeScreen({ onNavigate, theme }) {
       {/* ── Wellness Score Card ── */}
       <motion.div
         custom={0} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={{
+          position: 'relative', overflow: 'hidden',
           margin: '20px 16px 16px', background: theme.card, borderRadius: 22,
           padding: '22px 16px', boxShadow: `0 4px 20px ${theme.cardShadow}`,
           border: `1px solid ${theme.cardBorder}`,
+          transform: `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transition: tilt.x === 0 ? 'transform 0.5s ease' : 'transform 0.1s ease',
         }}
       >
+        {/* Specular highlight overlay */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 22,
+          background: `radial-gradient(circle at ${50 + tilt.y * 3}% ${50 + tilt.x * 3}%, rgba(255,255,255,0.25), transparent 60%)`,
+        }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 14 }}>
           <Sparkles size={14} color={theme.primary} />
           <p style={{ fontSize: 13, fontWeight: 600, color: theme.textMuted }}>Today's Wellness</p>

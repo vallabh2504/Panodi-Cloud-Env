@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus, ChevronDown, ChevronUp, Check, ArrowLeft, ArrowRight } from 'lucide-react'
 import { saveLog, getLog } from '../lib/storage'
 import { hapticLight, hapticMedium, hapticSuccess, hapticSelect } from '../lib/haptics'
+import { haptics } from '../lib/haptics'
 import { getTheme } from '../lib/themes'
 import { HeartPulse, SteamWisps, CheckDrawn } from '../components/AnimatedSVGs'
 
@@ -234,20 +235,38 @@ function BMCard({ bm, index, onUpdate, onSoftDelete, theme }) {
   )
 }
 
-function WaterTracker({ glasses, onChange, goal = 8, theme }) {
+function WaterTracker({ glasses, onChange, goal = 8, theme, justFilled, onJustFill }) {
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
         {Array.from({ length: goal }).map((_, i) => (
           <motion.button key={i} whileTap={{ scale: 0.9 }}
             aria-label={i < glasses ? `Remove glass ${i + 1}` : `Add glass ${i + 1}`}
-            onClick={() => { hapticSelect(); onChange(i < glasses ? i : i + 1) }}
+            onClick={() => {
+              haptics.tap()
+              if (i >= glasses) onJustFill(i)
+              onChange(i < glasses ? i : i + 1)
+            }}
             style={{
               fontSize: 26, background: 'none', border: 'none', cursor: 'pointer',
-              filter: i < glasses ? 'none' : 'grayscale(100%) opacity(0.3)',
-              transition: 'all 0.15s'
+              transition: 'all 0.15s', padding: 0,
             }}>
-            {i < glasses ? '🥛' : '🫙'}
+            <div style={{
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: '50%',
+              transition: 'all 0.3s ease',
+              background: i < glasses
+                ? 'linear-gradient(to top, #3B82F4 0%, #60A5FA 100%)'
+                : 'transparent',
+              transform: justFilled === i ? 'scale(1.3)' : 'scale(1)',
+              width: 36, height: 36,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{ filter: i < glasses ? 'none' : 'grayscale(100%) opacity(0.3)' }}>
+                {i < glasses ? '🥛' : '🫙'}
+              </span>
+            </div>
           </motion.button>
         ))}
       </div>
@@ -320,6 +339,11 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   const [avoidWarning, setAvoidWarning] = useState(null)
   const dragStartX = useRef(0)
 
+  // Micro-interaction states
+  const [justFilled, setJustFilled] = useState(null)
+  const [bgWarmth, setBgWarmth] = useState('')
+  const [saveFlash, setSaveFlash] = useState(false)
+
   // P1-A: Undo snackbar state
   const [pendingDelete, setPendingDelete] = useState(null) // { id, bm, timeoutId }
 
@@ -377,10 +401,10 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   }, [today])
 
   const goNext = () => {
-    if (step < STEPS.length - 1) { hapticLight(); setDirection(1); setStep(s => s + 1) }
+    if (step < STEPS.length - 1) { hapticLight(); haptics.light(); setDirection(1); setStep(s => s + 1) }
   }
   const goPrev = () => {
-    if (step > 0) { hapticLight(); setDirection(-1); setStep(s => s - 1) }
+    if (step > 0) { hapticLight(); haptics.light(); setDirection(-1); setStep(s => s - 1) }
   }
 
   const handleSave = async () => {
@@ -394,11 +418,15 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
     setSaved(true)
     setSaving(false)
     if (onLogSaved) onLogSaved(updated)
+    haptics.success()
+    setSaveFlash(true)
+    setTimeout(() => setSaveFlash(false), 800)
     setTimeout(() => { setSaved(false); onNavigate('home') }, 2200)
   }
 
   const addBM = () => {
     hapticMedium()
+    haptics.medium()
     const now = new Date()
     const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
     setLog(l => ({ ...l, bowelMovements: [...l.bowelMovements, { id: Date.now(), time, painLevel: 0, bloodPresent: false, spasm: false }] }))
@@ -417,17 +445,23 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   // P1-A: Undo delete handler
   const handleUndoDelete = () => {
     if (!pendingDelete) return
+    haptics.light()
     clearTimeout(pendingDelete.timeoutId)
     setLog(l => ({ ...l, bowelMovements: [...l.bowelMovements, pendingDelete.bm] }))
     setPendingDelete(null)
   }
 
+  const handleJustFill = (index) => {
+    setJustFilled(index)
+    setTimeout(() => setJustFilled(null), 300)
+  }
+
   const toggleFruit = (id) => {
-    hapticSelect()
+    haptics.light()
     setLog(l => ({ ...l, fruitsEaten: l.fruitsEaten.includes(id) ? l.fruitsEaten.filter(f => f !== id) : [...l.fruitsEaten, id] }))
   }
   const toggleFiber = (id) => {
-    hapticSelect()
+    haptics.light()
     setLog(l => ({ ...l, fiberFoods: l.fiberFoods.includes(id) ? l.fiberFoods.filter(f => f !== id) : [...l.fiberFoods, id] }))
   }
   const toggleAvoid = (id) => {
@@ -539,7 +573,11 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
           <div style={{ padding: '20px' }}>
             <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>How are you feeling, {name}? 🌡️</p>
             <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20 }}>These are separate from movements — your general comfort today</p>
-            <PainSlider value={log.dailySymptoms.restingPain} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, restingPain: v } }))} label="Resting discomfort (when not in the bathroom):" theme={theme} />
+            <PainSlider value={log.dailySymptoms.restingPain} onChange={v => {
+              haptics.light()
+              setBgWarmth(v <= 2 ? 'warm' : '')
+              setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, restingPain: v } }))
+            }} label="Resting discomfort (when not in the bathroom):" theme={theme} />
             <PainSlider value={log.dailySymptoms.itchingBurning} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, itchingBurning: v } }))} label="Burning or itching:" theme={theme} />
             <PainSlider value={log.dailySymptoms.sittingDiscomfort} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, sittingDiscomfort: v } }))} label="Discomfort when sitting:" theme={theme} />
             <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 12 }}>How was your day overall?</p>
@@ -570,7 +608,9 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
             <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20 }}>Each glass = 250ml. Tap to fill — aim for {waterGoal} glasses!</p>
             <WaterTracker glasses={log.hydration.waterGlasses}
               onChange={g => setLog(l => ({ ...l, hydration: { ...l.hydration, waterGlasses: g, waterMl: g * 250 } }))}
-              goal={waterGoal} theme={theme} />
+              goal={waterGoal} theme={theme}
+              justFilled={justFilled}
+              onJustFill={handleJustFill} />
             <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginTop: 20, marginBottom: 12 }}>Other drinks today:</p>
             <div style={{ display: 'flex', gap: 10 }}>
               {[
