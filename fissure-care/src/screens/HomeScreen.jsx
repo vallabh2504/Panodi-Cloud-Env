@@ -1,11 +1,29 @@
 import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
 const HealingGarden3D = lazy(() => import('../components/HealingGarden3D'))
+const NoiseShaderHero = lazy(() => import('../components/NoiseShaderHero'))
+const FlipNumber = lazy(() => import('../components/FlipNumber'))
 import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell, ChevronDown } from 'lucide-react'
 import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings, getHealingDayFreezes, useHealingDayFreeze } from '../lib/storage'
 import { getDailyInsight } from '../lib/correlations'
 import { FlameIcon, SunIcon, MoonIcon, WaveBar } from '../components/AnimatedSVGs'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useInView } from 'framer-motion'
+
+/* ── RevealCard: IntersectionObserver-based entrance ── */
+function RevealCard({ children, delay = 0 }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-40px' })
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
+  )
+}
 
 const tips = [
   'Warm sitz baths 3 times a day can help relax the area and speed up healing.',
@@ -124,6 +142,12 @@ function WellnessRing({ score, theme }) {
   return (
     <div>
       <div style={{ position: 'relative', width: 140, height: 140, margin: '0 auto' }}>
+        {/* Inner glow */}
+        <div style={{
+          position: 'absolute', inset: 16, borderRadius: '50%',
+          background: `radial-gradient(circle, ${color}22 0%, transparent 70%)`,
+          animation: score >= 70 ? 'ringGlow 2.5s ease-in-out infinite' : 'none',
+        }} />
         <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}
           role="progressbar"
           aria-valuenow={score}
@@ -132,12 +156,27 @@ function WellnessRing({ score, theme }) {
           aria-label={`Wellness score: ${score} out of 100`}
         >
           <circle cx={70} cy={70} r={radius} fill="none" stroke={theme.cardBorder} strokeWidth={stroke} />
+          {/* Comet ghost trail */}
+          <circle
+            cx={70} cy={70} r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth={stroke * 0.6}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset + circumference * 0.04}
+            strokeLinecap="round"
+            opacity={0.35}
+            style={{ transition: 'stroke-dashoffset 1s ease', filter: `blur(2px)` }}
+            className="ring-glow-trail"
+          />
           <circle cx={70} cy={70} r={radius} fill="none" stroke={color} strokeWidth={stroke}
             strokeDasharray={circumference} strokeDashoffset={offset}
             strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s ease' }} />
         </svg>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 32, fontWeight: 800, fontFamily: 'Nunito', color: theme.text }}>{score}</span>
+          <Suspense fallback={<span style={{ fontSize: 32, fontWeight: 800, fontFamily: 'Nunito', color: theme.text }}>{score}</span>}>
+            <FlipNumber value={score} color={theme.text} fontSize={32} suffix="" />
+          </Suspense>
           <span style={{ fontSize: 11, color: theme.textMuted }}>of 100</span>
         </div>
       </div>
@@ -663,6 +702,17 @@ export default function HomeScreen({ onNavigate, theme }) {
   }, [])
 
   const score = log ? calcWellnessScore(log) : 0
+  const wellnessScore = score
+
+  const timeClass = (() => {
+    const h = new Date().getHours()
+    if (h >= 5 && h < 12) return 'time-morning'
+    if (h >= 12 && h < 17) return 'time-midday'
+    if (h >= 17 && h < 21) return 'time-evening'
+    return 'time-night'
+  })()
+
+  const wellnessClass = wellnessScore >= 70 ? 'wellness-high' : wellnessScore >= 40 ? 'wellness-mid' : 'wellness-low'
 
   const [bloodFreeDays, setBloodFreeDays] = useState(0)
 
@@ -705,13 +755,15 @@ export default function HomeScreen({ onNavigate, theme }) {
   const handleTouchEnd = () => setTilt({ x: 0, y: 0 })
 
   return (
-    <div style={{ padding: '0 0 16px' }}>
+    <div className={`${timeClass} ${wellnessClass} ambient-overlay`} style={{ padding: '0 0 16px' }}>
       {/* ── Animated Hero Header ── */}
       <div className="parallax-container" style={{
         position: 'relative', overflow: 'hidden', minHeight: 180,
-        background: theme.headerGradient,
         borderRadius: '0 0 28px 28px',
       }}>
+        <Suspense fallback={null}>
+          <NoiseShaderHero theme={theme} style={{ borderRadius: 'inherit' }} />
+        </Suspense>
         {!useAnimations && (
           <div style={{ position: 'absolute', inset: 0, background: theme.headerGradient }} />
         )}
@@ -750,68 +802,78 @@ export default function HomeScreen({ onNavigate, theme }) {
       {insight && <InsightCard insight={insight} theme={theme} />}
 
       {/* ── Wellness Score Card ── */}
-      <motion.div
-        custom={0} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
-        className="glass-card tilt-card"
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          position: 'relative', overflow: 'hidden',
-          margin: '20px 16px 16px', borderRadius: 22,
-          padding: '22px 16px', boxShadow: `0 4px 20px ${theme.cardShadow}`,
-          border: `1px solid ${theme.cardBorder}`,
-          transform: `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-          transition: tilt.x === 0 ? 'transform 0.5s ease' : 'transform 0.1s ease',
-        }}
-      >
-        {/* Specular highlight overlay */}
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 22,
-          background: `radial-gradient(circle at ${50 + tilt.y * 3}% ${50 + tilt.x * 3}%, rgba(255,255,255,0.25), transparent 60%)`,
-        }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 14 }}>
-          <Sparkles size={14} color={theme.primary} />
-          <p style={{ fontSize: 13, fontWeight: 600, color: theme.textMuted }}>Today's Wellness</p>
+      <RevealCard delay={0}>
+        <div
+          className="glass-card tilt-card"
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{
+            position: 'relative', overflow: 'hidden',
+            margin: '20px 16px 16px', borderRadius: 22,
+            padding: '22px 16px', boxShadow: `0 4px 20px ${theme.cardShadow}`,
+            border: `1px solid ${theme.cardBorder}`,
+            transform: `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+            transition: tilt.x === 0 ? 'transform 0.5s ease' : 'transform 0.1s ease',
+          }}
+        >
+          {/* Specular highlight overlay */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 22,
+            background: `radial-gradient(circle at ${50 + tilt.y * 3}% ${50 + tilt.x * 3}%, rgba(255,255,255,0.25), transparent 60%)`,
+          }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 14 }}>
+            <Sparkles size={14} color={theme.primary} />
+            <p style={{ fontSize: 13, fontWeight: 600, color: theme.textMuted }}>Today's Wellness</p>
+          </div>
+          <WellnessRing score={score} theme={theme} />
+          <p style={{ textAlign: 'center', marginTop: 12, fontSize: 13, color: score >= 70 ? theme.wellnessHigh : theme.wellnessLow, fontWeight: 500 }}>
+            {score >= 80 ? 'Amazing day! Your body is healing beautifully.' :
+             score >= 70 ? 'Great effort! Keep this momentum going.' :
+             score >= 40 ? "You're doing okay — small steps count." :
+             log ? "Today was hard. That's okay — tomorrow is new." :
+             'Log your day to see your wellness score'}
+          </p>
         </div>
-        <WellnessRing score={score} theme={theme} />
-        <p style={{ textAlign: 'center', marginTop: 12, fontSize: 13, color: score >= 70 ? theme.wellnessHigh : theme.wellnessLow, fontWeight: 500 }}>
-          {score >= 80 ? 'Amazing day! Your body is healing beautifully.' :
-           score >= 70 ? 'Great effort! Keep this momentum going.' :
-           score >= 40 ? "You're doing okay — small steps count." :
-           log ? "Today was hard. That's okay — tomorrow is new." :
-           'Log your day to see your wellness score'}
-        </p>
-      </motion.div>
+      </RevealCard>
 
-      {/* ── Quick Summary Cards ── */}
-      <motion.div
-        custom={1} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
-        style={{ display: 'flex', gap: 10, padding: '0 16px', overflowX: 'auto' }}
-        className="scrollbar-hide"
-      >
-        {[
-          { icon: '💧', label: 'Water', value: `${log?.hydration?.waterGlasses || 0}/8`, sub: 'glasses' },
-          { icon: '🍌', label: 'Fruits', value: log?.fruitsEaten?.length || 0, sub: 'eaten' },
-          { icon: '🛁', label: 'Sitz baths', value: log?.sitzBaths?.length || 0, sub: 'today' },
-          { icon: '💛', label: 'Pain', value: log?.bowelMovements?.[0]?.painLevel ?? '–', sub: '/10' },
-          { icon: '🩸', label: 'Blood-free', value: lastBlood >= 90 ? '90+' : lastBlood, sub: 'days' },
-        ].map((card, i) => (
-          <motion.div
-            key={i}
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            style={{
-              minWidth: 82, background: theme.card, borderRadius: 18, padding: '14px 10px',
-              textAlign: 'center', border: `1px solid ${theme.cardBorder}`, flexShrink: 0,
-              boxShadow: `0 2px 8px ${theme.cardShadow}`,
-            }}
-          >
-            <div style={{ fontSize: 22, marginBottom: 2 }}>{card.icon}</div>
-            <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: theme.text, lineHeight: 1.2 }}>{card.value}</div>
-            <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 2 }}>{card.sub}</div>
-          </motion.div>
-        ))}
-      </motion.div>
+      {/* ── Quick Summary Cards (Bento Grid) ── */}
+      <RevealCard delay={0.1}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 10,
+          margin: '0 16px 16px',
+        }}>
+          {[
+            { icon: '💧', label: 'Water', value: `${log?.hydration?.waterGlasses || 0}/8`, sub: 'glasses' },
+            { icon: '🍌', label: 'Fruits', value: log?.fruitsEaten?.length || 0, sub: 'eaten' },
+            { icon: '🛁', label: 'Sitz baths', value: log?.sitzBaths?.length || 0, sub: 'today' },
+            { icon: '💛', label: 'Pain', value: log?.bowelMovements?.[0]?.painLevel ?? '–', sub: '/10' },
+            { icon: '🩸', label: 'Blood-free', value: lastBlood >= 90 ? '90+' : lastBlood, sub: 'days', flipNum: typeof lastBlood === 'number' && lastBlood < 90 },
+          ].map((card, i) => (
+            <motion.div
+              key={i}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                background: theme.card, borderRadius: 18, padding: '14px 10px',
+                textAlign: 'center', border: `1px solid ${theme.cardBorder}`,
+                boxShadow: `0 2px 8px ${theme.cardShadow}`,
+              }}
+            >
+              <div style={{ fontSize: 22, marginBottom: 2 }}>{card.icon}</div>
+              {card.flipNum ? (
+                <Suspense fallback={<div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, lineHeight: 1.2 }}>{card.value}</div>}>
+                  <FlipNumber value={lastBlood} color={theme.primary} fontSize={20} />
+                </Suspense>
+              ) : (
+                <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: theme.text, lineHeight: 1.2 }}>{card.value}</div>
+              )}
+              <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 2 }}>{card.sub}</div>
+            </motion.div>
+          ))}
+        </div>
+      </RevealCard>
 
       {/* ── YOUR PROGRESS section (collapsible) ── */}
       <div style={{ marginTop: 8 }}>
@@ -841,51 +903,49 @@ export default function HomeScreen({ onNavigate, theme }) {
               style={{ overflow: 'hidden' }}
             >
               {/* Healing Garden */}
-              <motion.div custom={2} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}>
+              <RevealCard delay={0}>
                 <HealingGardenFlowers bloodFreeDays={lastBlood} theme={theme} />
-              </motion.div>
+              </RevealCard>
 
               {/* Healing Day Grace */}
               {lastBlood === 0 && log && (() => {
                 const freezeData = getHealingDayFreezes()
                 const freezesLeft = 2 - freezeData.used
                 return (
-                  <motion.div
-                    custom={2} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
-                    style={{ margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18, padding: '14px 16px', border: `1px solid ${theme.tipBorder}` }}
-                  >
-                    <p style={{ fontSize: 13, color: theme.text, lineHeight: 1.6 }}>
-                      Every setback is part of healing 💛 — you have <strong>{freezesLeft}</strong> streak {freezesLeft === 1 ? 'freeze' : 'freezes'} left this month
-                    </p>
-                  </motion.div>
+                  <RevealCard delay={0.05}>
+                    <div style={{ margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18, padding: '14px 16px', border: `1px solid ${theme.tipBorder}` }}>
+                      <p style={{ fontSize: 13, color: theme.text, lineHeight: 1.6 }}>
+                        Every setback is part of healing 💛 — you have <strong>{freezesLeft}</strong> streak {freezesLeft === 1 ? 'freeze' : 'freezes'} left this month
+                      </p>
+                    </div>
+                  </RevealCard>
                 )
               })()}
 
               {/* Streak */}
               <AnimatePresence>
                 {streak > 0 && (
-                  <motion.div
-                    custom={3} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}
-                    style={{ margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18, padding: '14px 16px', border: `1px solid ${theme.tipBorder}`, display: 'flex', alignItems: 'center', gap: 12 }}
-                  >
-                    <FlameIcon size={24} color={theme.primary} />
-                    <div>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: theme.text }}>Day {streak} of your healing journey</p>
-                      <p style={{ fontSize: 12, color: theme.textMuted }}>
-                        {streak >= 90 ? '90 days — you are incredible' :
-                         streak >= 30 ? '30 days — a full month of self-care' :
-                         streak >= 14 ? '2 weeks — that takes real strength' :
-                         streak >= 7 ? 'One week — you showed up for yourself' : 'Every day counts. Keep going!'}
-                      </p>
+                  <RevealCard delay={0.1}>
+                    <div style={{ margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18, padding: '14px 16px', border: `1px solid ${theme.tipBorder}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <FlameIcon size={24} color={theme.primary} />
+                      <div>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: theme.text }}>Day {streak} of your healing journey</p>
+                        <p style={{ fontSize: 12, color: theme.textMuted }}>
+                          {streak >= 90 ? '90 days — you are incredible' :
+                           streak >= 30 ? '30 days — a full month of self-care' :
+                           streak >= 14 ? '2 weeks — that takes real strength' :
+                           streak >= 7 ? 'One week — you showed up for yourself' : 'Every day counts. Keep going!'}
+                        </p>
+                      </div>
                     </div>
-                  </motion.div>
+                  </RevealCard>
                 )}
               </AnimatePresence>
 
               {/* Fiber Goal */}
-              <motion.div custom={4} variants={fadeUp} initial="hidden" animate={mounted ? 'visible' : 'hidden'}>
+              <RevealCard delay={0.15}>
                 <FiberGoalWidget log={log} theme={theme} />
-              </motion.div>
+              </RevealCard>
             </motion.div>
           )}
         </AnimatePresence>
