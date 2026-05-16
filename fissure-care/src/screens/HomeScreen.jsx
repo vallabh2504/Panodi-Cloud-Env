@@ -246,26 +246,6 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
     }
   }
 
-  if (bloodFreeDays === 0) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        style={{
-          margin: '16px 16px 0', background: theme.tipBg,
-          borderRadius: 18, padding: '16px',
-          border: `1px solid ${theme.tipBorder}`, textAlign: 'center',
-        }}
-      >
-        <p style={{ fontSize: 28, marginBottom: 8 }}>🌱</p>
-        <p style={{ fontSize: 14, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Your Healing Garden</p>
-        <p style={{ fontSize: 12, color: theme.textMuted, lineHeight: 1.6 }}>
-          Log a blood-free day to plant your first flower. Every blood-free day grows your garden 🌸
-        </p>
-      </motion.div>
-    )
-  }
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -273,13 +253,14 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
       transition={{ duration: 0.5 }}
       style={{
         margin: '16px 16px 0', background: theme.tipBg,
-        borderRadius: 18, padding: '14px 16px',
+        borderRadius: 22, padding: '14px 16px',
         border: `1px solid ${theme.tipBorder}`,
+        overflow: 'hidden',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>
-          Your Healing Garden
+          🌿 Your Healing Garden
         </p>
         {showFreezeBtn && (
           <button
@@ -297,10 +278,12 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
       {freezeToast && (
         <p style={{ fontSize: 12, color: '#5BAFD6', fontWeight: 600, marginBottom: 6 }}>{freezeToast}</p>
       )}
-      <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 10 }}>
-        {bloodFreeDays} consecutive blood-free {bloodFreeDays === 1 ? 'day' : 'days'} — each flower is a victory
+      <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>
+        {bloodFreeDays === 0
+          ? 'Log a blood-free day to grow your first flower 🌸'
+          : `${bloodFreeDays} blood-free ${bloodFreeDays === 1 ? 'day' : 'days'} — each flower is a victory`}
       </p>
-      <Suspense fallback={<div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>🌱</div>}>
+      <Suspense fallback={<div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🌱</div>}>
         <HealingGarden3D bloodFreeDays={bloodFreeDays} theme={theme} />
       </Suspense>
     </motion.div>
@@ -760,13 +743,8 @@ export default function HomeScreen({ onNavigate, theme }) {
       <div className="parallax-container" style={{
         position: 'relative', overflow: 'hidden', minHeight: 180,
         borderRadius: '0 0 28px 28px',
+        background: theme.headerGradient,
       }}>
-        <Suspense fallback={null}>
-          <NoiseShaderHero theme={theme} style={{ borderRadius: 'inherit' }} />
-        </Suspense>
-        {!useAnimations && (
-          <div style={{ position: 'absolute', inset: 0, background: theme.headerGradient }} />
-        )}
         {useAnimations && <div className="parallax-back" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}><FallingParticles theme={theme} /></div>}
         {useAnimations && <div className="parallax-mid" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}><FlowingRiver theme={theme} /></div>}
         <motion.div
@@ -875,6 +853,11 @@ export default function HomeScreen({ onNavigate, theme }) {
         </div>
       </RevealCard>
 
+      {/* ── Healing Garden — always visible ── */}
+      <RevealCard delay={0.15}>
+        <HealingGardenFlowers bloodFreeDays={lastBlood} theme={theme} />
+      </RevealCard>
+
       {/* ── YOUR PROGRESS section (collapsible) ── */}
       <div style={{ marginTop: 8 }}>
         <button
@@ -902,11 +885,6 @@ export default function HomeScreen({ onNavigate, theme }) {
               transition={{ duration: 0.25, ease: 'easeInOut' }}
               style={{ overflow: 'hidden' }}
             >
-              {/* Healing Garden */}
-              <RevealCard delay={0}>
-                <HealingGardenFlowers bloodFreeDays={lastBlood} theme={theme} />
-              </RevealCard>
-
               {/* Healing Day Grace */}
               {lastBlood === 0 && log && (() => {
                 const freezeData = getHealingDayFreezes()
