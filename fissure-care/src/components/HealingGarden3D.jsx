@@ -1,6 +1,7 @@
 import { useRef, useEffect, useMemo, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Environment, Stars } from '@react-three/drei'
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
 import * as THREE from 'three'
 
 /* ── Flower mesh geometry constants ── */
@@ -153,15 +154,23 @@ function FlowerField({ count, theme, burstIndex }) {
 
   return (
     <>
-      <instancedMesh ref={headRef} args={[null, null, count]} frustumCulled={false}>
+      <instancedMesh ref={headRef} args={[null, null, count]} frustumCulled={false} castShadow>
         <torusGeometry args={TORUS_ARGS} />
-        <meshStandardMaterial metalness={0.1} roughness={0.5} />
+        <meshPhysicalMaterial
+          color={theme?.primary || '#E8705A'}
+          transmission={0.15}
+          thickness={0.3}
+          roughness={0.4}
+          metalness={0.05}
+          clearcoat={0.8}
+          clearcoatRoughness={0.2}
+        />
       </instancedMesh>
       <instancedMesh ref={centerRef} args={[null, null, count]} frustumCulled={false}>
         <circleGeometry args={[0.06, 8]} />
         <meshStandardMaterial color="#FFD700" metalness={0.2} roughness={0.4} />
       </instancedMesh>
-      <instancedMesh ref={stemRef} args={[null, null, count]}>
+      <instancedMesh ref={stemRef} args={[null, null, count]} castShadow>
         <cylinderGeometry args={CYLINDER_ARGS} />
         <meshStandardMaterial color="#4CAF50" metalness={0.1} roughness={0.5} />
       </instancedMesh>
@@ -194,11 +203,46 @@ function Sprout({ theme }) {
 /* ── Scene wrapper ── */
 function GardenScene({ bloodFreeDays, theme, burstIndex }) {
   const count = Math.min(bloodFreeDays, 30)
+  const { camera } = useThree()
+  const gyroRef = useRef({ beta: 0, gamma: 0 })
+  const cameraTargetRef = useRef({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const handleOrientation = (e) => {
+      gyroRef.current.beta = e.beta || 0   // front-back tilt (-180 to 180)
+      gyroRef.current.gamma = e.gamma || 0  // left-right tilt (-90 to 90)
+    }
+    // Request permission on iOS 13+
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(perm => {
+        if (perm === 'granted') window.addEventListener('deviceorientation', handleOrientation)
+      }).catch(() => {})
+    } else {
+      window.addEventListener('deviceorientation', handleOrientation)
+    }
+    return () => window.removeEventListener('deviceorientation', handleOrientation)
+  }, [])
+
+  useFrame(() => {
+    // Smoothly interpolate camera position toward gyro target
+    const targetX = (gyroRef.current.gamma / 90) * 0.8   // max ±0.8 units
+    const targetY = (gyroRef.current.beta / 180) * 0.4   // max ±0.4 units
+    cameraTargetRef.current.x += (targetX - cameraTargetRef.current.x) * 0.05
+    cameraTargetRef.current.y += (targetY - cameraTargetRef.current.y) * 0.05
+    camera.position.x = cameraTargetRef.current.x
+    camera.position.y = 2.5 + cameraTargetRef.current.y
+    camera.lookAt(0, 0, 0)
+  })
 
   return (
     <>
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[3, 5, 2]} intensity={1.2} />
+      <fog attach="fog" args={[theme?.background || '#FFF5F7', 6, 18]} />
+      {theme?.id === 'aurora' && <Stars radius={8} depth={4} count={300} factor={2} saturation={0.8} fade />}
+      <ambientLight intensity={0.4} />
+      <directionalLight position={[3, 8, 4]} intensity={1.0} color="#FFF5E0" castShadow />
+      <directionalLight position={[-4, 2, -2]} intensity={0.3} color="#A8D5F5" />  {/* cool fill */}
+      <pointLight position={[0, -1, 2]} intensity={0.4} color="#FFD6A0" />  {/* warm ground bounce */}
+      <Environment preset="sunset" background={false} />
       <Ground theme={theme} />
       {count === 0
         ? <Sprout theme={theme} />
@@ -210,6 +254,10 @@ function GardenScene({ bloodFreeDays, theme, burstIndex }) {
         minPolarAngle={Math.PI / 3}
         maxPolarAngle={Math.PI / 2.2}
       />
+      <EffectComposer>
+        <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.4} intensity={0.8} mipmapBlur />
+        <Vignette eskil={false} offset={0.3} darkness={0.6} />
+      </EffectComposer>
     </>
   )
 }
@@ -229,6 +277,7 @@ export default function HealingGarden3D({ bloodFreeDays = 0, theme = {} }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: 200 }}>
       <Canvas
+        shadows
         style={{ width: '100%', height: 200, borderRadius: 16 }}
         camera={{ position: [0, 2.5, 5], fov: 45 }}
         gl={{ alpha: true }}

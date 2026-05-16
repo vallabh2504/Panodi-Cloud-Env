@@ -1,3 +1,28 @@
+/* === CSS Houdini @property — enables smooth gradient animation === */
+@property --hue-shift {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --bg-lightness {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 97%;
+}
+
+@property --glow-opacity {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --ring-glow {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap');
 @import "tailwindcss";
 
@@ -301,4 +326,84 @@ button, input, select, textarea {
   pointer-events: none;
   z-index: 9999;
   animation: petalShower linear forwards;
+}
+
+/* === Variable Font Weight Breathing === */
+@keyframes weightBreathe {
+  0%, 100% { font-variation-settings: 'wght' 700; }
+  50% { font-variation-settings: 'wght' 900; }
+}
+
+@keyframes weightPulse {
+  0%, 100% { font-variation-settings: 'wght' 800; letter-spacing: -0.5px; }
+  50% { font-variation-settings: 'wght' 400; letter-spacing: 0.5px; }
+}
+
+.font-breathe {
+  animation: weightBreathe 3s ease-in-out infinite;
+}
+
+.font-pulse {
+  animation: weightPulse 4s ease-in-out infinite;
+}
+
+/* === Time-of-Day Ambient Shifts === */
+.time-morning {
+  --ambient-tint: rgba(255, 200, 100, 0.04);
+}
+.time-midday {
+  --ambient-tint: rgba(200, 230, 255, 0.03);
+}
+.time-evening {
+  --ambient-tint: rgba(180, 100, 200, 0.04);
+}
+.time-night {
+  --ambient-tint: rgba(50, 50, 120, 0.05);
+}
+
+/* Ambient overlay that uses the time var */
+.ambient-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: var(--ambient-tint, transparent);
+  pointer-events: none;
+  z-index: 0;
+  transition: background 120s ease;
+}
+
+/* === Wellness State Glow === */
+.wellness-high .glass-card {
+  box-shadow: 0 8px 32px rgba(90, 158, 90, 0.12), 0 2px 8px rgba(0,0,0,0.04);
+}
+.wellness-low .glass-card {
+  box-shadow: 0 8px 32px rgba(232, 112, 90, 0.10), 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* === Liquid Ring Glow === */
+@keyframes ringGlow {
+  0%, 100% { filter: drop-shadow(0 0 4px currentColor) drop-shadow(0 0 8px currentColor); opacity: 0.6; }
+  50% { filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor); opacity: 1; }
+}
+
+.ring-glow-trail {
+  animation: ringGlow 2.5s ease-in-out infinite;
+}
+
+/* === Scroll-Reveal (useInView trigger) === */
+.reveal-ready {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal-ready.in-view {
+  opacity: 1;
+  transform: none;
+}
+
+/* === Number flip container === */
+.flip-number-container {
+  display: inline-flex;
+  align-items: baseline;
+  overflow: hidden;
 }

@@ -1,10 +1,52 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+const Confetti3D = lazy(() => import('../components/Confetti3D'))
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus, ChevronDown, ChevronUp, Check, ArrowLeft, ArrowRight } from 'lucide-react'
 import { saveLog, getLog } from '../lib/storage'
 import { haptics } from '../lib/haptics'
 import { getTheme } from '../lib/themes'
-import { HeartPulse, SteamWisps, CheckDrawn } from '../components/AnimatedSVGs'
+import { HeartPulse, SteamWisps, CheckDrawn, WaterRipple, FoodPop, WarningWiggle, FlowerBloom } from '../components/AnimatedSVGs'
+
+function playHealingChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const notes = [261.63, 329.63, 392.00, 523.25] // C4, E4, G4, C5 — pentatonic
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12)
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12)
+      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.12 + 0.04)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.5)
+      osc.start(ctx.currentTime + i * 0.12)
+      osc.stop(ctx.currentTime + i * 0.12 + 0.55)
+    })
+  } catch {}
+}
+
+function playTapSound(freq = 800, duration = 0.08) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(freq, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + duration)
+    gain.gain.setValueAtTime(0.06, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + duration + 0.01)
+  } catch {}
+}
+
+function playWaterDrop() {
+  playTapSound(1200, 0.12)
+}
 
 const BRISTOL = [
   { type: 1, emoji: '🪨', label: 'Hard lumps', desc: 'Very hard, separate', color: '#F48585' },
@@ -249,7 +291,7 @@ function WaterTracker({ glasses, onChange, goal = 8, theme, justFilled, onJustFi
             aria-label={i < glasses ? `Remove glass ${i + 1}` : `Add glass ${i + 1}`}
             onClick={() => {
               haptics.tap()
-              if (i >= glasses) onJustFill(i)
+              if (i >= glasses) { onJustFill(i); playWaterDrop() }
               onChange(i < glasses ? i : i + 1)
             }}
             style={{
@@ -457,6 +499,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
     setSaving(false)
     if (onLogSaved) onLogSaved(updated)
     haptics.success()
+    playHealingChime()
     setSaveFlash(true)
     setTimeout(() => setSaveFlash(false), 800)
     setTimeout(() => { setSaved(false); onNavigate('home') }, 2200)
@@ -495,6 +538,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
 
   const toggleFruit = (id) => {
     haptics.light()
+    playTapSound(600, 0.06)
     setLog(l => ({ ...l, fruitsEaten: l.fruitsEaten.includes(id) ? l.fruitsEaten.filter(f => f !== id) : [...l.fruitsEaten, id] }))
   }
   const toggleFiber = (id) => {
@@ -641,6 +685,9 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
       case 'hydration':
         return (
           <div style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <WaterRipple size={52} color={theme.primary} />
+            </div>
             <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Stay hydrated 💧</p>
             <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20 }}>Each glass = 250ml. Tap to fill — aim for {waterGoal} glasses!</p>
             <WaterTracker glasses={log.hydration.waterGlasses}
@@ -675,6 +722,9 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
       case 'food':
         return (
           <div style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <FoodPop size={52} color={theme.primary} />
+            </div>
             <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>What healing foods did you have today? 🍎</p>
             <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16 }}>Tap everything you had. These foods support your recovery 💡</p>
             <p style={{ fontSize: 12, fontWeight: 700, color: theme.primary, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Healing fruits 🌟</p>
@@ -750,6 +800,9 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
       case 'avoid':
         return (
           <div style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <WarningWiggle size={52} color="#F5C67A" />
+            </div>
             <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Anything to note? ⚠️</p>
             <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16 }}>These foods can slow healing — just tracking, no judgment 💛</p>
             <AnimatePresence>
@@ -780,6 +833,9 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
       case 'selfcare':
         return (
           <div style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <FlowerBloom size={52} color={theme.primary} />
+            </div>
             <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, marginBottom: 4 }}>Almost there, {name}! 🛁</p>
             <p style={{ fontSize: 13, color: theme.textMuted, marginBottom: 20 }}>Self-care tracking — every sitz bath matters so much</p>
 
@@ -883,6 +939,11 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
                 background: theme.card, lineHeight: 1.7, marginBottom: 24,
               }}
             />
+            {saved && (
+              <Suspense fallback={null}>
+                <Confetti3D colors={['#A8D5A2', '#E8705A', '#F5C67A', '#C9A8F5', '#FFD700']} />
+              </Suspense>
+            )}
             <AnimatePresence mode="wait">
               {saved ? (
                 <motion.div
