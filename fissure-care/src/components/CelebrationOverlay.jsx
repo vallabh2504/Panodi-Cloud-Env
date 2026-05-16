@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BloomFlower, StarField } from './AnimatedSVGs'
-import Confetti3D from './Confetti3D'
+const Confetti3D = lazy(() => import('./Confetti3D'))
 
 function ConfettiCanvas({ colors }) {
   const canvasRef = useRef(null)
@@ -79,7 +79,9 @@ export default function CelebrationOverlay({ celebration, onDismiss }) {
             padding: 32,
           }}
         >
-          <Confetti3D colors={celebration?.confettiColors || config.colors} />
+          <Suspense fallback={null}>
+            <Confetti3D colors={celebration?.confettiColors || config.colors} />
+          </Suspense>
           <ConfettiCanvas colors={config.colors} />
           <motion.div
             initial={{ scale: 0.5, y: 40 }}

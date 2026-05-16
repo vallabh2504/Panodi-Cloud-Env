@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import HealingGarden3D from '../components/HealingGarden3D'
+import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
+const HealingGarden3D = lazy(() => import('../components/HealingGarden3D'))
 import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell, ChevronDown } from 'lucide-react'
 import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings, getHealingDayFreezes, useHealingDayFreeze } from '../lib/storage'
 import { getDailyInsight } from '../lib/correlations'
@@ -255,7 +255,9 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
       <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 10 }}>
         {bloodFreeDays} consecutive blood-free {bloodFreeDays === 1 ? 'day' : 'days'} — each flower is a victory
       </p>
-      <HealingGarden3D bloodFreeDays={bloodFreeDays} theme={theme} />
+      <Suspense fallback={<div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>🌱</div>}>
+        <HealingGarden3D bloodFreeDays={bloodFreeDays} theme={theme} />
+      </Suspense>
     </motion.div>
   )
 }
