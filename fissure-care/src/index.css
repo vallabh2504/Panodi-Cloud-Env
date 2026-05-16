@@ -17,7 +17,16 @@
   --radius-2xl: 1.5rem;
 }
 
-* { box-sizing: border-box; }
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.35s;
+  transition-timing-function: ease;
+}
+
 body {
   background-color: #FFF8F5;
   color: #3D2B2B;
@@ -53,18 +62,6 @@ body {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Smooth theme transitions */
-body, div, nav, button, input {
-  transition-property: background-color, border-color, color;
-  transition-duration: 0.3s;
-  transition-timing-function: ease;
-}
-
-/* Global button press state — Feature #4 */
-button:active {
-  transform: scale(0.97);
-  transition: transform 80ms ease !important;
-}
 
 /* Skeleton shimmer — Feature #1 */
 @keyframes shimmer {
@@ -277,14 +274,7 @@ input:focus:not(:focus-visible) {
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* === Theme Transition === */
-* {
-  transition-property: background-color, border-color, color;
-  transition-duration: 0.35s;
-  transition-timing-function: ease;
-}
-
-/* Override for elements that shouldn't inherit transitions */
+/* Override for interactive elements — keep transform and box-shadow transitions */
 button, input, select, textarea {
   transition-property: background-color, border-color, color, transform, box-shadow;
 }
