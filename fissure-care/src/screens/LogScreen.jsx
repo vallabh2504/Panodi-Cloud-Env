@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus, ChevronDown, ChevronUp, Check, ArrowLeft, ArrowRight } from 'lucide-react'
 import { saveLog, getLog } from '../lib/storage'
-import { hapticLight, hapticMedium, hapticSuccess, hapticSelect } from '../lib/haptics'
 import { haptics } from '../lib/haptics'
 import { getTheme } from '../lib/themes'
 import { HeartPulse, SteamWisps, CheckDrawn } from '../components/AnimatedSVGs'
@@ -80,7 +79,7 @@ function PainSlider({ value, onChange, label, theme }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <input type="range" min={0} max={10} value={value}
           aria-valuetext={`${value} out of 10 — ${PAIN_LABELS[value] || ''}`}
-          onChange={e => { hapticSelect(); onChange(Number(e.target.value)) }}
+          onChange={e => { haptics.tap(); onChange(Number(e.target.value)) }}
           style={{ flex: 1, accentColor: theme.primary, height: 6 }} />
         <div style={{ minWidth: 52, textAlign: 'center' }}>
           <motion.div key={emoji} initial={{ scale: 1.4 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 18 }}>
@@ -97,7 +96,7 @@ function Toggle({ value, onChange, labelYes = 'Yes', labelNo = 'No', theme }) {
   return (
     <div style={{ display: 'flex', gap: 8 }}>
       {[true, false].map(v => (
-        <motion.button key={String(v)} whileTap={{ scale: 0.96 }} onClick={() => { hapticSelect(); onChange(v) }} style={{
+        <motion.button key={String(v)} whileTap={{ scale: 0.96 }} onClick={() => { haptics.tap(); onChange(v) }} style={{
           flex: 1, padding: '11px', borderRadius: 14,
           border: `2px solid ${value === v ? theme.primary : theme.cardBorder}`,
           background: value === v ? theme.primary + '18' : theme.card,
@@ -114,14 +113,14 @@ function Toggle({ value, onChange, labelYes = 'Yes', labelNo = 'No', theme }) {
 function Stepper({ value, onChange, min = 0, max = 10, theme }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <motion.button whileTap={{ scale: 0.92 }} aria-label="Decrease" onClick={() => { hapticSelect(); onChange(Math.max(min, value - 1)) }} style={{
+      <motion.button whileTap={{ scale: 0.92 }} aria-label="Decrease" onClick={() => { haptics.tap(); onChange(Math.max(min, value - 1)) }} style={{
         width: 40, height: 40, borderRadius: 14, border: `1px solid ${theme.cardBorder}`,
         background: theme.card, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
         <Minus size={16} color={theme.textMuted} />
       </motion.button>
       <span style={{ fontSize: 24, fontWeight: 800, fontFamily: 'Nunito', minWidth: 36, textAlign: 'center', color: theme.text }}>{value}</span>
-      <motion.button whileTap={{ scale: 0.92 }} aria-label="Increase" onClick={() => { hapticSelect(); onChange(Math.min(max, value + 1)) }} style={{
+      <motion.button whileTap={{ scale: 0.92 }} aria-label="Increase" onClick={() => { haptics.tap(); onChange(Math.min(max, value + 1)) }} style={{
         width: 40, height: 40, borderRadius: 14, border: 'none',
         background: theme.primary, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
@@ -140,7 +139,7 @@ function BMCard({ bm, index, onUpdate, onSoftDelete, theme }) {
       style={{ marginBottom: 12, background: theme.card, borderRadius: 20, border: `1px solid ${theme.cardBorder}`, overflow: 'hidden' }}
     >
       <button
-        onClick={() => { hapticLight(); setExpanded(!expanded) }}
+        onClick={() => { haptics.light(); setExpanded(!expanded) }}
         aria-label={expanded ? 'Collapse movement entry' : 'Expand movement entry'}
         style={{
           width: '100%', padding: '14px 16px', background: 'none', border: 'none',
@@ -167,7 +166,7 @@ function BMCard({ bm, index, onUpdate, onSoftDelete, theme }) {
           <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 10 }}>Stool type — aim for 🍌 Type 4:</p>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 12, paddingBottom: 4 }} className="scrollbar-hide">
             {BRISTOL.map(b => (
-              <motion.button key={b.type} whileTap={{ scale: 0.94 }} onClick={() => { hapticSelect(); onUpdate({ ...bm, bristolType: b.type }) }} style={{
+              <motion.button key={b.type} whileTap={{ scale: 0.94 }} onClick={() => { haptics.tap(); onUpdate({ ...bm, bristolType: b.type }) }} style={{
                 minWidth: 62, padding: '8px 6px', borderRadius: 14, flexShrink: 0, cursor: 'pointer',
                 border: `2.5px solid ${bm.bristolType === b.type ? b.color : theme.cardBorder}`,
                 background: bm.bristolType === b.type ? b.color + '25' : theme.card,
@@ -190,7 +189,7 @@ function BMCard({ bm, index, onUpdate, onSoftDelete, theme }) {
               { value: 'some', label: 'Some 😤' },
               { value: 'significant', label: 'Significant 😣' },
             ].map(opt => (
-              <motion.button key={opt.value} whileTap={{ scale: 0.94 }} onClick={() => { hapticSelect(); onUpdate({ ...bm, straining: opt.value }) }} style={{
+              <motion.button key={opt.value} whileTap={{ scale: 0.94 }} onClick={() => { haptics.tap(); onUpdate({ ...bm, straining: opt.value }) }} style={{
                 flex: 1, padding: '9px', borderRadius: 12, cursor: 'pointer',
                 border: `2px solid ${bm.straining === opt.value ? theme.primary : theme.cardBorder}`,
                 background: bm.straining === opt.value ? theme.primary + '18' : theme.card,
@@ -412,16 +411,16 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   }, [today])
 
   const goNext = () => {
-    if (step < STEPS.length - 1) { hapticLight(); haptics.light(); setDirection(1); setStep(s => s + 1) }
+    if (step < STEPS.length - 1) { haptics.light(); setDirection(1); setStep(s => s + 1) }
   }
   const goPrev = () => {
-    if (step > 0) { hapticLight(); haptics.light(); setDirection(-1); setStep(s => s - 1) }
+    if (step > 0) { haptics.light(); setDirection(-1); setStep(s => s - 1) }
   }
 
   const handleSave = async () => {
     if (saving || saved) return
     setSaving(true)
-    hapticSuccess()
+    haptics.success()
     const updated = { ...log, hydration: { ...log.hydration, waterMl: log.hydration.waterGlasses * 250 } }
     await saveLog(today, updated)
     // P1-B: Clear draft on successful save
@@ -436,7 +435,6 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   }
 
   const addBM = () => {
-    hapticMedium()
     haptics.medium()
     const now = new Date()
     const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
@@ -445,7 +443,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
 
   // P1-A: Soft delete handler
   const handleSoftDelete = (bm) => {
-    hapticMedium()
+    haptics.medium()
     if (pendingDelete?.timeoutId) clearTimeout(pendingDelete.timeoutId)
     // Immediately hide it from the list
     setLog(l => ({ ...l, bowelMovements: l.bowelMovements.filter(b => b.id !== bm.id) }))
@@ -476,7 +474,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
     setLog(l => ({ ...l, fiberFoods: l.fiberFoods.includes(id) ? l.fiberFoods.filter(f => f !== id) : [...l.fiberFoods, id] }))
   }
   const toggleAvoid = (id) => {
-    hapticSelect()
+    haptics.tap()
     const food = AVOID_FOODS.find(f => f.id === id)
     if (!log.avoidFoods.includes(id)) {
       setAvoidWarning(food.tip)
@@ -485,7 +483,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
     setLog(l => ({ ...l, avoidFoods: l.avoidFoods.includes(id) ? l.avoidFoods.filter(f => f !== id) : [...l.avoidFoods, id] }))
   }
   const addSitzBath = () => {
-    hapticMedium()
+    haptics.medium()
     const now = new Date()
     const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
     setLog(l => ({ ...l, sitzBaths: [...l.sitzBaths, { time, durationMinutes: 15 }] }))
@@ -595,7 +593,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
             <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
               {[['😊', 'good', 'Good day!'], ['😐', 'ok', 'Just okay'], ['😣', 'hard_day', 'Hard day']].map(([emoji, val, label]) => (
                 <motion.button key={val} whileTap={{ scale: 0.94 }}
-                  onClick={() => { hapticSelect(); setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, overallComfort: val } })) }} style={{
+                  onClick={() => { haptics.tap(); setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, overallComfort: val } })) }} style={{
                     flex: 1, padding: '12px 8px', borderRadius: 16,
                     border: `2.5px solid ${log.dailySymptoms.overallComfort === val ? theme.primary : theme.cardBorder}`,
                     background: log.dailySymptoms.overallComfort === val ? theme.primary + '15' : theme.card,
@@ -630,7 +628,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
                 { key: 'alcohol', emoji: '🍺', label: 'Alcohol', good: false },
               ].map(({ key, emoji, label, good }) => (
                 <motion.button key={key} whileTap={{ scale: 0.94 }}
-                  onClick={() => { hapticSelect(); setLog(l => ({ ...l, hydration: { ...l.hydration, [key]: !l.hydration[key] } })) }} style={{
+                  onClick={() => { haptics.tap(); setLog(l => ({ ...l, hydration: { ...l.hydration, [key]: !l.hydration[key] } })) }} style={{
                     flex: 1, padding: '12px 8px', borderRadius: 16, cursor: 'pointer',
                     border: `2.5px solid ${log.hydration[key] ? (good ? '#A8D5A2' : '#F48585') : theme.cardBorder}`,
                     background: log.hydration[key] ? (good ? '#F0FFF0' : '#FFF0F0') : theme.card,
@@ -795,7 +793,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
             <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, marginBottom: 10 }}>Gentle movement:</p>
             <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
               <motion.button whileTap={{ scale: 0.94 }}
-                onClick={() => { hapticSelect(); setLog(l => ({ ...l, activity: { ...l.activity, walking: !l.activity.walking } })) }}
+                onClick={() => { haptics.tap(); setLog(l => ({ ...l, activity: { ...l.activity, walking: !l.activity.walking } })) }}
                 style={{
                   flex: 1, padding: '12px', borderRadius: 16, cursor: 'pointer',
                   border: `2.5px solid ${log.activity.walking ? '#A8D5A2' : theme.cardBorder}`,
@@ -806,7 +804,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
                 🚶 Walking
               </motion.button>
               <motion.button whileTap={{ scale: 0.94 }}
-                onClick={() => { hapticSelect(); setLog(l => ({ ...l, activity: { ...l.activity, yoga: !l.activity.yoga } })) }}
+                onClick={() => { haptics.tap(); setLog(l => ({ ...l, activity: { ...l.activity, yoga: !l.activity.yoga } })) }}
                 style={{
                   flex: 1, padding: '12px', borderRadius: 16, cursor: 'pointer',
                   border: `2.5px solid ${log.activity.yoga ? '#C9A8F5' : theme.cardBorder}`,
@@ -835,7 +833,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
               {EMOTIONS.map(emoji => (
                 <motion.button key={emoji} whileTap={{ scale: 0.9 }}
-                  onClick={() => { hapticSelect(); setLog(l => ({ ...l, selfCare: { ...l.selfCare, emotionalWellbeing: emoji } })) }} style={{
+                  onClick={() => { haptics.tap(); setLog(l => ({ ...l, selfCare: { ...l.selfCare, emotionalWellbeing: emoji } })) }} style={{
                     fontSize: 30,
                     background: log.selfCare.emotionalWellbeing === emoji ? theme.primary + '18' : 'none',
                     border: `2px solid ${log.selfCare.emotionalWellbeing === emoji ? theme.primary : 'transparent'}`,

@@ -757,7 +757,7 @@ export default function HomeScreen({ onNavigate, theme }) {
         onTouchEnd={handleTouchEnd}
         style={{
           position: 'relative', overflow: 'hidden',
-          margin: '20px 16px 16px', background: theme.card, borderRadius: 22,
+          margin: '20px 16px 16px', borderRadius: 22,
           padding: '22px 16px', boxShadow: `0 4px 20px ${theme.cardShadow}`,
           border: `1px solid ${theme.cardBorder}`,
           transform: `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
