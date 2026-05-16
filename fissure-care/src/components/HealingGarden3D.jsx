@@ -218,8 +218,8 @@ function Pond() {
         <meshLambertMaterial color="#5A8FA0" />
       </mesh>
       {/* water shimmer */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.06, 0.06, 0.01]}>
-        <ellipseGeometry args={[0.1, 0.06, 8]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.06, 0.06, 0.01]} scale={[1, 0.6, 1]}>
+        <circleGeometry args={[0.1, 8]} />
         <meshLambertMaterial color="#BFDFFF" transparent opacity={0.5} />
       </mesh>
     </group>
@@ -281,28 +281,28 @@ function Butterfly({ radius = 2.2, height = 1.6, speed = 0.5 }) {
     <group ref={ref}>
       {/* body */}
       <mesh>
-        <capsuleGeometry args={[0.025, 0.09, 4, 6]} />
+        <cylinderGeometry args={[0.018, 0.025, 0.11, 6]} />
         <meshLambertMaterial color="#3D2B2B" />
       </mesh>
       {/* left wing */}
       <group ref={wingRef1} position={[-0.02, 0, 0]}>
-        <mesh rotation={[0, 0, 0.3]} position={[-0.1, 0.02, 0]}>
-          <ellipseGeometry args={[0.14, 0.1, 8]} />
+        <mesh rotation={[0, 0, 0.3]} position={[-0.1, 0.02, 0]} scale={[1.4, 1, 1]}>
+          <circleGeometry args={[0.1, 8]} />
           <meshLambertMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
         </mesh>
-        <mesh rotation={[0, 0, 0.5]} position={[-0.08, -0.07, 0]}>
-          <ellipseGeometry args={[0.1, 0.07, 8]} />
+        <mesh rotation={[0, 0, 0.5]} position={[-0.08, -0.07, 0]} scale={[1.4, 1, 1]}>
+          <circleGeometry args={[0.07, 8]} />
           <meshLambertMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
         </mesh>
       </group>
       {/* right wing */}
       <group ref={wingRef2} position={[0.02, 0, 0]}>
-        <mesh rotation={[0, 0, -0.3]} position={[0.1, 0.02, 0]}>
-          <ellipseGeometry args={[0.14, 0.1, 8]} />
+        <mesh rotation={[0, 0, -0.3]} position={[0.1, 0.02, 0]} scale={[1.4, 1, 1]}>
+          <circleGeometry args={[0.1, 8]} />
           <meshLambertMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
         </mesh>
-        <mesh rotation={[0, 0, -0.5]} position={[0.08, -0.07, 0]}>
-          <ellipseGeometry args={[0.1, 0.07, 8]} />
+        <mesh rotation={[0, 0, -0.5]} position={[0.08, -0.07, 0]} scale={[1.4, 1, 1]}>
+          <circleGeometry args={[0.07, 8]} />
           <meshLambertMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
         </mesh>
       </group>
