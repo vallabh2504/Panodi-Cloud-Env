@@ -19,7 +19,7 @@ function ConfettiParticles({ count = 60, colors }) {
 
       velocities.push({
         x: (Math.random() - 0.5) * 0.04,
-        y: Math.random() * 0.03 + 0.01,
+        y: -(Math.random() * 0.03 + 0.01),
         z: (Math.random() - 0.5) * 0.02,
         rotX: (Math.random() - 0.5) * 0.08,
         rotY: (Math.random() - 0.5) * 0.08,
@@ -50,8 +50,8 @@ function ConfettiParticles({ count = 60, colors }) {
       pos.array[i * 3 + 1] += v.y
       pos.array[i * 3 + 2] += v.z
       // Drift outward
-      v.y -= 0.0005 // slight gravity
-      if (pos.array[i * 3 + 1] > 4) pos.array[i * 3 + 1] = -2
+      v.y -= 0.0005 // slight gravity (pulls further negative = downward)
+      if (pos.array[i * 3 + 1] < -4) pos.array[i * 3 + 1] = 4
     }
     pos.needsUpdate = true
   })

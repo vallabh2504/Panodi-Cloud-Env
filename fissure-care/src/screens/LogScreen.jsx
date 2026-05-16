@@ -67,6 +67,11 @@ const STEPS = [
   { id: 'journal', emoji: '📝', label: 'Journal' },
 ]
 
+const PAIN_LABELS = {
+  0: 'No pain', 1: 'Minimal', 2: 'Mild', 3: 'Moderate', 4: 'Uncomfortable',
+  5: 'Moderate pain', 6: 'Significant', 7: 'Severe', 8: 'Very severe', 9: 'Extreme', 10: 'Worst possible'
+}
+
 function PainSlider({ value, onChange, label, theme }) {
   const emoji = value <= 0 ? '😊' : value <= 3 ? '🙂' : value <= 6 ? '😐' : value <= 9 ? '😣' : '😭'
   return (
@@ -74,6 +79,7 @@ function PainSlider({ value, onChange, label, theme }) {
       {label && <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 10 }}>{label}</p>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <input type="range" min={0} max={10} value={value}
+          aria-valuetext={`${value} out of 10 — ${PAIN_LABELS[value] || ''}`}
           onChange={e => { hapticSelect(); onChange(Number(e.target.value)) }}
           style={{ flex: 1, accentColor: theme.primary, height: 6 }} />
         <div style={{ minWidth: 52, textAlign: 'center' }}>
@@ -274,6 +280,11 @@ function WaterTracker({ glasses, onChange, goal = 8, theme, justFilled, onJustFi
         <motion.div
           animate={{ width: `${Math.min((glasses / goal) * 100, 100)}%` }}
           transition={{ duration: 0.3 }}
+          role="progressbar"
+          aria-valuenow={glasses}
+          aria-valuemin={0}
+          aria-valuemax={8}
+          aria-label="Water intake progress"
           style={{ height: '100%', background: 'linear-gradient(90deg, #A8D5A2, #7BC97B)', borderRadius: 8 }}
         />
       </div>
@@ -681,6 +692,11 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
                     <motion.div
                       animate={{ width: `${Math.min((totalFiber / fiberGoal) * 100, 100)}%` }}
                       transition={{ duration: 0.3 }}
+                      role="progressbar"
+                      aria-valuenow={totalFiber}
+                      aria-valuemin={0}
+                      aria-valuemax={30}
+                      aria-label={`Fiber intake: ${totalFiber} of 30 grams`}
                       style={{ height: '100%', background: `linear-gradient(90deg, ${badgeColor}, ${badgeColor}cc)`, borderRadius: 8 }}
                     />
                   </div>
@@ -887,20 +903,6 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: theme.background, maxWidth: 430, margin: '0 auto', transition: 'background 0.8s ease' }}>
-      <style>{`
-        @keyframes fadeInOut {
-          0% { opacity: 0 }
-          20% { opacity: 1 }
-          80% { opacity: 1 }
-          100% { opacity: 0 }
-        }
-        @keyframes scaleUp {
-          0% { transform: scale(0.3) }
-          60% { transform: scale(1.2) }
-          100% { transform: scale(1) }
-        }
-      `}</style>
-
       {/* bgWarmth amber tint overlay */}
       <div style={{
         background: 'rgba(255, 180, 50, 0.06)',
@@ -919,9 +921,9 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
           background: 'rgba(90, 158, 90, 0.15)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           pointerEvents: 'none',
-          animation: 'fadeInOut 0.8s ease forwards',
+          animation: 'celebFlash 0.8s ease forwards',
         }}>
-          <div style={{ fontSize: 48, animation: 'scaleUp 0.4s ease' }}>💛</div>
+          <div style={{ fontSize: 48, animation: 'popIn 0.4s ease' }}>💛</div>
         </div>
       )}
 

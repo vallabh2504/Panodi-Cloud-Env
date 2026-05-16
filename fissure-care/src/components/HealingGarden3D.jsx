@@ -12,8 +12,8 @@ function FlowerBurst({ position, active }) {
   const meshRef = useRef(null)
   const stateRef = useRef({ particles: [], t: 0 })
   const dummyRef = useRef(new THREE.Object3D())
+  const { invalidate } = useThree()
 
-  // Initialize particles on mount
   useMemo(() => {
     stateRef.current.particles = Array.from({ length: 12 }, (_, i) => {
       const angle = (i / 12) * Math.PI * 2
@@ -27,8 +27,6 @@ function FlowerBurst({ position, active }) {
     })
     stateRef.current.t = 0
   }, [position[0], position[1], position[2]])
-
-  const { invalidate: invalidateBurst } = useThree()
 
   useFrame((_, delta) => {
     if (!active || !meshRef.current) return
@@ -51,7 +49,7 @@ function FlowerBurst({ position, active }) {
     })
     meshRef.current.instanceMatrix.needsUpdate = true
     meshRef.current.material.opacity = stateRef.current.particles[0]?.life ?? 0
-    invalidateBurst()
+    invalidate()
   })
 
   if (!active) return null
@@ -71,8 +69,8 @@ function FlowerField({ count, theme, burstIndex }) {
   const centerRef = useRef(null)
   const clockRef = useRef(0)
   const dummyRef = useRef(new THREE.Object3D())
+  const { invalidate } = useThree()
 
-  // Pre-compute flower positions and colors
   const flowers = useMemo(() => {
     const primary = theme.primary || '#E57BA4'
     const accent = theme.accent || theme.primaryLight || '#C9A8F5'
@@ -86,21 +84,19 @@ function FlowerField({ count, theme, burstIndex }) {
     })
   }, [count, theme.primary, theme.accent, theme.primaryLight])
 
-  // Set initial matrices and colors once
   useEffect(() => {
     if (!headRef.current || !stemRef.current) return
     const dummy = new THREE.Object3D()
 
     flowers.forEach((f, i) => {
-      // Flower head
       dummy.position.set(f.x, f.y + f.stemHeight + 0.18, f.z)
       dummy.rotation.set(0, 0, 0)
       dummy.scale.set(1, 1, 1)
       dummy.updateMatrix()
       headRef.current.setMatrixAt(i, dummy.matrix)
       headRef.current.setColorAt(i, new THREE.Color(f.color))
+      if (centerRef.current) centerRef.current.setMatrixAt(i, dummy.matrix)
 
-      // Stem
       dummy.position.set(f.x, f.y + f.stemHeight / 2, f.z)
       dummy.rotation.set(0, 0, 0)
       dummy.scale.set(1, f.stemHeight / 0.6, 1)
@@ -111,10 +107,8 @@ function FlowerField({ count, theme, burstIndex }) {
     headRef.current.instanceMatrix.needsUpdate = true
     headRef.current.instanceColor.needsUpdate = true
     stemRef.current.instanceMatrix.needsUpdate = true
+    if (centerRef.current) centerRef.current.instanceMatrix.needsUpdate = true
   }, [flowers])
-
-  // Wind animation
-  const { invalidate } = useThree()
 
   useFrame(({ clock }) => {
     if (!headRef.current || !stemRef.current) return
@@ -124,7 +118,6 @@ function FlowerField({ count, theme, burstIndex }) {
     flowers.forEach((f, i) => {
       const sway = Math.sin(t * 0.7 + i * 0.4) * 0.06
 
-      // Head sways
       dummy.position.set(
         f.x + sway * (f.stemHeight + 0.18),
         f.y + f.stemHeight + 0.18,
@@ -136,7 +129,6 @@ function FlowerField({ count, theme, burstIndex }) {
       headRef.current.setMatrixAt(i, dummy.matrix)
       if (centerRef.current) centerRef.current.setMatrixAt(i, dummy.matrix)
 
-      // Stem sways
       dummy.position.set(
         f.x + sway * (f.stemHeight / 2),
         f.y + f.stemHeight / 2,
@@ -154,7 +146,6 @@ function FlowerField({ count, theme, burstIndex }) {
     invalidate()
   })
 
-  // Newest flower position for burst
   const newestFlower = flowers[count - 1]
   const burstPos = newestFlower
     ? [newestFlower.x, newestFlower.y + newestFlower.stemHeight + 0.18, newestFlower.z]
