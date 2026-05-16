@@ -313,3 +313,77 @@ export function HealingOrb({ size = 44, color = '#C9A8F5', style = {} }) {
     </svg>
   )
 }
+
+/* 16. WaterRipple — expanding ripple rings with pulsing center dot */
+export function WaterRipple({ size = 48, color = '#3B82F4' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      {[0, 1, 2].map(i => (
+        <circle key={i} cx="24" cy="24" r={8 + i * 7} stroke={color} strokeWidth="2" strokeOpacity={0.7 - i * 0.2} fill="none">
+          <animate attributeName="r" values={`${6 + i * 6};${14 + i * 7};${6 + i * 6}`} dur={`${1.4 + i * 0.4}s`} repeatCount="indefinite" />
+          <animate attributeName="stroke-opacity" values={`${0.8 - i * 0.2};0;${0.8 - i * 0.2}`} dur={`${1.4 + i * 0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+      <circle cx="24" cy="24" r="5" fill={color} opacity="0.9">
+        <animate attributeName="r" values="5;6;5" dur="1s" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  )
+}
+
+/* 17. FoodPop — bouncing food emoji with sparkle accents */
+export function FoodPop({ size = 48, color = '#A8D5A2' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="16" fill={color} opacity="0.2">
+        <animate attributeName="r" values="14;17;14" dur="1.8s" repeatCount="indefinite" />
+      </circle>
+      <text x="24" y="30" textAnchor="middle" fontSize="22">🍎</text>
+      <g opacity="0">
+        {['✦','✦','✦'].map((s, i) => (
+          <text key={i} x={24 + Math.cos(i * 2.1) * 18} y={24 + Math.sin(i * 2.1) * 18}
+            textAnchor="middle" fontSize="10" fill={color}>
+            {s}
+            <animate attributeName="opacity" values="0;1;0" dur="2s" begin={`${i * 0.5}s`} repeatCount="indefinite" />
+          </text>
+        ))}
+      </g>
+    </svg>
+  )
+}
+
+/* 18. WarningWiggle — wiggling warning triangle */
+export function WarningWiggle({ size = 48, color = '#F5C67A' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <g>
+        <animateTransform attributeName="transform" type="rotate"
+          values="0 24 24;-5 24 24;5 24 24;-3 24 24;3 24 24;0 24 24"
+          dur="2.5s" repeatCount="indefinite" />
+        <polygon points="24,8 42,38 6,38" fill={color} opacity="0.9" />
+        <text x="24" y="35" textAnchor="middle" fontSize="16" fill="white" fontWeight="bold">!</text>
+      </g>
+    </svg>
+  )
+}
+
+/* 19. FlowerBloom — petal ellipses blooming with golden center */
+export function FlowerBloom({ size = 48, color = '#E8705A' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
+        <ellipse key={i} cx={24 + Math.cos(angle * Math.PI / 180) * 10}
+          cy={24 + Math.sin(angle * Math.PI / 180) * 10}
+          rx="7" ry="4"
+          fill={color} opacity="0.85"
+          transform={`rotate(${angle} ${24 + Math.cos(angle * Math.PI / 180) * 10} ${24 + Math.sin(angle * Math.PI / 180) * 10})`}>
+          <animate attributeName="rx" values="5;8;5" dur={`${1.5 + i * 0.1}s`} repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.7;1;0.7" dur={`${1.5 + i * 0.1}s`} repeatCount="indefinite" />
+        </ellipse>
+      ))}
+      <circle cx="24" cy="24" r="6" fill="#FFD700">
+        <animate attributeName="r" values="5;7;5" dur="2s" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  )
+}
