@@ -1,6 +1,6 @@
 import { useRef, useEffect, useMemo, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Environment } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 
@@ -203,6 +203,113 @@ function Seedling() {
   )
 }
 
+/* ── Mini pond ── */
+function Pond() {
+  return (
+    <group position={[1.1, 0.12, 0.6]}>
+      {/* water surface */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.38, 10]} />
+        <meshLambertMaterial color="#74B8E8" transparent opacity={0.85} />
+      </mesh>
+      {/* pond rim */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -0.01]}>
+        <ringGeometry args={[0.38, 0.46, 10]} />
+        <meshLambertMaterial color="#5A8FA0" />
+      </mesh>
+      {/* water shimmer */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.06, 0.06, 0.01]}>
+        <ellipseGeometry args={[0.1, 0.06, 8]} />
+        <meshLambertMaterial color="#BFDFFF" transparent opacity={0.5} />
+      </mesh>
+    </group>
+  )
+}
+
+/* ── Floating cloud ── */
+function Cloud({ x, y, z, speed = 0.15, scale = 1 }) {
+  const ref = useRef()
+  const offset = useMemo(() => Math.random() * Math.PI * 2, [])
+  useFrame(({ clock }) => {
+    if (!ref.current) return
+    ref.current.position.x = x + Math.sin(clock.elapsedTime * speed + offset) * 0.6
+    ref.current.position.y = y + Math.cos(clock.elapsedTime * speed * 0.7 + offset) * 0.1
+  })
+  return (
+    <group ref={ref} position={[x, y, z]} scale={scale}>
+      <mesh>
+        <sphereGeometry args={[0.38, 7, 5]} />
+        <meshLambertMaterial color="#FFFFFF" transparent opacity={0.92} />
+      </mesh>
+      <mesh position={[-0.3, -0.1, 0]}>
+        <sphereGeometry args={[0.28, 6, 5]} />
+        <meshLambertMaterial color="#F5F5F5" transparent opacity={0.88} />
+      </mesh>
+      <mesh position={[0.3, -0.1, 0]}>
+        <sphereGeometry args={[0.24, 6, 5]} />
+        <meshLambertMaterial color="#F5F5F5" transparent opacity={0.88} />
+      </mesh>
+      <mesh position={[0.1, 0.2, 0]}>
+        <sphereGeometry args={[0.22, 6, 5]} />
+        <meshLambertMaterial color="#FFFFFF" transparent opacity={0.9} />
+      </mesh>
+    </group>
+  )
+}
+
+/* ── Butterfly ── */
+function Butterfly({ radius = 2.2, height = 1.6, speed = 0.5 }) {
+  const ref = useRef()
+  const wingRef1 = useRef()
+  const wingRef2 = useRef()
+  const phase = useMemo(() => Math.random() * Math.PI * 2, [])
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime
+    if (ref.current) {
+      const angle = t * speed + phase
+      ref.current.position.x = Math.cos(angle) * radius
+      ref.current.position.z = Math.sin(angle) * radius * 0.6
+      ref.current.position.y = height + Math.sin(t * 1.8) * 0.3
+      ref.current.rotation.y = -angle + Math.PI / 2
+    }
+    // flap wings
+    const flap = Math.abs(Math.sin(t * 6)) * 0.7
+    if (wingRef1.current) wingRef1.current.rotation.y = -flap
+    if (wingRef2.current) wingRef2.current.rotation.y = flap
+  })
+  return (
+    <group ref={ref}>
+      {/* body */}
+      <mesh>
+        <capsuleGeometry args={[0.025, 0.09, 4, 6]} />
+        <meshLambertMaterial color="#3D2B2B" />
+      </mesh>
+      {/* left wing */}
+      <group ref={wingRef1} position={[-0.02, 0, 0]}>
+        <mesh rotation={[0, 0, 0.3]} position={[-0.1, 0.02, 0]}>
+          <ellipseGeometry args={[0.14, 0.1, 8]} />
+          <meshLambertMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh rotation={[0, 0, 0.5]} position={[-0.08, -0.07, 0]}>
+          <ellipseGeometry args={[0.1, 0.07, 8]} />
+          <meshLambertMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+      {/* right wing */}
+      <group ref={wingRef2} position={[0.02, 0, 0]}>
+        <mesh rotation={[0, 0, -0.3]} position={[0.1, 0.02, 0]}>
+          <ellipseGeometry args={[0.14, 0.1, 8]} />
+          <meshLambertMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh rotation={[0, 0, -0.5]} position={[0.08, -0.07, 0]}>
+          <ellipseGeometry args={[0.1, 0.07, 8]} />
+          <meshLambertMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+    </group>
+  )
+}
+
 /* ── Tree layout — deterministic scatter across island ── */
 const TREE_POSITIONS = [
   { x: 0,     z: -1.2,  scale: 1.15, variant: 0 },
@@ -275,17 +382,27 @@ function GardenScene({ bloodFreeDays }) {
       <Rock x={-0.6} z={0.3} />
       <Rock x={1.7} z={-1.6} />
 
+      <Pond />
+
+      <Cloud x={-3.5} y={4.2} z={-2.0} speed={0.12} scale={0.9} />
+      <Cloud x={3.0}  y={4.8} z={1.5}  speed={0.09} scale={0.7} />
+      <Cloud x={0.5}  y={5.2} z={-3.5} speed={0.14} scale={1.1} />
+
       {bloodFreeDays > 2 && <FallingPetals count={Math.min(bloodFreeDays * 2, 30)} />}
+      {bloodFreeDays > 1 && <Butterfly radius={2.0} height={1.8} speed={0.45} />}
+      {bloodFreeDays > 5 && <Butterfly radius={2.8} height={2.4} speed={0.3} />}
 
       <EffectComposer>
         <Bloom luminanceThreshold={0.8} luminanceSmoothing={0.3} intensity={0.4} mipmapBlur />
       </EffectComposer>
 
       <OrbitControls
-        enableZoom={false}
+        enableZoom
         enablePan={false}
-        minPolarAngle={Math.PI / 5}
-        maxPolarAngle={Math.PI / 3}
+        minDistance={3}
+        maxDistance={14}
+        minPolarAngle={Math.PI / 6}
+        maxPolarAngle={Math.PI / 2.8}
         autoRotate
         autoRotateSpeed={0.4}
       />
@@ -295,8 +412,14 @@ function GardenScene({ bloodFreeDays }) {
 
 /* ── Export ── */
 export default function HealingGarden3D({ bloodFreeDays = 0, theme = {} }) {
+  const [showHint, setShowHint] = useState(true)
+  useEffect(() => {
+    const t = setTimeout(() => setShowHint(false), 2800)
+    return () => clearTimeout(t)
+  }, [])
+
   return (
-    <div style={{ width: '100%', height: 240, borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: 260, borderRadius: 16, overflow: 'hidden', position: 'relative' }}>
       <Canvas
         shadows
         style={{ width: '100%', height: '100%' }}
@@ -306,6 +429,36 @@ export default function HealingGarden3D({ bloodFreeDays = 0, theme = {} }) {
       >
         <GardenScene bloodFreeDays={bloodFreeDays} />
       </Canvas>
+
+      {/* Day counter badge */}
+      {bloodFreeDays > 0 && (
+        <div style={{
+          position: 'absolute', top: 10, right: 10,
+          background: 'rgba(255,255,255,0.88)',
+          backdropFilter: 'blur(6px)',
+          borderRadius: 20, padding: '4px 10px',
+          fontSize: 11, fontWeight: 700, color: '#E8705A',
+          pointerEvents: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        }}>
+          🌸 Day {bloodFreeDays}
+        </div>
+      )}
+
+      {/* Pinch/scroll zoom hint — fades after 2.8s */}
+      {showHint && (
+        <div style={{
+          position: 'absolute', bottom: 10, left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,0.45)',
+          color: '#fff', fontSize: 10, fontWeight: 600,
+          borderRadius: 12, padding: '4px 12px',
+          pointerEvents: 'none', whiteSpace: 'nowrap',
+          transition: 'opacity 0.5s',
+          opacity: showHint ? 1 : 0,
+        }}>
+          Pinch or scroll to zoom · drag to rotate
+        </div>
+      )}
     </div>
   )
 }
