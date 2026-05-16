@@ -578,8 +578,8 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
               setBgWarmth(v <= 2 ? 'warm' : '')
               setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, restingPain: v } }))
             }} label="Resting discomfort (when not in the bathroom):" theme={theme} />
-            <PainSlider value={log.dailySymptoms.itchingBurning} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, itchingBurning: v } }))} label="Burning or itching:" theme={theme} />
-            <PainSlider value={log.dailySymptoms.sittingDiscomfort} onChange={v => setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, sittingDiscomfort: v } }))} label="Discomfort when sitting:" theme={theme} />
+            <PainSlider value={log.dailySymptoms.itchingBurning} onChange={v => { haptics.light(); setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, itchingBurning: v } })) }} label="Burning or itching:" theme={theme} />
+            <PainSlider value={log.dailySymptoms.sittingDiscomfort} onChange={v => { haptics.light(); setLog(l => ({ ...l, dailySymptoms: { ...l.dailySymptoms, sittingDiscomfort: v } })) }} label="Discomfort when sitting:" theme={theme} />
             <p style={{ fontSize: 13, fontWeight: 600, color: theme.text, marginBottom: 12 }}>How was your day overall?</p>
             <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
               {[['😊', 'good', 'Good day!'], ['😐', 'ok', 'Just okay'], ['😣', 'hard_day', 'Hard day']].map(([emoji, val, label]) => (
@@ -886,7 +886,45 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: theme.background, maxWidth: 430, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: theme.background, maxWidth: 430, margin: '0 auto', transition: 'background 0.8s ease' }}>
+      <style>{`
+        @keyframes fadeInOut {
+          0% { opacity: 0 }
+          20% { opacity: 1 }
+          80% { opacity: 1 }
+          100% { opacity: 0 }
+        }
+        @keyframes scaleUp {
+          0% { transform: scale(0.3) }
+          60% { transform: scale(1.2) }
+          100% { transform: scale(1) }
+        }
+      `}</style>
+
+      {/* bgWarmth amber tint overlay */}
+      <div style={{
+        background: 'rgba(255, 180, 50, 0.06)',
+        pointerEvents: 'none',
+        position: 'fixed',
+        inset: 0,
+        zIndex: 0,
+        transition: 'opacity 0.8s ease',
+        opacity: bgWarmth === 'warm' ? 1 : 0,
+      }} />
+
+      {/* Save flash celebration overlay */}
+      {saveFlash && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 999,
+          background: 'rgba(90, 158, 90, 0.15)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+          animation: 'fadeInOut 0.8s ease forwards',
+        }}>
+          <div style={{ fontSize: 48, animation: 'scaleUp 0.4s ease' }}>💛</div>
+        </div>
+      )}
+
       {/* P1-A: Undo snackbar */}
       <AnimatePresence>
         {pendingDelete && (
