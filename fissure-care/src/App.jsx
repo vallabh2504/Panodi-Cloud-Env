@@ -88,6 +88,28 @@ export default function App() {
     return () => clearInterval(id)
   }, [])
 
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const todayLog = JSON.parse(localStorage.getItem('fissurecare_log_' + today) || 'null')
+    const wasBloodFree = todayLog && todayLog.symptoms && !todayLog.symptoms.bleeding
+    if (wasBloodFree) {
+      // Spawn 12 petals
+      const petals = ['🌸', '🌸', '🌸', '🌺', '✿', '🌼']
+      for (let i = 0; i < 12; i++) {
+        const el = document.createElement('div')
+        el.className = 'petal'
+        el.textContent = petals[i % petals.length]
+        el.style.left = Math.random() * 100 + 'vw'
+        el.style.top = '-30px'
+        el.style.fontSize = (14 + Math.random() * 10) + 'px'
+        el.style.animationDuration = (2.5 + Math.random() * 2) + 's'
+        el.style.animationDelay = (Math.random() * 1.5) + 's'
+        document.body.appendChild(el)
+        setTimeout(() => el.remove(), 5000)
+      }
+    }
+  }, []) // runs once on mount
+
   const handleEnter = (tab = 'home') => {
     localStorage.setItem('fissurecare_launched', '1')
     setShowSplash(false)
@@ -97,6 +119,7 @@ export default function App() {
   const handleThemeChange = (id) => {
     saveThemeId(id)
     setThemeId(id)
+    document.body.style.transition = 'background 0.5s ease'
   }
 
   const handleLogSaved = useCallback((log) => {

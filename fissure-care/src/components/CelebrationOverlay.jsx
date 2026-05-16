@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BloomFlower, StarField } from './AnimatedSVGs'
+import Confetti3D from './Confetti3D'
 
 function ConfettiCanvas({ colors }) {
   const canvasRef = useRef(null)
@@ -78,6 +79,7 @@ export default function CelebrationOverlay({ celebration, onDismiss }) {
             padding: 32,
           }}
         >
+          <Confetti3D colors={celebration?.confettiColors || config.colors} />
           <ConfettiCanvas colors={config.colors} />
           <motion.div
             initial={{ scale: 0.5, y: 40 }}
@@ -88,7 +90,7 @@ export default function CelebrationOverlay({ celebration, onDismiss }) {
             aria-modal="true"
             aria-label={celebration?.title}
             style={{
-              position: 'relative', zIndex: 1,
+              position: 'relative', zIndex: 2,
               background: '#fff', borderRadius: 28, padding: '36px 28px',
               textAlign: 'center', maxWidth: 320, width: '100%',
               boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
