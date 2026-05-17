@@ -312,19 +312,40 @@ export default function InsightsScreen({ theme }) {
     score: l.wellnessScore || 0
   }))
 
-  const walkingData = filtered.map(l => {
+  // boAt watch data — merge log activity with standalone watch keys
+  const watchDataMap = useMemo(() => {
+    const map = {}
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key?.startsWith('fissurecare_watch_')) {
+        try { map[key.replace('fissurecare_watch_', '')] = JSON.parse(localStorage.getItem(key)) } catch {}
+      }
+    }
+    return map
+  }, [logs])
+
+  const fitnessData = filtered.map(l => {
+    const wd = watchDataMap[l.date] || {}
     const storedSteps = parseInt(localStorage.getItem('fissurecare_steps_' + l.date) || '0', 10)
     return {
       date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
-      steps: l.activity?.steps || storedSteps,
-      mins: l.activity?.walkingMinutes || 0,
+      steps: l.activity?.steps || wd.steps || storedSteps || 0,
+      activeMins: l.activity?.walkingMinutes || wd.activeMinutes || 0,
+      heartRate: l.activity?.heartRate || wd.heartRate || null,
+      spO2: l.activity?.spO2 || wd.spO2 || null,
+      sleepHours: l.activity?.sleepHours || wd.sleepHours || null,
+      calories: l.activity?.calories || wd.calories || 0,
     }
   })
-  const hasWalkingData = walkingData.some(d => d.steps > 0 || d.mins > 0)
-  const avgSteps = hasWalkingData
-    ? Math.round(walkingData.filter(d => d.steps > 0).reduce((s, d) => s + d.steps, 0) / Math.max(walkingData.filter(d => d.steps > 0).length, 1))
-    : 0
-  const goalDays = walkingData.filter(d => d.steps >= 5000).length
+  const hasFitnessData = fitnessData.some(d => d.steps > 0 || d.heartRate || d.sleepHours)
+  const activeFitness = fitnessData.filter(d => d.steps > 0)
+  const avgSteps = activeFitness.length
+    ? Math.round(activeFitness.reduce((s, d) => s + d.steps, 0) / activeFitness.length) : 0
+  const goalDays = fitnessData.filter(d => d.steps >= 8000).length
+  const hrReadings = fitnessData.filter(d => d.heartRate)
+  const avgHR = hrReadings.length ? Math.round(hrReadings.reduce((s, d) => s + d.heartRate, 0) / hrReadings.length) : null
+  const sleepReadings = fitnessData.filter(d => d.sleepHours)
+  const avgSleep = sleepReadings.length ? (sleepReadings.reduce((s, d) => s + d.sleepHours, 0) / sleepReadings.length).toFixed(1) : null
 
   const bristolCounts = {}
   filtered.forEach(l => l.bowelMovements?.forEach(bm => {
@@ -527,66 +548,117 @@ export default function InsightsScreen({ theme }) {
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Walking Activity */}
-          {hasWalkingData ? (
-            <ChartCard theme={theme} title="Walk & Activity" subtitle="Steps synced from Apple Watch">
-              <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-                <div style={{
-                  flex: 1, textAlign: 'center', background: theme?.tipBg || '#FFF8F5',
-                  borderRadius: 12, padding: '10px 8px',
-                  border: `1px solid ${theme?.tipBorder || '#F0E0DA'}`,
-                }}>
-                  <p style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: p }}>{avgSteps.toLocaleString()}</p>
-                  <p style={{ fontSize: 11, color: muted }}>avg steps/day</p>
-                </div>
-                <div style={{
-                  flex: 1, textAlign: 'center', background: theme?.tipBg || '#FFF8F5',
-                  borderRadius: 12, padding: '10px 8px',
-                  border: `1px solid ${theme?.tipBorder || '#F0E0DA'}`,
-                }}>
-                  <p style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: theme?.wellnessHigh || '#A8D5A2' }}>{goalDays}</p>
-                  <p style={{ fontSize: 11, color: muted }}>days hit 5k goal</p>
-                </div>
-                <div style={{
-                  flex: 1, textAlign: 'center', background: theme?.tipBg || '#FFF8F5',
-                  borderRadius: 12, padding: '10px 8px',
-                  border: `1px solid ${theme?.tipBorder || '#F0E0DA'}`,
-                }}>
-                  <p style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: '#C9A8F5' }}>
-                    {walkingData.filter(d => d.mins > 0).length > 0
-                      ? Math.round(walkingData.filter(d => d.mins > 0).reduce((s, d) => s + d.mins, 0) / walkingData.filter(d => d.mins > 0).length)
-                      : '—'}
-                  </p>
-                  <p style={{ fontSize: 11, color: muted }}>avg walk mins</p>
-                </div>
+          {/* ── boAt Fitness Analytics ── */}
+          <div style={{ margin: '0 16px 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>⌚</span>
+            <p style={{ fontSize: 15, fontWeight: 700, color: text }}>boAt Fitness Tracker</p>
+          </div>
+
+          {hasFitnessData ? (
+            <>
+              {/* Summary pills */}
+              <div style={{ display: 'flex', gap: 8, padding: '0 16px 4px', overflowX: 'auto' }}>
+                {[
+                  { label: 'Avg Steps', value: avgSteps.toLocaleString(), color: p, icon: '🚶' },
+                  { label: 'Goal Days', value: `${goalDays}d`, color: theme?.wellnessHigh || '#A8D5A2', icon: '🏆', sub: '(8k steps)' },
+                  { label: 'Avg HR', value: avgHR ? `${avgHR} bpm` : '—', color: '#F48585', icon: '❤️' },
+                  { label: 'Avg Sleep', value: avgSleep ? `${avgSleep}h` : '—', color: '#C9A8F5', icon: '😴' },
+                ].map(stat => (
+                  <div key={stat.label} style={{
+                    flex: '0 0 auto', minWidth: 84, background: card, borderRadius: 16,
+                    padding: '10px 10px', textAlign: 'center',
+                    border: `1px solid ${border}`,
+                  }}>
+                    <div style={{ fontSize: 18, marginBottom: 2 }}>{stat.icon}</div>
+                    <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'Nunito', color: stat.color, lineHeight: 1.1 }}>{stat.value}</div>
+                    <div style={{ fontSize: 9, color: muted, marginTop: 2 }}>{stat.label}</div>
+                  </div>
+                ))}
               </div>
-              <ResponsiveContainer width="100%" height={130}>
-                <LineChart data={walkingData}>
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
-                  <YAxis tick={{ fontSize: 10, fill: muted }} width={30} />
-                  <Tooltip formatter={(v, name) => [
-                    name === 'steps' ? v.toLocaleString() : `${v} min`,
-                    name === 'steps' ? 'Steps' : 'Walk mins',
-                  ]} />
-                  <Line type="monotone" dataKey="steps" stroke={p} strokeWidth={2.5} dot={{ fill: p, r: 3 }} connectNulls name="steps" />
-                  <Line type="monotone" dataKey="mins" stroke="#C9A8F5" strokeWidth={2} dot={false} connectNulls name="mins" />
-                </LineChart>
-              </ResponsiveContainer>
-              <p style={{ fontSize: 12, color: muted, marginTop: 4 }}>
-                <span style={{ color: p }}>— Steps</span> &nbsp; <span style={{ color: '#C9A8F5' }}>— Walk mins</span>
-                &nbsp;·&nbsp; 5,000 steps earns +7 pts on your wellness score
-              </p>
-            </ChartCard>
-          ) : (
-            <ChartCard theme={theme} title="Walk & Activity" subtitle="Apple Watch step sync">
-              <div style={{ textAlign: 'center', padding: '12px 0 4px' }}>
-                <p style={{ fontSize: 28, marginBottom: 6 }}>⌚</p>
-                <p style={{ fontSize: 13, color: muted }}>No walking data yet.</p>
+
+              {/* Steps + Active Minutes chart */}
+              <ChartCard theme={theme} title="Steps & Active Time" subtitle="Daily step count vs. walking minutes">
+                <ResponsiveContainer width="100%" height={140}>
+                  <LineChart data={fitnessData}>
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
+                    <YAxis yAxisId="s" orientation="left" tick={{ fontSize: 10, fill: muted }} width={32} />
+                    <YAxis yAxisId="m" orientation="right" domain={[0, 60]} tick={{ fontSize: 10, fill: muted }} width={22} />
+                    <Tooltip formatter={(v, name) => [name === 'steps' ? v.toLocaleString() : `${v} min`, name === 'steps' ? 'Steps' : 'Active mins']} />
+                    <Line yAxisId="s" type="monotone" dataKey="steps" stroke={p} strokeWidth={2.5} dot={{ fill: p, r: 3 }} connectNulls name="steps" />
+                    <Line yAxisId="m" type="monotone" dataKey="activeMins" stroke={theme?.wellnessHigh || '#A8D5A2'} strokeWidth={2} dot={false} connectNulls name="activeMins" />
+                  </LineChart>
+                </ResponsiveContainer>
                 <p style={{ fontSize: 12, color: muted, marginTop: 4 }}>
-                  Tap <b>Sync from Apple Watch</b> on the home screen to add your steps.
+                  <span style={{ color: p }}>— Steps</span>&nbsp; <span style={{ color: theme?.wellnessHigh || '#A8D5A2' }}>— Active mins</span>
+                  &nbsp;·&nbsp; 8,000 steps = +10 pts on your wellness score
                 </p>
-              </div>
-            </ChartCard>
+              </ChartCard>
+
+              {/* Heart Rate + SpO2 chart */}
+              {hrReadings.length > 0 && (
+                <ChartCard theme={theme} title="Heart Rate & SpO2" subtitle="Resting HR and blood oxygen from boAt Watch">
+                  <ResponsiveContainer width="100%" height={130}>
+                    <LineChart data={fitnessData.filter(d => d.heartRate || d.spO2)}>
+                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
+                      <YAxis yAxisId="hr" orientation="left" domain={[40, 120]} tick={{ fontSize: 10, fill: muted }} width={25} />
+                      <YAxis yAxisId="sp" orientation="right" domain={[90, 100]} tick={{ fontSize: 10, fill: muted }} width={25} />
+                      <Tooltip formatter={(v, name) => [name === 'heartRate' ? `${v} bpm` : `${v}%`, name === 'heartRate' ? 'Heart Rate' : 'SpO2']} />
+                      <Line yAxisId="hr" type="monotone" dataKey="heartRate" stroke="#F48585" strokeWidth={2.5} dot={{ fill: '#F48585', r: 3 }} connectNulls name="heartRate" />
+                      <Line yAxisId="sp" type="monotone" dataKey="spO2" stroke="#74B8E8" strokeWidth={2} dot={{ fill: '#74B8E8', r: 2 }} connectNulls name="spO2" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <p style={{ fontSize: 12, color: muted, marginTop: 4 }}>
+                    <span style={{ color: '#F48585' }}>— Heart Rate (bpm)</span>&nbsp; <span style={{ color: '#74B8E8' }}>— SpO2 (%)</span>
+                    &nbsp;·&nbsp; Normal SpO2: 95–100%
+                  </p>
+                </ChartCard>
+              )}
+
+              {/* Sleep chart */}
+              {sleepReadings.length > 0 && (
+                <ChartCard theme={theme} title="Sleep Quality" subtitle="Hours of sleep per night from boAt Watch">
+                  <ResponsiveContainer width="100%" height={110}>
+                    <BarChart data={fitnessData.filter(d => d.sleepHours)}>
+                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
+                      <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: muted }} width={20} />
+                      <Tooltip formatter={v => [`${v}h`, 'Sleep']} />
+                      <Bar dataKey="sleepHours" radius={[4, 4, 0, 0]}
+                        fill="#C9A8F5"
+                        label={false}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <p style={{ fontSize: 12, color: muted, marginTop: 4 }}>
+                    Target: 7–9 hours · Sleep ≥7h adds +5 pts to your wellness score
+                  </p>
+                </ChartCard>
+              )}
+
+              {/* Calories chart */}
+              {fitnessData.some(d => d.calories > 0) && (
+                <ChartCard theme={theme} title="Calories Burned" subtitle="Active calorie burn from boAt Watch">
+                  <ResponsiveContainer width="100%" height={100}>
+                    <BarChart data={fitnessData}>
+                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
+                      <YAxis tick={{ fontSize: 10, fill: muted }} width={28} />
+                      <Tooltip formatter={v => [`${v} kcal`, 'Calories']} />
+                      <Bar dataKey="calories" fill="#F5C67A" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              )}
+            </>
+          ) : (
+            <div style={{
+              margin: '0 16px 16px', background: card, borderRadius: 20,
+              padding: '28px 20px', textAlign: 'center', border: `1px solid ${border}`,
+            }}>
+              <p style={{ fontSize: 32, marginBottom: 10 }}>⌚</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: text, marginBottom: 6 }}>No Watch Data Yet</p>
+              <p style={{ fontSize: 13, color: muted, lineHeight: 1.6 }}>
+                Connect your <b>boAt Wave Magma</b> on the Home screen to start tracking steps, heart rate, SpO2, sleep, and calories.
+              </p>
+            </div>
           )}
 
           {/* Symptom Calendar */}

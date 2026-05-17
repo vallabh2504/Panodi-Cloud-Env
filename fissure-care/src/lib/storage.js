@@ -102,25 +102,52 @@ export function calcWellnessScore(log) {
   const pain = ((10 - avgPain) / 10) * 25
   const bmTypes = log.bowelMovements?.map(bm => bm.bristolType) || []
   const bm = bmTypes.includes(4) ? 10 : bmTypes.some(t => t === 3 || t === 5) ? 7 : bmTypes.length ? 3 : 0
+  // boAt watch bonuses (capped so total never exceeds 100)
   const steps = log.activity?.steps || 0
   const walking = steps >= 7500 ? 10 : steps >= 5000 ? 7 : steps >= 2500 ? 4 : steps > 0 ? 1 : 0
-  return Math.round(Math.min(water + fruits + fiber + sitz + pain + bm + walking, 100))
+  const sleep = log.activity?.sleepHours || 0
+  const sleepBonus = sleep >= 7 ? 5 : sleep >= 6 ? 3 : sleep >= 5 ? 1 : 0
+  return Math.round(Math.min(water + fruits + fiber + sitz + pain + bm + walking + sleepBonus, 100))
 }
 
-// Walking / Watch sync helpers
-export function getStepsForDate(date) {
-  return parseInt(localStorage.getItem('fissurecare_steps_' + date) || '0', 10)
+// boAt watch data CRUD
+export function getWatchData(date) {
+  try {
+    const d = localStorage.getItem('fissurecare_watch_' + date)
+    return d ? JSON.parse(d) : null
+  } catch { return null }
 }
 
-export async function saveStepsForDate(date, steps, walkingMins) {
-  localStorage.setItem('fissurecare_steps_' + date, String(steps))
+export async function saveWatchData(date, watchData) {
+  localStorage.setItem('fissurecare_watch_' + date, JSON.stringify(watchData))
+  // backward-compat step key
+  if (watchData.steps) localStorage.setItem('fissurecare_steps_' + date, String(watchData.steps))
+  // patch daily log activity if it exists
   const log = await getLog(date)
   if (log) {
     if (!log.activity) log.activity = {}
-    log.activity.steps = steps
-    if (walkingMins !== undefined) log.activity.walkingMinutes = walkingMins
+    if (watchData.steps != null)        log.activity.steps        = watchData.steps
+    if (watchData.activeMinutes != null) log.activity.walkingMinutes = watchData.activeMinutes
+    if (watchData.heartRate != null)    log.activity.heartRate    = watchData.heartRate
+    if (watchData.spO2 != null)         log.activity.spO2         = watchData.spO2
+    if (watchData.sleepHours != null)   log.activity.sleepHours   = watchData.sleepHours
+    if (watchData.calories != null)     log.activity.calories     = watchData.calories
     await saveLog(date, log)
   }
+}
+
+export function getAllWatchData() {
+  const result = []
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (key?.startsWith('fissurecare_watch_')) {
+      try {
+        const date = key.replace('fissurecare_watch_', '')
+        result.push({ date, ...JSON.parse(localStorage.getItem(key)) })
+      } catch {}
+    }
+  }
+  return result.sort((a, b) => new Date(b.date) - new Date(a.date))
 }
 
 export function getHealingDayFreezes() {
