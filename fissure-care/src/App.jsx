@@ -6,6 +6,7 @@ import { checkAndClaimCelebrations } from './lib/celebrations'
 import HomeScreen from './screens/HomeScreen'
 import LogScreen from './screens/LogScreen'
 import InsightsScreen from './screens/InsightsScreen'
+import FitnessScreen from './screens/FitnessScreen'
 import MedsScreen from './screens/MedsScreen'
 import SettingsScreen from './screens/SettingsScreen'
 import WisdomScreen from './screens/WisdomScreen'
@@ -166,6 +167,7 @@ export default function App() {
           <OfflineBanner />
           {activeTab === 'home' && <HomeScreen onNavigate={setActiveTab} theme={theme} />}
           {activeTab === 'log' && <LogScreen onNavigate={setActiveTab} onLogSaved={handleLogSaved} theme={theme} />}
+          {activeTab === 'fitness' && <FitnessScreen theme={theme} onNavigate={setActiveTab} />}
           {activeTab === 'insights' && <InsightsScreen theme={theme} />}
           {activeTab === 'meds' && <MedsScreen theme={theme} />}
           {activeTab === 'wisdom' && <WisdomScreen theme={theme} />}

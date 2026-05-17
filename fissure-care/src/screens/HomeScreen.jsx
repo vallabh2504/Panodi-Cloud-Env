@@ -292,6 +292,92 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
   )
 }
 
+/* ── Fitness Teaser Card (compact, navigates to Fitness tab) ── */
+function FitnessTeaserCard({ today, theme, onNavigate }) {
+  const [watchData, setWatchData] = useState(null)
+
+  useEffect(() => {
+    const raw = localStorage.getItem('fissurecare_watch_' + today)
+    if (raw) { try { setWatchData(JSON.parse(raw)) } catch {} }
+  }, [today])
+
+  const steps    = watchData?.steps || 0
+  const hr       = watchData?.heartRate
+  const sleep    = watchData?.sleepHours
+  const calories = watchData?.calories || 0
+  const hasData  = steps > 0 || hr || sleep
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      style={{
+        margin: '0 16px 16px', background: theme.card, borderRadius: 22,
+        border: `1px solid ${theme.cardBorder}`,
+        boxShadow: `0 2px 14px ${theme.cardShadow}`, overflow: 'hidden',
+      }}
+    >
+      <div style={{ padding: '14px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <span style={{ fontSize: 20 }}>⌚</span>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, lineHeight: 1.2 }}>boAt Fitness</p>
+            <p style={{ fontSize: 10, color: theme.textMuted }}>Wave Magma</p>
+          </div>
+        </div>
+        {hasData && watchData?.syncedAt && (
+          <span style={{ fontSize: 10, color: theme.textMuted }}>
+            Synced {new Date(watchData.syncedAt).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })}
+          </span>
+        )}
+      </div>
+
+      {hasData ? (
+        <div style={{ display: 'flex', gap: 8, padding: '0 16px 12px', overflowX: 'auto' }}>
+          {[
+            { icon: '🚶', label: 'Steps',    value: steps.toLocaleString(),    color: theme.primary },
+            { icon: '❤️', label: 'HR',       value: hr    ? `${hr} bpm`  : '—', color: '#F48585' },
+            { icon: '😴', label: 'Sleep',    value: sleep ? `${sleep}h`  : '—', color: '#C9A8F5' },
+            { icon: '🔥', label: 'Calories', value: calories || '—',           color: '#F5C67A' },
+          ].map(stat => (
+            <div key={stat.label} style={{
+              flex: '0 0 auto', minWidth: 66, background: theme.tipBg,
+              borderRadius: 14, padding: '8px 8px', textAlign: 'center',
+              border: `1px solid ${theme.tipBorder}`,
+            }}>
+              <div style={{ fontSize: 15, marginBottom: 2 }}>{stat.icon}</div>
+              <div style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Nunito', color: stat.color, lineHeight: 1.1 }}>{stat.value}</div>
+              <div style={{ fontSize: 9, color: theme.textMuted, marginTop: 1 }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p style={{ fontSize: 12, color: theme.textMuted, padding: '0 16px 12px', lineHeight: 1.5 }}>
+          No data synced today — open Fitness tab to connect your watch.
+        </p>
+      )}
+
+      <div style={{ padding: '0 16px 14px' }}>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => onNavigate('fitness')}
+          style={{
+            width: '100%', padding: '11px',
+            background: `linear-gradient(135deg, ${theme.primary}18, ${theme.primary}08)`,
+            border: `1.5px solid ${theme.primary}50`,
+            borderRadius: 14, cursor: 'pointer',
+            color: theme.primary, fontSize: 13, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          }}
+        >
+          {hasData ? '📊 Full Fitness Dashboard →' : '⌚ Open Fitness Tracker →'}
+        </motion.button>
+      </div>
+    </motion.div>
+  )
+}
+
 /* ── BLE connect helper (Web Bluetooth) ── */
 async function connectBoatBLE({ onConnected, onHeartRate, onDisconnect }) {
   if (!navigator?.bluetooth) throw Object.assign(new Error('NO_BLE'), { code: 'NO_BLE' })
@@ -1234,14 +1320,9 @@ export default function HomeScreen({ onNavigate, theme }) {
         </div>
       </RevealCard>
 
-      {/* ── boAt Fitness Card ── */}
+      {/* ── boAt Fitness Teaser Card ── */}
       <RevealCard delay={0.12}>
-        <BoatWatchCard
-          log={log}
-          today={today}
-          theme={theme}
-          onUpdate={() => getLog(today).then(setLog)}
-        />
+        <FitnessTeaserCard today={today} theme={theme} onNavigate={onNavigate} />
       </RevealCard>
 
       {/* ── Healing Garden — always visible ── */}

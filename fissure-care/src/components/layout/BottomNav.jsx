@@ -1,8 +1,9 @@
-import { Home, PenLine, BarChart2, Pill, Settings } from 'lucide-react'
+import { Home, PenLine, BarChart2, Pill, Settings, Activity } from 'lucide-react'
 
 const TABS = [
   { id: 'home',     label: 'Today',    Icon: Home },
   { id: 'log',      label: 'Log',      Icon: PenLine },
+  { id: 'fitness',  label: 'Fitness',  Icon: Activity },
   { id: 'insights', label: 'Insights', Icon: BarChart2 },
   { id: 'meds',     label: 'Care',     Icon: Pill },
   { id: 'settings', label: 'Settings', Icon: Settings },
