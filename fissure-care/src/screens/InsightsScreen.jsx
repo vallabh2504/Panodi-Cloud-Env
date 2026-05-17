@@ -312,6 +312,20 @@ export default function InsightsScreen({ theme }) {
     score: l.wellnessScore || 0
   }))
 
+  const walkingData = filtered.map(l => {
+    const storedSteps = parseInt(localStorage.getItem('fissurecare_steps_' + l.date) || '0', 10)
+    return {
+      date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+      steps: l.activity?.steps || storedSteps,
+      mins: l.activity?.walkingMinutes || 0,
+    }
+  })
+  const hasWalkingData = walkingData.some(d => d.steps > 0 || d.mins > 0)
+  const avgSteps = hasWalkingData
+    ? Math.round(walkingData.filter(d => d.steps > 0).reduce((s, d) => s + d.steps, 0) / Math.max(walkingData.filter(d => d.steps > 0).length, 1))
+    : 0
+  const goalDays = walkingData.filter(d => d.steps >= 5000).length
+
   const bristolCounts = {}
   filtered.forEach(l => l.bowelMovements?.forEach(bm => {
     if (bm.bristolType) bristolCounts[bm.bristolType] = (bristolCounts[bm.bristolType] || 0) + 1
@@ -512,6 +526,68 @@ export default function InsightsScreen({ theme }) {
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
+
+          {/* Walking Activity */}
+          {hasWalkingData ? (
+            <ChartCard theme={theme} title="Walk & Activity" subtitle="Steps synced from Apple Watch">
+              <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                <div style={{
+                  flex: 1, textAlign: 'center', background: theme?.tipBg || '#FFF8F5',
+                  borderRadius: 12, padding: '10px 8px',
+                  border: `1px solid ${theme?.tipBorder || '#F0E0DA'}`,
+                }}>
+                  <p style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: p }}>{avgSteps.toLocaleString()}</p>
+                  <p style={{ fontSize: 11, color: muted }}>avg steps/day</p>
+                </div>
+                <div style={{
+                  flex: 1, textAlign: 'center', background: theme?.tipBg || '#FFF8F5',
+                  borderRadius: 12, padding: '10px 8px',
+                  border: `1px solid ${theme?.tipBorder || '#F0E0DA'}`,
+                }}>
+                  <p style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: theme?.wellnessHigh || '#A8D5A2' }}>{goalDays}</p>
+                  <p style={{ fontSize: 11, color: muted }}>days hit 5k goal</p>
+                </div>
+                <div style={{
+                  flex: 1, textAlign: 'center', background: theme?.tipBg || '#FFF8F5',
+                  borderRadius: 12, padding: '10px 8px',
+                  border: `1px solid ${theme?.tipBorder || '#F0E0DA'}`,
+                }}>
+                  <p style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: '#C9A8F5' }}>
+                    {walkingData.filter(d => d.mins > 0).length > 0
+                      ? Math.round(walkingData.filter(d => d.mins > 0).reduce((s, d) => s + d.mins, 0) / walkingData.filter(d => d.mins > 0).length)
+                      : '—'}
+                  </p>
+                  <p style={{ fontSize: 11, color: muted }}>avg walk mins</p>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={130}>
+                <LineChart data={walkingData}>
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10, fill: muted }} width={30} />
+                  <Tooltip formatter={(v, name) => [
+                    name === 'steps' ? v.toLocaleString() : `${v} min`,
+                    name === 'steps' ? 'Steps' : 'Walk mins',
+                  ]} />
+                  <Line type="monotone" dataKey="steps" stroke={p} strokeWidth={2.5} dot={{ fill: p, r: 3 }} connectNulls name="steps" />
+                  <Line type="monotone" dataKey="mins" stroke="#C9A8F5" strokeWidth={2} dot={false} connectNulls name="mins" />
+                </LineChart>
+              </ResponsiveContainer>
+              <p style={{ fontSize: 12, color: muted, marginTop: 4 }}>
+                <span style={{ color: p }}>— Steps</span> &nbsp; <span style={{ color: '#C9A8F5' }}>— Walk mins</span>
+                &nbsp;·&nbsp; 5,000 steps earns +7 pts on your wellness score
+              </p>
+            </ChartCard>
+          ) : (
+            <ChartCard theme={theme} title="Walk & Activity" subtitle="Apple Watch step sync">
+              <div style={{ textAlign: 'center', padding: '12px 0 4px' }}>
+                <p style={{ fontSize: 28, marginBottom: 6 }}>⌚</p>
+                <p style={{ fontSize: 13, color: muted }}>No walking data yet.</p>
+                <p style={{ fontSize: 12, color: muted, marginTop: 4 }}>
+                  Tap <b>Sync from Apple Watch</b> on the home screen to add your steps.
+                </p>
+              </div>
+            </ChartCard>
+          )}
 
           {/* Symptom Calendar */}
           <CalendarHeatmap logs={logs} theme={theme} />

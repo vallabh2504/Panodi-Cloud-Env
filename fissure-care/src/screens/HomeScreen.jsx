@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } fro
 const HealingGarden3D = lazy(() => import('../components/HealingGarden3D'))
 const NoiseShaderHero = lazy(() => import('../components/NoiseShaderHero'))
 const FlipNumber = lazy(() => import('../components/FlipNumber'))
-import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell, ChevronDown } from 'lucide-react'
-import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings, getHealingDayFreezes, useHealingDayFreeze } from '../lib/storage'
+import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell, ChevronDown, Watch, Footprints } from 'lucide-react'
+import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings, getHealingDayFreezes, useHealingDayFreeze, getStepsForDate, saveStepsForDate } from '../lib/storage'
 import { getDailyInsight } from '../lib/correlations'
 import { FlameIcon, SunIcon, MoonIcon, WaveBar } from '../components/AnimatedSVGs'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
@@ -218,6 +218,7 @@ function WellnessRing({ score, theme }) {
               ['🛁 Sitz Baths', '15 pts'],
               ['😌 Low Pain', '25 pts'],
               ['💩 Good Bristol', '10 pts'],
+              ['🚶 Walking (bonus)', '+ up to 10 pts'],
             ].map(([label, pts]) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ fontSize: 12, color: theme.text }}>{label}</span>
@@ -287,6 +288,246 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
         <HealingGarden3D bloodFreeDays={bloodFreeDays} theme={theme} />
       </Suspense>
     </motion.div>
+  )
+}
+
+/* ── Apple Watch Sync Card ── */
+const STEP_GOAL = 5000
+
+function WatchSyncCard({ log, today, theme, onUpdate }) {
+  const [showModal, setShowModal] = useState(false)
+  const [displaySteps, setDisplaySteps] = useState(0)
+  const [stepInput, setStepInput] = useState('')
+  const [minsInput, setMinsInput] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    const stored = getStepsForDate(today)
+    setDisplaySteps(stored || log?.activity?.steps || 0)
+  }, [today, log])
+
+  const walkingMins = log?.activity?.walkingMinutes || 0
+  const pct = Math.min((displaySteps / STEP_GOAL) * 100, 100)
+  const stepColor = displaySteps >= STEP_GOAL ? theme.wellnessHigh : displaySteps >= 2500 ? theme.primary : theme.textMuted
+
+  const radius = 34, stroke = 7, circ = 2 * Math.PI * radius
+  const arcOffset = circ - (pct / 100) * circ
+
+  const openModal = () => {
+    setStepInput(displaySteps > 0 ? String(displaySteps) : '')
+    setMinsInput(walkingMins > 0 ? String(walkingMins) : '')
+    setShowModal(true)
+  }
+
+  const handleSave = async () => {
+    const s = parseInt(stepInput) || 0
+    const m = parseInt(minsInput) || undefined
+    setSaving(true)
+    await saveStepsForDate(today, s, m)
+    setDisplaySteps(s)
+    setSaved(true)
+    setSaving(false)
+    onUpdate()
+    setTimeout(() => { setSaved(false); setShowModal(false) }, 900)
+  }
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        style={{
+          margin: '0 16px 16px', background: theme.card, borderRadius: 20,
+          padding: '16px', border: `1px solid ${theme.cardBorder}`,
+          boxShadow: `0 2px 10px ${theme.cardShadow}`,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Watch size={15} color={theme.primary} />
+            <p style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>Walk & Activity</p>
+          </div>
+          <span style={{ fontSize: 11, color: theme.textMuted }}>Goal: {STEP_GOAL.toLocaleString()} steps</span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* Arc ring */}
+          <div style={{ position: 'relative', width: 80, height: 80, flexShrink: 0 }}>
+            <svg width={80} height={80}>
+              <circle cx={40} cy={40} r={radius} fill="none" stroke={theme.cardBorder} strokeWidth={stroke} />
+              <circle
+                cx={40} cy={40} r={radius} fill="none"
+                stroke={stepColor} strokeWidth={stroke}
+                strokeDasharray={circ} strokeDashoffset={arcOffset}
+                strokeLinecap="round" transform="rotate(-90 40 40)"
+                style={{ transition: 'stroke-dashoffset 1s ease, stroke 0.4s ease' }}
+              />
+            </svg>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 14, fontWeight: 800, fontFamily: 'Nunito', color: stepColor, lineHeight: 1 }}>
+                {displaySteps >= 1000 ? `${(displaySteps / 1000).toFixed(1)}k` : displaySteps || '–'}
+              </span>
+              <span style={{ fontSize: 8, color: theme.textMuted }}>steps</span>
+            </div>
+          </div>
+
+          {/* Text info */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: stepColor, lineHeight: 1.1 }}>
+              {displaySteps > 0 ? displaySteps.toLocaleString() : '—'}
+            </p>
+            <p style={{ fontSize: 12, color: theme.textMuted, marginTop: 2, marginBottom: 7 }}>
+              {displaySteps >= STEP_GOAL ? '🎉 Daily goal reached!' : displaySteps > 0 ? `${(STEP_GOAL - displaySteps).toLocaleString()} steps to goal` : 'Sync your walk data'}
+            </p>
+            <div style={{ height: 5, background: theme.cardBorder, borderRadius: 3, overflow: 'hidden', marginBottom: 5 }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.9, ease: 'easeOut' }}
+                style={{ height: '100%', borderRadius: 3, background: stepColor }}
+              />
+            </div>
+            {walkingMins > 0 && (
+              <p style={{ fontSize: 11, color: theme.textMuted, display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Footprints size={10} color={theme.textMuted} /> {walkingMins} min walking
+              </p>
+            )}
+          </div>
+        </div>
+
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={openModal}
+          style={{
+            width: '100%', marginTop: 12, padding: '11px',
+            background: `linear-gradient(135deg, ${theme.primary}18, ${theme.primary}0a)`,
+            border: `1.5px solid ${theme.primary}50`,
+            borderRadius: 14, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            color: theme.primary, fontSize: 13, fontWeight: 700,
+          }}
+        >
+          <Watch size={14} /> Sync from Apple Watch
+        </motion.button>
+      </motion.div>
+
+      {/* Sync bottom sheet */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+              zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            }}
+            onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              style={{
+                background: theme.card, borderRadius: '28px 28px 0 0',
+                padding: '20px 20px 36px', width: '100%', maxWidth: 480,
+                boxShadow: '0 -8px 40px rgba(0,0,0,0.2)',
+              }}
+            >
+              <div style={{ width: 36, height: 4, background: theme.cardBorder, borderRadius: 2, margin: '0 auto 18px' }} />
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <Watch size={17} color={theme.primary} /> Apple Watch Sync
+                </p>
+                <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: theme.textMuted, lineHeight: 1 }}>×</button>
+              </div>
+
+              {/* How-to tip */}
+              <div style={{ background: theme.tipBg, borderRadius: 14, padding: '11px 14px', marginBottom: 16, border: `1px solid ${theme.tipBorder}` }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: theme.primary, marginBottom: 5 }}>How to check your steps</p>
+                <p style={{ fontSize: 12, color: theme.text, lineHeight: 1.65 }}>
+                  ⌚ <b>Apple Watch:</b> Open <em>Activity</em> app → swipe to Steps<br />
+                  📱 <b>iPhone:</b> Open <em>Health</em> app → Steps
+                </p>
+              </div>
+
+              {/* Steps input */}
+              <p style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Steps Today</p>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={stepInput}
+                onChange={e => setStepInput(e.target.value)}
+                placeholder="e.g. 5000"
+                style={{
+                  width: '100%', padding: '13px 16px', borderRadius: 14,
+                  border: `1.5px solid ${theme.cardBorder}`, background: theme.tipBg,
+                  fontSize: 24, fontWeight: 800, fontFamily: 'Nunito', color: theme.text,
+                  outline: 'none', boxSizing: 'border-box', marginBottom: 10,
+                }}
+              />
+              <div style={{ display: 'flex', gap: 7, marginBottom: 16 }}>
+                {[500, 1000, 2000].map(amt => (
+                  <button
+                    key={amt}
+                    onClick={() => setStepInput(s => String((parseInt(s) || 0) + amt))}
+                    style={{
+                      flex: 1, padding: '8px 0', background: theme.tipBg,
+                      border: `1px solid ${theme.cardBorder}`, borderRadius: 10,
+                      fontSize: 12, fontWeight: 700, color: theme.primary, cursor: 'pointer',
+                    }}
+                  >+{amt >= 1000 ? `${amt / 1000}k` : amt}</button>
+                ))}
+                <button
+                  onClick={() => setStepInput('0')}
+                  style={{
+                    padding: '8px 12px', background: theme.tipBg,
+                    border: `1px solid ${theme.cardBorder}`, borderRadius: 10,
+                    fontSize: 12, fontWeight: 600, color: theme.textMuted, cursor: 'pointer',
+                  }}
+                >Clear</button>
+              </div>
+
+              {/* Walking minutes */}
+              <p style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Walking Minutes</p>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={minsInput}
+                onChange={e => setMinsInput(e.target.value)}
+                placeholder="e.g. 30"
+                style={{
+                  width: '100%', padding: '11px 16px', borderRadius: 14,
+                  border: `1.5px solid ${theme.cardBorder}`, background: theme.tipBg,
+                  fontSize: 17, fontWeight: 600, color: theme.text,
+                  outline: 'none', boxSizing: 'border-box', marginBottom: 18,
+                }}
+              />
+
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  width: '100%', padding: '15px',
+                  background: saved ? (theme.wellnessHigh || '#A8D5A2') : (theme.ctaGradient || theme.primary),
+                  border: 'none', borderRadius: 16, color: '#fff',
+                  fontSize: 15, fontWeight: 700, cursor: saving ? 'default' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  transition: 'background 0.3s ease',
+                }}
+              >
+                {saved ? '✓ Synced & score updated!' : saving ? 'Saving…' : <><Watch size={15} /> Save & Update Score</>}
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }
 
@@ -851,6 +1092,16 @@ export default function HomeScreen({ onNavigate, theme }) {
             </motion.div>
           ))}
         </div>
+      </RevealCard>
+
+      {/* ── Watch Sync — walk & step data ── */}
+      <RevealCard delay={0.12}>
+        <WatchSyncCard
+          log={log}
+          today={today}
+          theme={theme}
+          onUpdate={() => getLog(today).then(setLog)}
+        />
       </RevealCard>
 
       {/* ── Healing Garden — always visible ── */}

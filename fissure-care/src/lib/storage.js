@@ -92,18 +92,35 @@ export function getStreak() {
 
 export function calcWellnessScore(log) {
   if (!log) return 0
-  // Evidence-based weights: fiber/hydration most impactful, pain inversion key
-  const water = ((log.hydration?.waterGlasses || 0) / 8) * 20   // was 25
-  const fruits = Math.min((log.fruitsEaten?.length || 0) / 3, 1) * 15  // was 20
-  const fiber = Math.min((log.fiberFoods?.length || 0) / 3, 1) * 15   // NEW: fiber gets own weight
-  const sitz = Math.min((log.sitzBaths?.length || 0) / 2, 1) * 15     // was 20
+  const water = ((log.hydration?.waterGlasses || 0) / 8) * 20
+  const fruits = Math.min((log.fruitsEaten?.length || 0) / 3, 1) * 15
+  const fiber = Math.min((log.fiberFoods?.length || 0) / 3, 1) * 15
+  const sitz = Math.min((log.sitzBaths?.length || 0) / 2, 1) * 15
   const avgPain = log.bowelMovements?.length
     ? log.bowelMovements.reduce((s, bm) => s + (bm.painLevel || 0), 0) / log.bowelMovements.length
     : (log.dailySymptoms?.restingPain || 0)
-  const pain = ((10 - avgPain) / 10) * 25                        // was 20 — pain is critical
+  const pain = ((10 - avgPain) / 10) * 25
   const bmTypes = log.bowelMovements?.map(bm => bm.bristolType) || []
-  const bm = bmTypes.includes(4) ? 10 : bmTypes.some(t => t === 3 || t === 5) ? 7 : bmTypes.length ? 3 : 0  // was 15→10
-  return Math.round(Math.min(water + fruits + fiber + sitz + pain + bm, 100))
+  const bm = bmTypes.includes(4) ? 10 : bmTypes.some(t => t === 3 || t === 5) ? 7 : bmTypes.length ? 3 : 0
+  const steps = log.activity?.steps || 0
+  const walking = steps >= 7500 ? 10 : steps >= 5000 ? 7 : steps >= 2500 ? 4 : steps > 0 ? 1 : 0
+  return Math.round(Math.min(water + fruits + fiber + sitz + pain + bm + walking, 100))
+}
+
+// Walking / Watch sync helpers
+export function getStepsForDate(date) {
+  return parseInt(localStorage.getItem('fissurecare_steps_' + date) || '0', 10)
+}
+
+export async function saveStepsForDate(date, steps, walkingMins) {
+  localStorage.setItem('fissurecare_steps_' + date, String(steps))
+  const log = await getLog(date)
+  if (log) {
+    if (!log.activity) log.activity = {}
+    log.activity.steps = steps
+    if (walkingMins !== undefined) log.activity.walkingMinutes = walkingMins
+    await saveLog(date, log)
+  }
 }
 
 export function getHealingDayFreezes() {
