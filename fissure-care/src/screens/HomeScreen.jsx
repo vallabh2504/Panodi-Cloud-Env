@@ -1502,37 +1502,41 @@ export default function HomeScreen({ onNavigate, theme }) {
       {/* ── Sticky Log Pill (appears when scrolled) ── */}
       <AnimatePresence>
         {scrolled && !log && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            style={{
-              position: 'fixed',
-              bottom: 'calc(80px + env(safe-area-inset-bottom))',
-              left: '50%', transform: 'translateX(-50%)',
-              zIndex: 50, width: 'calc(100% - 32px)', maxWidth: 398,
-            }}
-          >
-            <button
-              onClick={() => onNavigate('log')}
-              aria-label="Log today's health data"
-              style={{
-                width: '100%', padding: '14px 20px',
-                background: theme.ctaGradient, border: 'none', borderRadius: 20,
-                color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                boxShadow: `0 6px 24px ${theme.ctaShadow}`,
-              }}
+          <div style={{
+            position: 'fixed',
+            bottom: 'calc(68px + env(safe-area-inset-bottom))',
+            left: 0, right: 0,
+            display: 'flex', justifyContent: 'center',
+            padding: '0 16px',
+            zIndex: 50, pointerEvents: 'none',
+          }}>
+            <motion.div
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 80, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              style={{ width: '100%', maxWidth: 398, pointerEvents: 'auto' }}
             >
-              📋 Log today's check-in
-              {streak > 0 && (
-                <span style={{ background: 'rgba(255,255,255,0.22)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>
-                  🔥 {streak}
-                </span>
-              )}
-            </button>
-          </motion.div>
+              <button
+                onClick={() => onNavigate('log')}
+                aria-label="Log today's health data"
+                style={{
+                  width: '100%', padding: '14px 20px',
+                  background: theme.ctaGradient, border: 'none', borderRadius: 20,
+                  color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  boxShadow: `0 6px 24px ${theme.ctaShadow}`,
+                }}
+              >
+                📋 Log today's check-in
+                {streak > 0 && (
+                  <span style={{ background: 'rgba(255,255,255,0.22)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>
+                    🔥 {streak}
+                  </span>
+                )}
+              </button>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
