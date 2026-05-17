@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Vercel — never commit pre-built output, forces fresh Vite build on every deploy
+.vercel/output
+.vercel/builders
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
