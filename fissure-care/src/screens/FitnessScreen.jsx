@@ -162,10 +162,10 @@ function ConnectCard({ theme, today, onDataSaved }) {
           </div>
           <div>
             {bleState === 'connected' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#F0FFF5', borderRadius: 20, padding: '5px 12px', border: '1px solid #C8E6C9' }}>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#4CAF50', animation: 'pulse 1.5s ease infinite' }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#2E7D32' }}>{bleInfo?.name || 'Connected'}</span>
-                {bleInfo?.battery != null && <span style={{ fontSize: 11, color: '#4CAF50' }}>🔋{bleInfo.battery}%</span>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: theme.successBg, borderRadius: 20, padding: '5px 12px', border: `1px solid ${theme.successBorder}` }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: theme.success, animation: 'pulse 1.5s ease infinite' }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: theme.success }}>{bleInfo?.name || 'Connected'}</span>
+                {bleInfo?.battery != null && <span style={{ fontSize: 11, color: theme.success }}>🔋{bleInfo.battery}%</span>}
               </div>
             ) : bleState === 'connecting' ? (
               <span style={{ fontSize: 12, color: theme.textMuted }}>Searching…</span>
@@ -179,11 +179,11 @@ function ConnectCard({ theme, today, onDataSaved }) {
 
         {/* Live HR badge when connected */}
         {liveHR && (
-          <div style={{ margin: '0 16px 12px', background: '#FFF0F0', borderRadius: 14, padding: '10px 14px', border: '1px solid #FFCDD2', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ margin: '0 16px 12px', background: theme.dangerBg, borderRadius: 14, padding: '10px 14px', border: `1px solid ${theme.dangerBorder}`, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 20 }}>❤️</span>
             <div>
-              <p style={{ fontSize: 11, color: '#B71C1C', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Live Heart Rate</p>
-              <p style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: '#E53935', lineHeight: 1.1 }}>{liveHR} <span style={{ fontSize: 13, fontWeight: 500 }}>bpm</span></p>
+              <p style={{ fontSize: 11, color: theme.danger, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Live Heart Rate</p>
+              <p style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.danger, lineHeight: 1.1 }}>{liveHR} <span style={{ fontSize: 13, fontWeight: 500 }}>bpm</span></p>
             </div>
           </div>
         )}
@@ -197,11 +197,11 @@ function ConnectCard({ theme, today, onDataSaved }) {
             style={{
               flex: 1, padding: '13px 0',
               background: bleState === 'connected'
-                ? '#F0FFF5'
+                ? theme.successBg
                 : `linear-gradient(135deg, ${theme.primary}22, ${theme.primary}08)`,
-              border: `1.5px solid ${bleState === 'connected' ? '#C8E6C9' : theme.primary + '60'}`,
+              border: `1.5px solid ${bleState === 'connected' ? theme.successBorder : theme.primary + '60'}`,
               borderRadius: 16, cursor: bleState === 'connecting' ? 'default' : 'pointer',
-              color: bleState === 'connected' ? '#2E7D32' : theme.primary,
+              color: bleState === 'connected' ? theme.success : theme.primary,
               fontSize: 13, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             }}

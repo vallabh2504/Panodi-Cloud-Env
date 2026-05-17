@@ -561,10 +561,10 @@ function BoatWatchCard({ log, today, theme, onUpdate }) {
             </div>
           </div>
           {bleState === 'connected'
-            ? <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#F0FFF5', borderRadius: 20, padding: '4px 10px', border: '1px solid #C8E6C9' }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4CAF50' }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#2E7D32' }}>{bleInfo?.name || 'Connected'}</span>
-                {bleInfo?.battery != null && <span style={{ fontSize: 11, color: '#4CAF50' }}>🔋{bleInfo.battery}%</span>}
+            ? <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: theme.successBg, borderRadius: 20, padding: '4px 10px', border: `1px solid ${theme.successBorder}` }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: theme.success }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: theme.success }}>{bleInfo?.name || 'Connected'}</span>
+                {bleInfo?.battery != null && <span style={{ fontSize: 11, color: theme.success }}>🔋{bleInfo.battery}%</span>}
               </div>
             : bleState === 'connecting'
             ? <span style={{ fontSize: 11, color: theme.textMuted }}>Searching…</span>
