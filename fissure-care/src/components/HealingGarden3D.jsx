@@ -25,27 +25,27 @@ function Island() {
       {/* Grass top face */}
       <mesh position={[0, 0, 0]} receiveShadow>
         <cylinderGeometry args={[3.2, 3.2, 0.22, 6]} />
-        <meshLambertMaterial color={GRASS_TOP} />
+        <meshStandardMaterial color={GRASS_TOP} />
       </mesh>
       {/* Darker grass edge ring */}
       <mesh position={[0, -0.04, 0]}>
         <cylinderGeometry args={[3.25, 3.4, 0.14, 6]} />
-        <meshLambertMaterial color={GRASS_DARK} />
+        <meshStandardMaterial color={GRASS_DARK} />
       </mesh>
       {/* Earth side — upper */}
       <mesh position={[0, -0.38, 0]}>
         <cylinderGeometry args={[3.4, 3.1, 0.52, 6]} />
-        <meshLambertMaterial color={EARTH} />
+        <meshStandardMaterial color={EARTH} />
       </mesh>
       {/* Earth side — lower taper */}
       <mesh position={[0, -0.82, 0]}>
         <cylinderGeometry args={[3.1, 2.2, 0.52, 6]} />
-        <meshLambertMaterial color={EARTH_DARK} />
+        <meshStandardMaterial color={EARTH_DARK} />
       </mesh>
       {/* Bottom cap */}
       <mesh position={[0, -1.1, 0]}>
         <cylinderGeometry args={[2.2, 2.0, 0.12, 6]} />
-        <meshLambertMaterial color={EARTH_DARK} />
+        <meshStandardMaterial color={EARTH_DARK} />
       </mesh>
     </group>
   )
@@ -76,33 +76,33 @@ function BlossomTree({ x, z, scale = 1, variant = 0 }) {
       {/* Trunk */}
       <mesh castShadow position={[0, trunkHeight / 2, 0]}>
         <cylinderGeometry args={[trunkR * 0.7, trunkR, trunkHeight, 5]} />
-        <meshLambertMaterial color={TRUNK} />
+        <meshStandardMaterial color={TRUNK} />
       </mesh>
       {/* Trunk dark side */}
       <mesh position={[trunkR * 0.3, trunkHeight / 2, 0]}>
         <cylinderGeometry args={[trunkR * 0.35, trunkR * 0.5, trunkHeight, 5]} />
-        <meshLambertMaterial color={TRUNK_DARK} />
+        <meshStandardMaterial color={TRUNK_DARK} />
       </mesh>
 
       {/* Main canopy sphere */}
       <mesh castShadow position={[0, trunkHeight + canopyR1 * 0.65, 0]}>
         <sphereGeometry args={[canopyR1, 7, 5]} />
-        <meshLambertMaterial color={blossomColor} />
+        <meshStandardMaterial color={blossomColor} roughness={0.55} metalness={0} emissive={blossomColor} emissiveIntensity={0.22} />
       </mesh>
       {/* Secondary puff — left */}
       <mesh castShadow position={[-canopyR1 * 0.55, trunkHeight + canopyR2 * 0.5, canopyR1 * 0.1]}>
         <sphereGeometry args={[canopyR2, 6, 5]} />
-        <meshLambertMaterial color={variant % 2 === 0 ? BLOSSOM_B : BLOSSOM_A} />
+        <meshStandardMaterial color={variant % 2 === 0 ? BLOSSOM_B : BLOSSOM_A} roughness={0.55} emissive={variant % 2 === 0 ? BLOSSOM_B : BLOSSOM_A} emissiveIntensity={0.18} />
       </mesh>
       {/* Secondary puff — right */}
       <mesh castShadow position={[canopyR1 * 0.5, trunkHeight + canopyR3 * 0.6, -canopyR1 * 0.2]}>
         <sphereGeometry args={[canopyR3, 6, 5]} />
-        <meshLambertMaterial color={BLOSSOM_C} />
+        <meshStandardMaterial color={BLOSSOM_C} roughness={0.55} emissive={BLOSSOM_C} emissiveIntensity={0.18} />
       </mesh>
       {/* Top accent puff */}
       <mesh position={[0, trunkHeight + canopyR1 * 1.3, 0]}>
         <sphereGeometry args={[canopyR3 * 0.8, 6, 5]} />
-        <meshLambertMaterial color={BLOSSOM_C} />
+        <meshStandardMaterial color={BLOSSOM_C} roughness={0.55} emissive={BLOSSOM_C} emissiveIntensity={0.18} />
       </mesh>
     </group>
   )
@@ -114,11 +114,11 @@ function Rock({ x, z }) {
     <group position={[x, 0.11, z]}>
       <mesh castShadow>
         <dodecahedronGeometry args={[0.18, 0]} />
-        <meshLambertMaterial color={ROCK_COLOR} />
+        <meshStandardMaterial color={ROCK_COLOR} />
       </mesh>
       <mesh position={[0.08, -0.04, 0.05]} scale={[0.7, 0.6, 0.8]}>
         <dodecahedronGeometry args={[0.14, 0]} />
-        <meshLambertMaterial color={ROCK_DARK} />
+        <meshStandardMaterial color={ROCK_DARK} />
       </mesh>
     </group>
   )
@@ -131,7 +131,7 @@ function GrassTuft({ x, z }) {
       {[0, 0.12, -0.1].map((ox, i) => (
         <mesh key={i} position={[ox, 0.06, i * 0.05]} rotation={[0, i * 1.2, 0.2]}>
           <coneGeometry args={[0.04, 0.14, 4]} />
-          <meshLambertMaterial color={GRASS_DARK} />
+          <meshStandardMaterial color={GRASS_DARK} />
         </mesh>
       ))}
     </group>
@@ -174,7 +174,7 @@ function FallingPetals({ count }) {
   return (
     <instancedMesh ref={meshRef} args={[null, null, count]} frustumCulled={false}>
       <circleGeometry args={[1, 5]} />
-      <meshLambertMaterial color={PETAL_COLOR} transparent opacity={0.8} side={THREE.DoubleSide} />
+      <meshStandardMaterial color={PETAL_COLOR} transparent opacity={0.8} side={THREE.DoubleSide} emissive={PETAL_COLOR} emissiveIntensity={0.15} />
     </instancedMesh>
   )
 }
@@ -189,15 +189,15 @@ function Seedling() {
     <group ref={ref} position={[0, 0.11, 0]}>
       <mesh position={[0, 0.15, 0]}>
         <cylinderGeometry args={[0.04, 0.06, 0.3, 5]} />
-        <meshLambertMaterial color={TRUNK} />
+        <meshStandardMaterial color={TRUNK} />
       </mesh>
       <mesh position={[0, 0.38, 0]}>
         <sphereGeometry args={[0.18, 6, 5]} />
-        <meshLambertMaterial color={BLOSSOM_A} />
+        <meshStandardMaterial color={BLOSSOM_A} />
       </mesh>
       <mesh position={[0.12, 0.34, 0]}>
         <sphereGeometry args={[0.12, 6, 5]} />
-        <meshLambertMaterial color={BLOSSOM_C} />
+        <meshStandardMaterial color={BLOSSOM_C} roughness={0.55} emissive={BLOSSOM_C} emissiveIntensity={0.18} />
       </mesh>
     </group>
   )
@@ -210,17 +210,17 @@ function Pond() {
       {/* water surface */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.38, 10]} />
-        <meshLambertMaterial color="#74B8E8" transparent opacity={0.85} />
+        <meshStandardMaterial color="#74B8E8" transparent opacity={0.85} roughness={0.1} metalness={0.25} emissive="#74B8E8" emissiveIntensity={0.08} />
       </mesh>
       {/* pond rim */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -0.01]}>
         <ringGeometry args={[0.38, 0.46, 10]} />
-        <meshLambertMaterial color="#5A8FA0" />
+        <meshStandardMaterial color="#5A8FA0" />
       </mesh>
       {/* water shimmer */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.06, 0.06, 0.01]} scale={[1, 0.6, 1]}>
         <circleGeometry args={[0.1, 8]} />
-        <meshLambertMaterial color="#BFDFFF" transparent opacity={0.5} />
+        <meshStandardMaterial color="#BFDFFF" transparent opacity={0.5} />
       </mesh>
     </group>
   )
@@ -239,19 +239,19 @@ function Cloud({ x, y, z, speed = 0.15, scale = 1 }) {
     <group ref={ref} position={[x, y, z]} scale={scale}>
       <mesh>
         <sphereGeometry args={[0.38, 7, 5]} />
-        <meshLambertMaterial color="#FFFFFF" transparent opacity={0.92} />
+        <meshStandardMaterial color="#FFFFFF" transparent opacity={0.92} />
       </mesh>
       <mesh position={[-0.3, -0.1, 0]}>
         <sphereGeometry args={[0.28, 6, 5]} />
-        <meshLambertMaterial color="#F5F5F5" transparent opacity={0.88} />
+        <meshStandardMaterial color="#F5F5F5" transparent opacity={0.88} />
       </mesh>
       <mesh position={[0.3, -0.1, 0]}>
         <sphereGeometry args={[0.24, 6, 5]} />
-        <meshLambertMaterial color="#F5F5F5" transparent opacity={0.88} />
+        <meshStandardMaterial color="#F5F5F5" transparent opacity={0.88} />
       </mesh>
       <mesh position={[0.1, 0.2, 0]}>
         <sphereGeometry args={[0.22, 6, 5]} />
-        <meshLambertMaterial color="#FFFFFF" transparent opacity={0.9} />
+        <meshStandardMaterial color="#FFFFFF" transparent opacity={0.9} />
       </mesh>
     </group>
   )
@@ -282,28 +282,28 @@ function Butterfly({ radius = 2.2, height = 1.6, speed = 0.5 }) {
       {/* body */}
       <mesh>
         <cylinderGeometry args={[0.018, 0.025, 0.11, 6]} />
-        <meshLambertMaterial color="#3D2B2B" />
+        <meshStandardMaterial color="#3D2B2B" />
       </mesh>
       {/* left wing */}
       <group ref={wingRef1} position={[-0.02, 0, 0]}>
         <mesh rotation={[0, 0, 0.3]} position={[-0.1, 0.02, 0]} scale={[1.4, 1, 1]}>
           <circleGeometry args={[0.1, 8]} />
-          <meshLambertMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
+          <meshStandardMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
         </mesh>
         <mesh rotation={[0, 0, 0.5]} position={[-0.08, -0.07, 0]} scale={[1.4, 1, 1]}>
           <circleGeometry args={[0.07, 8]} />
-          <meshLambertMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
+          <meshStandardMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
         </mesh>
       </group>
       {/* right wing */}
       <group ref={wingRef2} position={[0.02, 0, 0]}>
         <mesh rotation={[0, 0, -0.3]} position={[0.1, 0.02, 0]} scale={[1.4, 1, 1]}>
           <circleGeometry args={[0.1, 8]} />
-          <meshLambertMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
+          <meshStandardMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
         </mesh>
         <mesh rotation={[0, 0, -0.5]} position={[0.08, -0.07, 0]} scale={[1.4, 1, 1]}>
           <circleGeometry args={[0.07, 8]} />
-          <meshLambertMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
+          <meshStandardMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
         </mesh>
       </group>
     </group>
@@ -393,7 +393,7 @@ function GardenScene({ bloodFreeDays }) {
       {bloodFreeDays > 5 && <Butterfly radius={2.8} height={2.4} speed={0.3} />}
 
       <EffectComposer>
-        <Bloom luminanceThreshold={0.8} luminanceSmoothing={0.3} intensity={0.4} mipmapBlur />
+        <Bloom luminanceThreshold={0.55} luminanceSmoothing={0.4} intensity={0.6} mipmapBlur />
       </EffectComposer>
 
       <OrbitControls

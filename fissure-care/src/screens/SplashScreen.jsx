@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { BloomFlower, SunIcon } from '../components/AnimatedSVGs'
 
+const NoiseShaderHero = lazy(() => import('../components/NoiseShaderHero'))
+
 const THEME_MAP = {
   cherry: {
     bg: '#FFF5F7',
-    heroOverlay: 'linear-gradient(to right, #FFF5F7 55%, transparent)',
+    heroOverlay: 'linear-gradient(to right, #FFF5F7 68%, transparent)',
     headline: '#3D1A14',
     subtitle: '#8C7070',
     accentBar: '#F5C67A',
@@ -25,7 +27,7 @@ const THEME_MAP = {
   },
   ocean: {
     bg: '#F0F7FF',
-    heroOverlay: 'linear-gradient(to right, #F0F7FF 55%, transparent)',
+    heroOverlay: 'linear-gradient(to right, #F0F7FF 68%, transparent)',
     headline: '#0A1F3A',
     subtitle: '#6A8BAA',
     accentBar: '#67C7B8',
@@ -44,7 +46,7 @@ const THEME_MAP = {
   },
   aurora: {
     bg: '#F5F0FF',
-    heroOverlay: 'linear-gradient(to right, #F5F0FF 55%, transparent)',
+    heroOverlay: 'linear-gradient(to right, #F5F0FF 68%, transparent)',
     headline: '#1C0B48',
     subtitle: '#7C6BA0',
     accentBar: '#34D399',
@@ -60,6 +62,25 @@ const THEME_MAP = {
     featurePillBorder: '#D8C8FF',
     reviewBg: 'rgba(197,168,245,0.15)',
     flowerColor: '#8B5CF6',
+  },
+  midnight: {
+    bg: '#0D0A0E',
+    heroOverlay: 'linear-gradient(to right, #0D0A0E 70%, transparent)',
+    headline: '#F0E8F0',
+    subtitle: '#9A8A9A',
+    accentBar: '#C04060',
+    pillBg: 'rgba(192,64,96,0.15)',
+    pillText: '#E06080',
+    buttonGradient: 'linear-gradient(135deg, #C04060 0%, #9D4EDD 100%)',
+    buttonShadow: 'rgba(192,64,96,0.5)',
+    logoFill: '#C04060',
+    logoInner: '#3D1A3A',
+    linkColor: '#9A8A9A',
+    linkUnderline: '#9D4EDD',
+    starColor: '#C04060',
+    featurePillBorder: 'rgba(192,64,96,0.3)',
+    reviewBg: 'rgba(192,64,96,0.08)',
+    flowerColor: '#C04060',
   },
 }
 
@@ -101,6 +122,11 @@ export default function SplashScreen({ onEnter, theme }) {
       position: 'relative', overflow: 'hidden', fontFamily: "'Inter', sans-serif",
     }}>
 
+      {/* GPU noise shader — full-bleed animated background */}
+      <Suspense fallback={<div style={{ position: 'absolute', inset: 0, background: tc.bg }} />}>
+        <NoiseShaderHero theme={theme} style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
+      </Suspense>
+
       {/* ── Hero illustration area ── */}
       <div style={{ position: 'relative', minHeight: '56dvh', flexShrink: 0 }}>
         {/* Hero image — right side */}
@@ -120,7 +146,7 @@ export default function SplashScreen({ onEnter, theme }) {
         />
         {/* Text-readable left fade */}
         <div style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0, width: '60%',
+          position: 'absolute', left: 0, top: 0, bottom: 0, width: '68%',
           background: tc.heroOverlay,
           zIndex: 2, pointerEvents: 'none',
         }} />

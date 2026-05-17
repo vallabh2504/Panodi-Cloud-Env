@@ -6,7 +6,6 @@ import { PlusCircle, Sparkles, Timer, X, Music, Lightbulb, Bell, ChevronDown } f
 import { getLog, getAllLogs, getStreak, calcWellnessScore, getSettings, getHealingDayFreezes, useHealingDayFreeze, getWatchData, saveWatchData } from '../lib/storage'
 import { getDailyInsight } from '../lib/correlations'
 import { FlameIcon, SunIcon, MoonIcon, WaveBar } from '../components/AnimatedSVGs'
-import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 
 /* ── RevealCard: IntersectionObserver-based entrance ── */
@@ -175,7 +174,9 @@ function WellnessRing({ score, theme }) {
         </svg>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <Suspense fallback={<span style={{ fontSize: 32, fontWeight: 800, fontFamily: 'Nunito', color: theme.text }}>{score}</span>}>
-            <FlipNumber value={score} color={theme.text} fontSize={32} suffix="" />
+            <div className="font-breathe">
+              <FlipNumber value={score} color={theme.text} fontSize={32} suffix="" />
+            </div>
           </Suspense>
           <span style={{ fontSize: 11, color: theme.textMuted }}>of 100</span>
         </div>
@@ -1072,6 +1073,86 @@ function InsightCard({ insight, theme }) {
   )
 }
 
+/* ── Animated SVG pain line — draws in on viewport entry ── */
+function AnimatedPainLine({ weekData, theme }) {
+  const containerRef = useRef(null)
+  const pathRef = useRef(null)
+  const inView = useInView(containerRef, { once: true, margin: '-20px' })
+  const [pathLen, setPathLen] = useState(0)
+  const [drawn, setDrawn] = useState(false)
+
+  const W = 280, H = 60
+  const validPoints = weekData
+    .map((d, i) => d.pain !== null ? { x: (i / (weekData.length - 1)) * W, y: H - (d.pain / 10) * H } : null)
+    .filter(Boolean)
+
+  const dPath = validPoints.length >= 2
+    ? validPoints.reduce((acc, p, i) => {
+        if (i === 0) return `M ${p.x.toFixed(1)} ${p.y.toFixed(1)}`
+        const prev = validPoints[i - 1]
+        const cpx = ((prev.x + p.x) / 2).toFixed(1)
+        return `${acc} C ${cpx} ${prev.y.toFixed(1)} ${cpx} ${p.y.toFixed(1)} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`
+      }, '')
+    : null
+
+  useEffect(() => {
+    if (inView && pathRef.current && !drawn) {
+      const len = pathRef.current.getTotalLength()
+      setPathLen(len)
+      requestAnimationFrame(() => setDrawn(true))
+    }
+  }, [inView, drawn])
+
+  if (!dPath) return null
+
+  return (
+    <div ref={containerRef}>
+      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible', display: 'block' }}>
+        {/* Gradient fill below the line */}
+        <defs>
+          <linearGradient id="painFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor={theme.primary} stopOpacity={0.18} />
+            <stop offset="100%" stopColor={theme.primary} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        {/* Fill area */}
+        {dPath && (
+          <path
+            d={`${dPath} L ${validPoints[validPoints.length - 1].x} ${H} L ${validPoints[0].x} ${H} Z`}
+            fill="url(#painFill)"
+            style={{ opacity: drawn ? 1 : 0, transition: 'opacity 0.6s ease 0.4s' }}
+          />
+        )}
+        {/* Animated line */}
+        <path
+          ref={pathRef}
+          d={dPath}
+          fill="none"
+          stroke={theme.primary}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            strokeDasharray: pathLen || 1000,
+            strokeDashoffset: drawn ? 0 : (pathLen || 1000),
+            transition: drawn ? 'stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)' : 'none',
+          }}
+        />
+        {/* Dots — appear after line draws */}
+        {validPoints.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={3.5} fill={theme.primary}
+            style={{ opacity: drawn ? 1 : 0, transition: `opacity 0.25s ease ${0.9 + i * 0.08}s` }} />
+        ))}
+      </svg>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+        {weekData.map((d, i) => (
+          <span key={i} style={{ fontSize: 10, color: theme.textMuted, textAlign: 'center', flex: 1 }}>{d.day}</span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ── Main V2 HomeScreen ── */
 export default function HomeScreen({ onNavigate, theme }) {
   const [log, setLog] = useState(null)
@@ -1294,7 +1375,6 @@ export default function HomeScreen({ onNavigate, theme }) {
             { icon: '🍌', label: 'Fruits', value: log?.fruitsEaten?.length || 0, sub: 'eaten' },
             { icon: '🛁', label: 'Sitz baths', value: log?.sitzBaths?.length || 0, sub: 'today' },
             { icon: '💛', label: 'Pain', value: log?.bowelMovements?.[0]?.painLevel ?? '–', sub: '/10' },
-            { icon: '🩸', label: 'Blood-free', value: lastBlood >= 90 ? '90+' : lastBlood, sub: 'days', flipNum: typeof lastBlood === 'number' && lastBlood < 90 },
           ].map((card, i) => (
             <motion.div
               key={i}
@@ -1307,16 +1387,58 @@ export default function HomeScreen({ onNavigate, theme }) {
               }}
             >
               <div style={{ fontSize: 22, marginBottom: 2 }}>{card.icon}</div>
-              {card.flipNum ? (
-                <Suspense fallback={<div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, lineHeight: 1.2 }}>{card.value}</div>}>
-                  <FlipNumber value={lastBlood} color={theme.primary} fontSize={20} />
-                </Suspense>
-              ) : (
-                <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: theme.text, lineHeight: 1.2 }}>{card.value}</div>
-              )}
+              <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: theme.text, lineHeight: 1.2 }}>{card.value}</div>
               <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 2 }}>{card.sub}</div>
             </motion.div>
           ))}
+
+          {/* ── Blood-free hero cell — spans full width ── */}
+          {(() => {
+            const streakColor = lastBlood >= 30 ? (theme.wellnessHigh || '#A8D5A2')
+              : lastBlood >= 7 ? theme.primary
+              : lastBlood >= 1 ? theme.wellnessLow || '#F5C67A'
+              : theme.textMuted
+            const streakBg = lastBlood >= 30 ? `${theme.wellnessHigh || '#A8D5A2'}18`
+              : lastBlood >= 7 ? `${theme.primary}12`
+              : lastBlood >= 1 ? `${theme.wellnessLow || '#F5C67A'}15`
+              : theme.card
+            return (
+              <motion.div
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  gridColumn: 'span 2',
+                  background: streakBg,
+                  borderRadius: 18, padding: '14px 16px',
+                  border: `1.5px solid ${streakColor}40`,
+                  boxShadow: `0 2px 12px ${theme.cardShadow}`,
+                  display: 'flex', alignItems: 'center', gap: 14,
+                }}
+              >
+                {/* Left: icon + count */}
+                <div style={{ flexShrink: 0, textAlign: 'center', minWidth: 64 }}>
+                  <div style={{ fontSize: 24, marginBottom: 2 }}>🩸</div>
+                  <Suspense fallback={
+                    <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Nunito', color: streakColor, lineHeight: 1 }}>
+                      {lastBlood >= 90 ? '90+' : lastBlood}
+                    </div>
+                  }>
+                    <FlipNumber value={lastBlood >= 90 ? 90 : lastBlood} color={streakColor} fontSize={28} suffix={lastBlood >= 90 ? '+' : ''} />
+                  </Suspense>
+                  <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 1 }}>blood-free days</div>
+                </div>
+                {/* Right: sparkline */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: theme.textMuted, marginBottom: 6 }}>Pain this week</p>
+                  {weekData.some(d => d.pain !== null) ? (
+                    <AnimatedPainLine weekData={weekData} theme={{ ...theme, primary: streakColor }} />
+                  ) : (
+                    <p style={{ fontSize: 11, color: theme.textMuted, fontStyle: 'italic' }}>Log days to see trend</p>
+                  )}
+                </div>
+              </motion.div>
+            )
+          })()}
         </div>
       </RevealCard>
 
@@ -1379,7 +1501,9 @@ export default function HomeScreen({ onNavigate, theme }) {
                     <div style={{ margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18, padding: '14px 16px', border: `1px solid ${theme.tipBorder}`, display: 'flex', alignItems: 'center', gap: 12 }}>
                       <FlameIcon size={24} color={theme.primary} />
                       <div>
-                        <p style={{ fontSize: 15, fontWeight: 700, color: theme.text }}>Day {streak} of your healing journey</p>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: theme.text }}>
+                          <span className="font-pulse">Day {streak}</span> of your healing journey
+                        </p>
                         <p style={{ fontSize: 12, color: theme.textMuted }}>
                           {streak >= 90 ? '90 days — you are incredible' :
                            streak >= 30 ? '30 days — a full month of self-care' :
@@ -1471,17 +1595,7 @@ export default function HomeScreen({ onNavigate, theme }) {
                   style={{ margin: '16px 16px 0', background: theme.card, borderRadius: 20, padding: '16px', border: `1px solid ${theme.cardBorder}`, boxShadow: `0 2px 10px ${theme.cardShadow}` }}
                 >
                   <p style={{ fontSize: 13, fontWeight: 600, color: theme.textMuted, marginBottom: 10 }}>Pain this week</p>
-                  <ResponsiveContainer width="100%" height={60}>
-                    <LineChart data={weekData}>
-                      <Line type="monotone" dataKey="pain" stroke={theme.primary} strokeWidth={2.5}
-                        dot={{ fill: theme.primary, r: 3, strokeWidth: 0 }} connectNulls />
-                    </LineChart>
-                  </ResponsiveContainer>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                    {weekData.map((d, i) => (
-                      <span key={i} style={{ fontSize: 10, color: theme.textMuted, flex: 1, textAlign: 'center' }}>{d.day}</span>
-                    ))}
-                  </div>
+                  <AnimatedPainLine weekData={weekData} theme={theme} />
                 </motion.div>
               )}
 
