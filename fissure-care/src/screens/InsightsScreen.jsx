@@ -1,14 +1,263 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { getAllLogs } from '../lib/storage'
-import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
-} from 'recharts'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
 import { analyzeFoodOutcomes } from '../lib/correlations'
 
 const TABS = ['Week', 'Month', '3 Months']
+
+// ─── Native SVG Charts ────────────────────────────────────────────────────────
+
+function AnimatedLineChart({ data, color, min = 0, max = 10, height = 120, fillOpacity = 0.18, showDots = true }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-20px' })
+  const pathRef = useRef(null)
+  const [length, setLength] = useState(1000)
+
+  useEffect(() => {
+    if (pathRef.current) setLength(pathRef.current.getTotalLength() || 1000)
+  }, [data])
+
+  if (!data.length) return null
+
+  const W = 320, H = height, PAD = { t: 8, r: 8, b: 28, l: 28 }
+  const iW = W - PAD.l - PAD.r
+  const iH = H - PAD.t - PAD.b
+  const range = max - min || 1
+
+  const pts = data.map((d, i) => ({
+    x: PAD.l + (i / Math.max(data.length - 1, 1)) * iW,
+    y: PAD.t + iH - ((d.value - min) / range) * iH,
+  }))
+
+  // cubic bezier path
+  let d = `M ${pts[0].x} ${pts[0].y}`
+  for (let i = 1; i < pts.length; i++) {
+    const prev = pts[i - 1], cur = pts[i]
+    const cpx = (prev.x + cur.x) / 2
+    d += ` C ${cpx} ${prev.y} ${cpx} ${cur.y} ${cur.x} ${cur.y}`
+  }
+  const fillPath = d + ` L ${pts[pts.length - 1].x} ${PAD.t + iH} L ${pts[0].x} ${PAD.t + iH} Z`
+  const gradId = `lg_${color.replace(/[^a-z0-9]/gi, '_')}`
+
+  // y-axis labels (3 ticks)
+  const yTicks = [min, Math.round((min + max) / 2), max]
+
+  return (
+    <div ref={ref} style={{ width: '100%' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height, overflow: 'visible' }}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={fillOpacity * 1.6} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+
+        {/* y-axis ticks */}
+        {yTicks.map(v => {
+          const y = PAD.t + iH - ((v - min) / range) * iH
+          return (
+            <g key={v}>
+              <line x1={PAD.l - 4} y1={y} x2={PAD.l + iW} y2={y}
+                stroke="currentColor" strokeOpacity={0.06} strokeWidth={1} />
+              <text x={PAD.l - 6} y={y + 4} textAnchor="end" fontSize={9} fill="currentColor" opacity={0.4}>{v}</text>
+            </g>
+          )
+        })}
+
+        {/* x-axis labels */}
+        {data.map((d, i) => {
+          const every = data.length > 14 ? Math.ceil(data.length / 7) : 1
+          if (i % every !== 0 && i !== data.length - 1) return null
+          return (
+            <text key={i} x={pts[i].x} y={H - 4} textAnchor="middle" fontSize={9}
+              fill="currentColor" opacity={0.45}>{d.label}</text>
+          )
+        })}
+
+        {/* fill */}
+        <motion.path
+          d={fillPath} fill={`url(#${gradId})`}
+          initial={{ opacity: 0 }} animate={{ opacity: inView ? 1 : 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        />
+
+        {/* line */}
+        <path ref={pathRef} d={d} fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" />
+        <motion.path
+          d={d} fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round"
+          strokeDasharray={length} strokeDashoffset={length}
+          animate={{ strokeDashoffset: inView ? 0 : length }}
+          transition={{ duration: 1.2, ease: 'easeInOut' }}
+        />
+
+        {/* dots */}
+        {showDots && pts.map((p, i) => (
+          <motion.circle key={i} cx={p.x} cy={p.y} r={3} fill={color}
+            initial={{ opacity: 0, scale: 0 }} animate={{ opacity: inView ? 1 : 0, scale: inView ? 1 : 0 }}
+            transition={{ delay: 1.0 + i * 0.06, duration: 0.2 }}
+          />
+        ))}
+      </svg>
+    </div>
+  )
+}
+
+function AnimatedDualLineChart({ data, color1, color2, min1 = 0, max1 = 8, min2 = 1, max2 = 7, height = 130, label1, label2 }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-20px' })
+  const pathRef1 = useRef(null)
+  const pathRef2 = useRef(null)
+  const [len1, setLen1] = useState(1000)
+  const [len2, setLen2] = useState(1000)
+
+  useEffect(() => {
+    if (pathRef1.current) setLen1(pathRef1.current.getTotalLength() || 1000)
+    if (pathRef2.current) setLen2(pathRef2.current.getTotalLength() || 1000)
+  }, [data])
+
+  if (!data.length) return null
+
+  const W = 320, H = height, PAD = { t: 8, r: 8, b: 28, l: 8 }
+  const iW = W - PAD.l - PAD.r
+  const iH = H - PAD.t - PAD.b
+
+  const makePts = (key, min, max) => data.map((d, i) => ({
+    x: PAD.l + (i / Math.max(data.length - 1, 1)) * iW,
+    y: PAD.t + iH - ((d[key] - min) / (max - min || 1)) * iH,
+  }))
+
+  const makePath = (pts) => {
+    let path = `M ${pts[0].x} ${pts[0].y}`
+    for (let i = 1; i < pts.length; i++) {
+      const prev = pts[i - 1], cur = pts[i]
+      const cpx = (prev.x + cur.x) / 2
+      path += ` C ${cpx} ${prev.y} ${cpx} ${cur.y} ${cur.x} ${cur.y}`
+    }
+    return path
+  }
+
+  const pts1 = makePts('v1', min1, max1)
+  const pts2 = makePts('v2', min2, max2)
+  const d1 = makePath(pts1)
+  const d2 = makePath(pts2)
+
+  return (
+    <div ref={ref} style={{ width: '100%' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height, overflow: 'visible' }}>
+        {/* x labels */}
+        {data.map((d, i) => {
+          const every = data.length > 14 ? Math.ceil(data.length / 7) : 1
+          if (i % every !== 0 && i !== data.length - 1) return null
+          return <text key={i} x={pts1[i].x} y={H - 4} textAnchor="middle" fontSize={9} fill="currentColor" opacity={0.45}>{d.label}</text>
+        })}
+
+        {/* ghost paths for length measurement */}
+        <path ref={pathRef1} d={d1} fill="none" stroke="none" />
+        <path ref={pathRef2} d={d2} fill="none" stroke="none" />
+
+        {[{ d: d1, color: color1, len: len1 }, { d: d2, color: color2, len: len2 }].map(({ d, color, len }, idx) => (
+          <motion.path key={idx} d={d} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round"
+            strokeDasharray={len} strokeDashoffset={len}
+            animate={{ strokeDashoffset: inView ? 0 : len }}
+            transition={{ duration: 1.2, ease: 'easeInOut', delay: idx * 0.2 }}
+          />
+        ))}
+      </svg>
+      <p style={{ fontSize: 11, color: 'currentColor', opacity: 0.55, marginTop: 2 }}>
+        <span style={{ color: color1 }}>— {label1}</span>
+        &nbsp;&nbsp;
+        <span style={{ color: color2 }}>— {label2}</span>
+      </p>
+    </div>
+  )
+}
+
+function AnimatedBarChart({ data, color, height = 90 }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-20px' })
+  if (!data.length) return null
+
+  const W = 320, H = height, PAD = { t: 4, r: 8, b: 24, l: 8 }
+  const iW = W - PAD.l - PAD.r
+  const iH = H - PAD.t - PAD.b
+  const barW = Math.max(4, (iW / data.length) * 0.6)
+  const gap = iW / data.length
+  const maxVal = Math.max(...data.map(d => d.value), 1)
+
+  return (
+    <div ref={ref} style={{ width: '100%' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height, overflow: 'visible' }}>
+        {data.map((d, i) => {
+          const barH = (d.value / maxVal) * iH
+          const x = PAD.l + gap * i + (gap - barW) / 2
+          const y = PAD.t + iH - barH
+          return (
+            <g key={i}>
+              <motion.rect
+                x={x} y={PAD.t + iH} width={barW} height={0} rx={3} fill={color}
+                animate={{ y: inView ? y : PAD.t + iH, height: inView ? barH : 0 }}
+                transition={{ duration: 0.6, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
+              />
+              {data.length <= 14 && (
+                <text x={x + barW / 2} y={H - 4} textAnchor="middle" fontSize={9}
+                  fill="currentColor" opacity={0.45}>{d.label}</text>
+              )}
+            </g>
+          )
+        })}
+      </svg>
+    </div>
+  )
+}
+
+function AnimatedDonutChart({ data, colors, size = 140 }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-20px' })
+  const total = data.reduce((s, d) => s + d.value, 0) || 1
+  const cx = size / 2, cy = size / 2, R = size * 0.36, r = size * 0.22
+
+  let angle = -Math.PI / 2
+  const arcs = data.map((d, i) => {
+    const sweep = (d.value / total) * Math.PI * 2
+    const x1 = cx + R * Math.cos(angle), y1 = cy + R * Math.sin(angle)
+    angle += sweep
+    const x2 = cx + R * Math.cos(angle), y2 = cy + R * Math.sin(angle)
+    const ix1 = cx + r * Math.cos(angle - sweep), iy1 = cy + r * Math.sin(angle - sweep)
+    const ix2 = cx + r * Math.cos(angle), iy2 = cy + r * Math.sin(angle)
+    const large = sweep > Math.PI ? 1 : 0
+    return {
+      path: `M ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${r} ${r} 0 ${large} 0 ${ix1} ${iy1} Z`,
+      color: colors[i % colors.length],
+      pct: Math.round((d.value / total) * 100),
+      name: d.name,
+    }
+  })
+
+  return (
+    <div ref={ref} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <svg width={size} height={size}>
+        {arcs.map((arc, i) => (
+          <motion.path key={i} d={arc.path} fill={arc.color}
+            initial={{ opacity: 0, scale: 0.8 }} style={{ transformOrigin: `${cx}px ${cy}px` }}
+            animate={{ opacity: inView ? 1 : 0, scale: inView ? 1 : 0.8 }}
+            transition={{ delay: i * 0.08, duration: 0.4 }}
+          />
+        ))}
+      </svg>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {arcs.map((arc, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 3, background: arc.color, flexShrink: 0 }} />
+            <span style={{ fontSize: 11 }}>{arc.name} ({arc.pct}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Other components ─────────────────────────────────────────────────────────
 
 function ChartCard({ title, subtitle, children, theme }) {
   return (
@@ -157,18 +406,14 @@ function CalendarHeatmap({ logs, theme }) {
   const month = now.getMonth()
   const monthName = now.toLocaleString('en', { month: 'long' })
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const firstDayOfWeek = new Date(year, month, 1).getDay() // 0=Sun
+  const firstDayOfWeek = new Date(year, month, 1).getDay()
 
-  // Build a map from YYYY-MM-DD -> log data
   const logMap = useMemo(() => {
     const map = {}
-    for (const log of logs) {
-      map[log.date] = log
-    }
+    for (const log of logs) { map[log.date] = log }
     return map
   }, [logs])
 
-  // Build 35-cell grid (5 weeks * 7 days)
   const cells = []
   for (let i = 0; i < 35; i++) {
     const dayNum = i - firstDayOfWeek + 1
@@ -177,8 +422,7 @@ function CalendarHeatmap({ logs, theme }) {
     } else {
       const mm = String(month + 1).padStart(2, '0')
       const dd = String(dayNum).padStart(2, '0')
-      const dateStr = `${year}-${mm}-${dd}`
-      cells.push({ dayNum, dateStr })
+      cells.push({ dayNum, dateStr: `${year}-${mm}-${dd}` })
     }
   }
 
@@ -195,7 +439,6 @@ function CalendarHeatmap({ logs, theme }) {
   }
 
   const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
-
   const selectedLog = selectedDay ? logMap[selectedDay] : null
   const selectedPain = selectedLog
     ? (selectedLog.bowelMovements?.[0]?.painLevel ?? selectedLog.dailySymptoms?.restingPain ?? null)
@@ -209,34 +452,26 @@ function CalendarHeatmap({ logs, theme }) {
       <p style={{ fontSize: 15, fontWeight: 700, color: text, marginBottom: 2 }}>Symptom Calendar</p>
       <p style={{ fontSize: 12, color: muted, marginBottom: 12 }}>{monthName} {year}</p>
 
-      {/* Day of week headers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 36px)', gap: 4, marginBottom: 4 }}>
         {DAYS_OF_WEEK.map(d => (
           <div key={d} style={{ width: 36, textAlign: 'center', fontSize: 10, fontWeight: 600, color: muted }}>{d}</div>
         ))}
       </div>
 
-      {/* Calendar grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 36px)', gap: 4 }}>
         {cells.map((cell, idx) => {
           const color = getCellColor(cell.dateStr)
           const isSelected = selectedDay === cell.dateStr
           const hasData = cell.dateStr && logMap[cell.dateStr]
           return (
-            <div
-              key={idx}
-              onClick={() => {
-                if (!hasData) return
-                setSelectedDay(isSelected ? null : cell.dateStr)
-              }}
+            <div key={idx}
+              onClick={() => { if (!hasData) return; setSelectedDay(isSelected ? null : cell.dateStr) }}
               style={{
-                width: 36, height: 36, borderRadius: 8,
-                background: color,
+                width: 36, height: 36, borderRadius: 8, background: color,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: hasData ? 'pointer' : 'default',
                 border: isSelected ? `2px solid ${text}` : '2px solid transparent',
-                boxSizing: 'border-box',
-                opacity: cell.dayNum === null ? 0 : 1,
+                boxSizing: 'border-box', opacity: cell.dayNum === null ? 0 : 1,
               }}
             >
               {cell.dayNum !== null && (
@@ -249,11 +484,8 @@ function CalendarHeatmap({ logs, theme }) {
         })}
       </div>
 
-      {/* Tooltip / selected day info */}
       {selectedDay && selectedLog && (
-        <div style={{
-          marginTop: 10, background: border, borderRadius: 12, padding: '10px 14px',
-        }}>
+        <div style={{ marginTop: 10, background: border, borderRadius: 12, padding: '10px 14px' }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: text, marginBottom: 2 }}>{selectedDay}</p>
           <p style={{ fontSize: 12, color: muted }}>
             Pain: {selectedPain !== null ? `${selectedPain}/10` : 'Not recorded'} &nbsp;&middot;&nbsp;
@@ -262,7 +494,6 @@ function CalendarHeatmap({ logs, theme }) {
         </div>
       )}
 
-      {/* Legend */}
       <div style={{ display: 'flex', gap: 12, marginTop: 14, flexWrap: 'wrap' }}>
         {[
           { color: wellnessHigh, label: 'Pain ≤3, no blood' },
@@ -280,6 +511,8 @@ function CalendarHeatmap({ logs, theme }) {
   )
 }
 
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function InsightsScreen({ theme }) {
   const [tab, setTab] = useState('Week')
   const [logs, setLogs] = useState([])
@@ -292,24 +525,24 @@ export default function InsightsScreen({ theme }) {
   const isEmergency = useMemo(() => checkEmergencyCondition(logs), [logs])
 
   const painData = filtered.map(l => ({
-    date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
-    pain: l.bowelMovements?.[0]?.painLevel ?? l.dailySymptoms?.restingPain ?? 0
+    label: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+    value: l.bowelMovements?.[0]?.painLevel ?? l.dailySymptoms?.restingPain ?? 0,
   }))
 
   const bloodData = filtered.map(l => ({
-    date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
-    blood: l.bowelMovements?.some(bm => bm.bloodPresent) ? 1 : 0
+    label: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+    value: l.bowelMovements?.some(bm => bm.bloodPresent) ? 1 : 0,
   }))
 
-  const waterData = filtered.map(l => ({
-    date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
-    water: l.hydration?.waterGlasses || 0,
-    bristol: l.bowelMovements?.[0]?.bristolType || 0
+  const waterBristolData = filtered.map(l => ({
+    label: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+    v1: l.hydration?.waterGlasses || 0,
+    v2: l.bowelMovements?.[0]?.bristolType || 0,
   }))
 
   const scoreData = filtered.map(l => ({
-    date: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
-    score: l.wellnessScore || 0
+    label: new Date(l.date).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+    value: l.wellnessScore || 0,
   }))
 
   const bristolCounts = {}
@@ -317,9 +550,8 @@ export default function InsightsScreen({ theme }) {
     if (bm.bristolType) bristolCounts[bm.bristolType] = (bristolCounts[bm.bristolType] || 0) + 1
   }))
   const bristolData = Object.entries(bristolCounts).map(([type, count]) => ({ name: `Type ${type}`, value: count }))
-  const COLORS = ['#F48585', '#F5A68A', '#F5C67A', '#A8D5A2', '#C9A8F5', '#F5C67A', '#F48585']
+  const DONUT_COLORS = ['#F48585', '#F5A68A', '#F5C67A', '#A8D5A2', '#C9A8F5', '#60A0F0', '#F48585']
 
-  // Blood-free streak — look back up to 90 days
   let bloodFreeDays = 0
   for (const l of logs.slice(0, 90)) {
     if (l.bowelMovements?.some(bm => bm.bloodPresent)) break
@@ -327,7 +559,7 @@ export default function InsightsScreen({ theme }) {
   }
   const bloodFreeCapped = bloodFreeDays >= 90
 
-  const avgScore = scoreData.length ? Math.round(scoreData.reduce((s, d) => s + d.score, 0) / scoreData.length) : 0
+  const avgScore = scoreData.length ? Math.round(scoreData.reduce((s, d) => s + d.value, 0) / scoreData.length) : 0
 
   const downloadReport = (emergency) => {
     const report = generateReport(logs, emergency)
@@ -348,7 +580,7 @@ export default function InsightsScreen({ theme }) {
   const header = theme?.headerGradient || 'linear-gradient(135deg, #FFF0EB, #FFF8F5)'
 
   return (
-    <div>
+    <div style={{ color: text }}>
       <div style={{ padding: '20px 20px 16px', background: header, borderBottom: `1px solid ${border}` }}>
         <p style={{ fontSize: 20, fontWeight: 700, color: p }}>Your Insights</p>
         <p style={{ fontSize: 13, color: muted }}>Track your healing journey over time</p>
@@ -414,7 +646,7 @@ export default function InsightsScreen({ theme }) {
           </AnimatePresence>
 
           {/* Score Summary */}
-          <div style={{ margin: '0 16px 16px', background: header, borderRadius: 20, padding: '16px', border: `1px solid ${border}` }}>
+          <div style={{ margin: '0 16px 16px', background: card, borderRadius: 20, padding: '16px', border: `1px solid ${border}` }}>
             <p style={{ fontSize: 13, color: muted }}>{tab} average score</p>
             <p style={{ fontSize: 42, fontWeight: 800, fontFamily: 'Nunito', color: p }}>{avgScore}</p>
             <p style={{ fontSize: 13, color: muted }}>
@@ -432,19 +664,11 @@ export default function InsightsScreen({ theme }) {
 
           {/* Pain Chart */}
           <ChartCard theme={theme} title="Pain Levels" subtitle={`Your discomfort score over the last ${tab.toLowerCase()}`}>
-            <ResponsiveContainer width="100%" height={140}>
-              <LineChart data={painData}>
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
-                <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: muted }} width={20} />
-                <Tooltip formatter={v => [`${v}/10`, 'Pain']} />
-                <Line type="monotone" dataKey="pain" stroke={p} strokeWidth={2.5}
-                  dot={{ fill: p, r: 3 }} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
+            <AnimatedLineChart data={painData} color={p} min={0} max={10} height={130} />
             <p style={{ fontSize: 12, color: muted, marginTop: 8 }}>
-              {painData.length >= 2 && painData[painData.length - 1].pain < painData[0].pain
+              {painData.length >= 2 && painData[painData.length - 1].value < painData[0].value
                 ? 'Trending down — great progress!'
-                : painData.length >= 2 && painData[painData.length - 1].pain > painData[0].pain
+                : painData.length >= 2 && painData[painData.length - 1].value > painData[0].value
                 ? 'Pain seems elevated. Consider calling your doctor if it continues.'
                 : 'Keep logging to see trends.'}
             </p>
@@ -452,14 +676,7 @@ export default function InsightsScreen({ theme }) {
 
           {/* Blood Incidents */}
           <ChartCard theme={theme} title="Bleeding Incidents" subtitle="Days with vs. without bleeding">
-            <ResponsiveContainer width="100%" height={100}>
-              <BarChart data={bloodData}>
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
-                <YAxis domain={[0, 1]} tick={{ fontSize: 10 }} width={15} hide />
-                <Tooltip formatter={v => [v ? 'Yes' : 'None', 'Bleeding']} />
-                <Bar dataKey="blood" fill="#F48585" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <AnimatedBarChart data={bloodData} color="#F48585" height={90} />
             <p style={{ fontSize: 12, color: muted, marginTop: 8 }}>
               {bloodFreeDays > 0
                 ? bloodFreeCapped
@@ -471,46 +688,26 @@ export default function InsightsScreen({ theme }) {
 
           {/* Hydration vs Bristol */}
           <ChartCard theme={theme} title="Water Intake & Stool Quality" subtitle="How hydration affects consistency">
-            <ResponsiveContainer width="100%" height={140}>
-              <LineChart data={waterData}>
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
-                <YAxis yAxisId="water" orientation="left" domain={[0, 8]} tick={{ fontSize: 10, fill: muted }} width={20} />
-                <YAxis yAxisId="bristol" orientation="right" domain={[1, 7]} tick={{ fontSize: 10, fill: muted }} width={20} />
-                <Tooltip />
-                <Line yAxisId="water" type="monotone" dataKey="water" stroke="#A8D5A2" strokeWidth={2} name="Water (glasses)" dot={false} connectNulls />
-                <Line yAxisId="bristol" type="monotone" dataKey="bristol" stroke="#C9A8F5" strokeWidth={2} name="Bristol type" dot={false} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
-            <p style={{ fontSize: 12, color: muted, marginTop: 4 }}>
-              <span style={{ color: '#A8D5A2' }}>— Water</span> &nbsp; <span style={{ color: '#C9A8F5' }}>— Stool type</span>
-            </p>
+            <AnimatedDualLineChart
+              data={waterBristolData} color1="#A8D5A2" color2="#C9A8F5"
+              min1={0} max1={8} min2={1} max2={7} height={130}
+              label1="Water (glasses)" label2="Stool type"
+            />
           </ChartCard>
 
           {/* Bristol Distribution */}
           {bristolData.length > 0 && (
             <ChartCard theme={theme} title="Stool Type Distribution" subtitle="Your most common type — aim for Type 4">
-              <ResponsiveContainer width="100%" height={160}>
-                <PieChart>
-                  <Pie data={bristolData} cx="50%" cy="50%" outerRadius={60} dataKey="value"
-                    label={({ name, percent }) => `${name} (${Math.round(percent * 100)}%)`} labelLine={false}>
-                    {bristolData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <AnimatedDonutChart data={bristolData} colors={DONUT_COLORS} size={130} />
             </ChartCard>
           )}
 
           {/* Wellness Score Trend */}
           <ChartCard theme={theme} title="Wellness Score Trend" subtitle="Your daily score over time">
-            <ResponsiveContainer width="100%" height={120}>
-              <LineChart data={scoreData}>
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: muted }} interval="preserveStartEnd" />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: muted }} width={25} />
-                <Tooltip />
-                <Line type="monotone" dataKey="score" stroke={theme?.wellnessHigh || '#A8D5A2'} strokeWidth={2.5} dot={{ fill: theme?.wellnessHigh || '#A8D5A2', r: 3 }} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
+            <AnimatedLineChart
+              data={scoreData} color={theme?.wellnessHigh || '#A8D5A2'}
+              min={0} max={100} height={120}
+            />
           </ChartCard>
 
           {/* Symptom Calendar */}

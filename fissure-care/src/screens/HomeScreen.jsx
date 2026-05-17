@@ -1337,6 +1337,7 @@ export default function HomeScreen({ onNavigate, theme }) {
             position: 'relative', overflow: 'hidden',
             margin: '20px 16px 16px', borderRadius: 22,
             padding: '22px 16px', boxShadow: `0 4px 20px ${theme.cardShadow}`,
+            background: theme.card,
             border: `1px solid ${theme.cardBorder}`,
             transform: `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
             transition: tilt.x === 0 ? 'transform 0.5s ease' : 'transform 0.1s ease',
