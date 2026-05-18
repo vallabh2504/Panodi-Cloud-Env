@@ -11,6 +11,7 @@ import {
   Running, Walking, Yoga, Leaf, Seedling, Wave, WarningTriangle, CheckCircle,
   CherryBlossom, Celebration, CalendarIcon, Lightbulb,
   FaceRelieved, FaceNeutral, FaceDiscomfort, FacePain, FaceSevere,
+  Apple, Banana, Coconut, Coffee, BeerGlass,
 } from '../components/icons/AppIcons'
 import {
   BananaEmoji, AppleEmoji, GrapesEmoji, WatermelonEmoji, PearEmoji,
