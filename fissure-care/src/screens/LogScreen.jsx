@@ -11,6 +11,7 @@ import {
   Running, Walking, Yoga, Leaf, Seedling, Wave, WarningTriangle, CheckCircle,
   CherryBlossom, Celebration, CalendarIcon, Lightbulb,
   FaceRelieved, FaceNeutral, FaceDiscomfort, FacePain, FaceSevere,
+  Bristol1, Bristol2, Bristol3, Bristol4, Bristol5, Bristol6, Bristol7,
   Apple, Banana, Grapes, LeafyGreen, Carrot, Grain, Coffee, BeerGlass,
   Bread, Mango, Coconut, Kiwi, Pear, FrenchFries, HotDish,
   FruitGeneric, Beans, Blueberry, Nut, Chili, Watermelon,
@@ -70,13 +71,13 @@ const BRISTOL = [
 
 function BristolIcon({ type, size = 20, color }) {
   switch (type) {
-    case 1: return <Nut size={size} color={color} />          // hard/dense
-    case 2: return <Nut size={size} color={color} />          // lumpy
-    case 3: return <Grain size={size} color={color} />        // cracked
-    case 4: return <Banana size={size} color={color} />       // ideal smooth
-    case 5: return <Seedling size={size} color={color} />     // soft blobs
-    case 6: return <Wave size={size} color={color} />         // mushy/wavy
-    case 7: return <WaterDrop size={size} color={color} />    // liquid
+    case 1: return <Bristol1 size={size} color={color} />
+    case 2: return <Bristol2 size={size} color={color} />
+    case 3: return <Bristol3 size={size} color={color} />
+    case 4: return <Bristol4 size={size} color={color} />
+    case 5: return <Bristol5 size={size} color={color} />
+    case 6: return <Bristol6 size={size} color={color} />
+    case 7: return <Bristol7 size={size} color={color} />
     default: return null
   }
 }
