@@ -11,12 +11,17 @@ import {
   Running, Walking, Yoga, Leaf, Seedling, Wave, WarningTriangle, CheckCircle,
   CherryBlossom, Celebration, CalendarIcon, Lightbulb,
   FaceRelieved, FaceNeutral, FaceDiscomfort, FacePain, FaceSevere,
-  Bristol1, Bristol2, Bristol3, Bristol4, Bristol5, Bristol6, Bristol7,
-  Apple, Banana, Grapes, LeafyGreen, Carrot, Grain, Coffee, BeerGlass,
-  Bread, Mango, Coconut, Kiwi, Pear, FrenchFries, HotDish,
-  FruitGeneric, Beans, Blueberry, Nut, Chili, Watermelon,
-  Meat, Salt,
 } from '../components/icons/AppIcons'
+import {
+  BananaEmoji, AppleEmoji, GrapesEmoji, WatermelonEmoji, PearEmoji,
+  KiwiEmoji, MangoEmoji, CoconutEmoji, BlueberryEmoji, PapayaEmoji,
+  GuavaEmoji, ChikooEmoji,
+  GrainEmoji, BrownRiceEmoji, LentilsEmoji, SpinachEmoji, CarrotEmoji,
+  IsabgolEmoji, BreadEmoji, BroccoliEmoji, FlaxseedsEmoji, ChickpeasEmoji,
+  ChiliEmoji, FrenchFriesEmoji, MeatEmoji, BeerEmoji, CoffeeEmoji, SaltEmoji,
+  Bristol1Emoji, Bristol2Emoji, Bristol3Emoji, Bristol4Emoji,
+  Bristol5Emoji, Bristol6Emoji, Bristol7Emoji,
+} from '../components/icons/EmojiIcons'
 
 function playHealingChime() {
   try {
@@ -69,15 +74,15 @@ const BRISTOL = [
   { type: 7, label: 'Liquid', desc: 'No solid pieces', color: '#F48585' },
 ]
 
-function BristolIcon({ type, size = 20, color }) {
+function BristolIcon({ type, size = 28 }) {
   switch (type) {
-    case 1: return <Bristol1 size={size} color={color} />
-    case 2: return <Bristol2 size={size} color={color} />
-    case 3: return <Bristol3 size={size} color={color} />
-    case 4: return <Bristol4 size={size} color={color} />
-    case 5: return <Bristol5 size={size} color={color} />
-    case 6: return <Bristol6 size={size} color={color} />
-    case 7: return <Bristol7 size={size} color={color} />
+    case 1: return <Bristol1Emoji size={size} />
+    case 2: return <Bristol2Emoji size={size} />
+    case 3: return <Bristol3Emoji size={size} />
+    case 4: return <Bristol4Emoji size={size} />
+    case 5: return <Bristol5Emoji size={size} />
+    case 6: return <Bristol6Emoji size={size} />
+    case 7: return <Bristol7Emoji size={size} />
     default: return null
   }
 }
@@ -96,17 +101,20 @@ const FRUITS_DATA = [
   { id: 'guava', name: 'Guava', benefit: 'Very high fiber' },
 ]
 
-function FruitIcon({ id, size = 22, color }) {
+function FruitIcon({ id, size = 28 }) {
   switch (id) {
-    case 'banana': return <Banana size={size} color={color} />
-    case 'grapes': return <Grapes size={size} color={color} />
-    case 'watermelon': return <Watermelon size={size} color={color} />
-    case 'jamun': return <Blueberry size={size} color={color} />
-    case 'apple': return <Apple size={size} color={color} />
-    case 'pear': return <Pear size={size} color={color} />
-    case 'kiwi': return <Kiwi size={size} color={color} />
-    case 'mango': return <Mango size={size} color={color} />
-    default: return <FruitGeneric size={size} color={color} />
+    case 'banana':     return <BananaEmoji size={size} />
+    case 'papaya':     return <PapayaEmoji size={size} />
+    case 'grapes':     return <GrapesEmoji size={size} />
+    case 'watermelon': return <WatermelonEmoji size={size} />
+    case 'chikoo':     return <ChikooEmoji size={size} />
+    case 'jamun':      return <BlueberryEmoji size={size} />
+    case 'apple':      return <AppleEmoji size={size} />
+    case 'pear':       return <PearEmoji size={size} />
+    case 'kiwi':       return <KiwiEmoji size={size} />
+    case 'mango':      return <MangoEmoji size={size} />
+    case 'guava':      return <GuavaEmoji size={size} />
+    default:           return <AppleEmoji size={size} />
   }
 }
 
@@ -123,19 +131,19 @@ const FIBER_FOODS = [
   { id: 'chickpeas', name: 'Chickpeas', grams: 6 },
 ]
 
-function FiberIcon({ id, size = 20, color }) {
+function FiberIcon({ id, size = 28 }) {
   switch (id) {
-    case 'oats': return <Grain size={size} color={color} />
-    case 'brown_rice': return <FruitGeneric size={size} color={color} />
-    case 'lentils': return <HotDish size={size} color={color} />
-    case 'spinach': return <LeafyGreen size={size} color={color} />
-    case 'carrots': return <Carrot size={size} color={color} />
-    case 'isabgol': return <Leaf size={size} color={color} />
-    case 'whole_wheat': return <Bread size={size} color={color} />
-    case 'broccoli': return <LeafyGreen size={size} color={color} />
-    case 'flaxseeds': return <Beans size={size} color={color} />
-    case 'chickpeas': return <Nut size={size} color={color} />
-    default: return <FruitGeneric size={size} color={color} />
+    case 'oats':       return <GrainEmoji size={size} />
+    case 'brown_rice': return <BrownRiceEmoji size={size} />
+    case 'lentils':    return <LentilsEmoji size={size} />
+    case 'spinach':    return <SpinachEmoji size={size} />
+    case 'carrots':    return <CarrotEmoji size={size} />
+    case 'isabgol':    return <IsabgolEmoji size={size} />
+    case 'whole_wheat':return <BreadEmoji size={size} />
+    case 'broccoli':   return <BroccoliEmoji size={size} />
+    case 'flaxseeds':  return <FlaxseedsEmoji size={size} />
+    case 'chickpeas':  return <ChickpeasEmoji size={size} />
+    default:           return <GrainEmoji size={size} />
   }
 }
 
@@ -149,16 +157,16 @@ const AVOID_FOODS = [
   { id: 'white_bread', name: 'White bread', tip: 'Refined carbs can harden stools. Try whole grain instead' },
 ]
 
-function AvoidIcon({ id, size = 22, color }) {
+function AvoidIcon({ id, size = 28 }) {
   switch (id) {
-    case 'spicy': return <Chili size={size} color={color} />
-    case 'fried': return <FrenchFries size={size} color={color} />
-    case 'red_meat': return <Meat size={size} color={color} />
-    case 'alcohol': return <BeerGlass size={size} color={color} />
-    case 'coffee': return <Coffee size={size} color={color} />
-    case 'salty': return <Salt size={size} color={color} />
-    case 'white_bread': return <Bread size={size} color={color} />
-    default: return <WarningTriangle size={size} color={color} />
+    case 'spicy':      return <ChiliEmoji size={size} />
+    case 'fried':      return <FrenchFriesEmoji size={size} />
+    case 'red_meat':   return <MeatEmoji size={size} />
+    case 'alcohol':    return <BeerEmoji size={size} />
+    case 'coffee':     return <CoffeeEmoji size={size} />
+    case 'salty':      return <SaltEmoji size={size} />
+    case 'white_bread':return <BreadEmoji size={size} />
+    default:           return <WarningTriangle size={size} color="currentColor" />
   }
 }
 
