@@ -427,15 +427,100 @@ export function FaceSevere({ size = 24, color = 'currentColor', style, ...p }) {
   )
 }
 
+// ─── Bristol Scale Icons ─────────────────────────────────────────────────────
+
+export function Bristol1({ size = 24, color = 'currentColor', style, ...p }) {
+  // Separate hard pellets (5 scattered circles)
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
+      <circle stroke={color} strokeWidth={1.8} fill="none" cx="5.5" cy="10" r="2.5" />
+      <circle stroke={color} strokeWidth={1.8} fill="none" cx="12" cy="8" r="2.5" />
+      <circle stroke={color} strokeWidth={1.8} fill="none" cx="18.5" cy="10.5" r="2.5" />
+      <circle stroke={color} strokeWidth={1.8} fill="none" cx="8" cy="16.5" r="2.5" />
+      <circle stroke={color} strokeWidth={1.8} fill="none" cx="15.5" cy="15.5" r="2.5" />
+    </svg>
+  )
+}
+
+export function Bristol2({ size = 24, color = 'currentColor', style, ...p }) {
+  // Bumpy lumpy sausage
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M3 14 Q3.5 11 6 12 Q8 9 10 12 Q12 9 14 12 Q16 9 18 12 Q20.5 11 21 14 Q21 18 12 18 Q3 18 3 14 Z" />
+    </svg>
+  )
+}
+
+export function Bristol3({ size = 24, color = 'currentColor', style, ...p }) {
+  // Sausage with surface cracks
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
+      <ellipse {...base} stroke={color} strokeWidth={1.8} cx="12" cy="13" rx="8.5" ry="4" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M8.5 9.3 Q8 13 8.5 16.7" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M14 9.3 Q13.5 13 14 16.7" />
+    </svg>
+  )
+}
+
+export function Bristol4({ size = 24, color = 'currentColor', style, ...p }) {
+  // Smooth ideal sausage (with subtle highlight)
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
+      <ellipse {...base} stroke={color} strokeWidth={1.8} cx="12" cy="13" rx="8.5" ry="4.5" />
+      <path {...base} stroke={color} strokeWidth={1.2}
+        d="M5.5 12 Q12 10 18.5 12" />
+    </svg>
+  )
+}
+
+export function Bristol5({ size = 24, color = 'currentColor', style, ...p }) {
+  // Soft separate blobs
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
+      <ellipse {...base} stroke={color} strokeWidth={1.8} cx="7.5" cy="14" rx="5" ry="3.5" />
+      <ellipse {...base} stroke={color} strokeWidth={1.8} cx="17.5" cy="13.5" rx="4.5" ry="3" />
+    </svg>
+  )
+}
+
+export function Bristol6({ size = 24, color = 'currentColor', style, ...p }) {
+  // Fluffy mushy cloud shape
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M3.5 17 Q3 13 7 13 Q7 10 10 10 Q11 7 14 8 Q17 7 18 10 Q21 10 21 13 Q21 18 17 18 Q12 20 7 18 Q3.5 18 3.5 17 Z" />
+    </svg>
+  )
+}
+
+export function Bristol7({ size = 24, color = 'currentColor', style, ...p }) {
+  // Liquid — three water drops
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M6 4 C9.5 8 9.5 13.5 6 16.5 C2.5 13.5 2.5 8 6 4 Z" />
+      <path {...base} stroke={color} strokeWidth={1.7}
+        d="M17 8 C19.8 11.5 19.8 16 17 19 C14.2 16 14.2 11.5 17 8 Z" />
+      <path {...base} stroke={color} strokeWidth={1.5}
+        d="M10.5 18 C12.2 20.5 12.2 22.5 10.5 23.5 C8.8 22.5 8.8 20.5 10.5 18 Z" />
+    </svg>
+  )
+}
+
 // ─── Food / Nutrition ────────────────────────────────────────────────────────
 
 export function Apple({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M12 3c-1 0-2.5 1-2.5 1S6 3 4.5 6c-1.5 3-1 7 1 10s3.5 4 5.5 4h2c2 0 3.5-1 5.5-4s2.5-7 1-10C18 3 16 3 14.5 4c0 0-1.5-1-2.5-1z" />
-      <path {...base} stroke={color} strokeWidth={1.8}
-        d="M12 3V1M12 1c1 0 2 1 2 1" />
+        d="M4 11.319c0 3.102 .444 5.319 2.222 7.978c1.351 1.797 3.156 2.247 5.08 .988c.426 -.268 .97 -.268 1.397 0c1.923 1.26 3.728 .809 5.079 -.988c1.778 -2.66 2.222 -4.876 2.222 -7.977c0 -2.661 -1.99 -5.32 -4.444 -5.32c-1.267 0 -2.41 .693 -3.22 1.44a.5 .5 0 0 1 -.672 0c-.809 -.746 -1.953 -1.44 -3.22 -1.44c-2.454 0 -4.444 2.66 -4.444 5.319" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M7 12c0 -1.47 .454 -2.34 1.5 -3" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M12 7c0 -1.2 .867 -4 3 -4" />
     </svg>
   )
 }
@@ -444,11 +529,7 @@ export function Banana({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M4 13c.5-4 3.3-8 8-8 5 0 8 4 8 8" />
-      <path {...base} stroke={color} strokeWidth={1.8}
-        d="M4 13c3 4 7 6 10 6 2 0 3-1 4-3" />
-      <path {...base} stroke={color} strokeWidth={1.8}
-        d="M12 5c0 0-2-2-1-4" />
+        d="M20 6v-2a1 1 0 0 0 -1 -1h-2a1 1 0 0 0 -1 1v2a9.09 9.09 0 0 1 -4 8.08c-2 1.31 -5 1.57 -7 1.59a2 2 0 0 0 -2 2a2 2 0 0 0 1.16 1.81c2.69 1.2 9.46 3.44 14.35 -1.66c4.49 -4.74 1.49 -11.82 1.49 -11.82" />
     </svg>
   )
 }
@@ -471,9 +552,15 @@ export function Carrot({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M6 20L18 4M6 20c2 0 6-2 8-8" />
+        d="M3 21s9.834 -3.489 12.684 -6.34a4.487 4.487 0 0 0 0 -6.344a4.483 4.483 0 0 0 -6.342 0c-2.86 2.861 -6.347 12.689 -6.347 12.689l.005 -.005" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M9 13l-1.5 -1.5" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M16 14l-2 -2" />
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M10 4c0 0 0 4-4 4M12 2c0 0 2 3 0 6M14 4c0 0 2 3 0 6" />
+        d="M22 8s-1.14 -2 -3 -2c-1.406 0 -3 2 -3 2s1.14 2 3 2s3 -2 3 -2" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M16 2s-2 1.14 -2 3s2 3 2 3s2 -1.577 2 -3c0 -1.86 -2 -3 -2 -3" />
     </svg>
   )
 }
@@ -493,11 +580,13 @@ export function Grain({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M12 22V10M12 10c0-4 4-8 8-8M12 10c0-4-4-8-8-8" />
-      <path {...base} stroke={color} strokeWidth={1.4}
-        d="M12 14c0 0 3-2 5-1M12 14c0 0-3-2-5-1" />
-      <path {...base} stroke={color} strokeWidth={1.4}
-        d="M12 18c0 0 2-2 4-1M12 18c0 0-2-2-4-1" />
+        d="M12.014 21.514v-3.75" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M5.93 9.504l-.43 1.604c-.712 2.659 .866 5.391 3.524 6.105c.997 .268 1.993 .535 2.99 .801v-3.44c-.164 -2.105 -1.637 -3.879 -3.676 -4.426l-2.408 -.644" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M13.744 11.164c.454 -.454 .815 -.994 1.061 -1.587c.246 -.594 .372 -1.23 .372 -1.873c0 -.643 -.126 -1.279 -.372 -1.872c-.246 -.594 -.606 -1.133 -1.061 -1.588l-1.73 -1.73l-1.73 1.73c-.454 .454 -.815 .994 -1.06 1.588c-.246 .594 -.372 1.23 -.373 1.872c0 .643 .127 1.279 .373 1.873c.246 .594 .606 1.133 1.06 1.587" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M18.099 9.504l.43 1.604c.712 2.659 -.866 5.391 -3.525 6.105c-.997 .268 -1.994 .535 -2.99 .801v-3.44c.164 -2.105 1.637 -3.879 3.677 -4.426l2.408 -.644" />
     </svg>
   )
 }
@@ -506,12 +595,15 @@ export function Coffee({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M18 8h1a4 4 0 0 1 0 8h-1" />
+        d="M3 14c.83 .642 2.077 1.017 3.5 1c1.423 .017 2.67 -.358 3.5 -1c.83 -.642 2.077 -1.017 3.5 -1c1.423 -.017 2.67 .358 3.5 1" />
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
-      <line stroke={color} strokeWidth={1.8} x1="6" y1="1" x2="6" y2="4" />
-      <line stroke={color} strokeWidth={1.8} x1="10" y1="1" x2="10" y2="4" />
-      <line stroke={color} strokeWidth={1.8} x1="14" y1="1" x2="14" y2="4" />
+        d="M8 3a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M12 3a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M3 10h14v5a6 6 0 0 1 -6 6h-2a6 6 0 0 1 -6 -6v-5" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M16.746 16.726a3 3 0 1 0 .252 -5.555" />
     </svg>
   )
 }
@@ -533,10 +625,7 @@ export function Bread({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M3 11a4 4 0 0 1 4-4h10a4 4 0 0 1 0 8H7L3 19V11z" />
-      <line stroke={color} strokeWidth={1.4} x1="8" y1="11" x2="8" y2="15" />
-      <line stroke={color} strokeWidth={1.4} x1="12" y1="11" x2="12" y2="15" />
-      <line stroke={color} strokeWidth={1.4} x1="16" y1="11" x2="16" y2="15" />
+        d="M18 4a3 3 0 0 1 2 5.235v8.765a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-8.764a3 3 0 0 1 1.824 -5.231h12.176v-.005" />
     </svg>
   )
 }
@@ -555,11 +644,15 @@ export function SaladBowl({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M2 10h20M4 10a8 8 0 0 0 16 0" />
-      <path {...base} stroke={color} strokeWidth={1.8}
-        d="M7 6c1-2 3-3 5-3s4 1 5 3" />
+        d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5 -2.517 5.573 -4 6.5v1a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-1c-1.687 -1.054 -4 -5 -4 -6.5v-.5a1 1 0 0 1 1 -1" />
       <path {...base} stroke={color} strokeWidth={1.4}
-        d="M9 7c.5-1 1.5-2 3-2" />
+        d="M18.5 11c.351 -1.017 .426 -2.236 .5 -3.714v-1.286h-2.256c-2.83 0 -4.616 .804 -5.64 2.076" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M5.255 11.008a12.204 12.204 0 0 1 -.255 -2.008v-1h1.755c.98 0 1.801 .124 2.479 .35" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M8 8l1 -4l4 2.5" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M13 11v-.5a2.5 2.5 0 1 0 -5 0v.5" />
     </svg>
   )
 }
@@ -579,9 +672,13 @@ export function Meat({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M15 7C11 3 4 5 4 11c0 2 1 4 3 5l-3 3 2 2 3-3c3 2 7 1 9-2 2-3 1-7-3-9z" />
+        d="M13.62 8.382l1.966 -1.967a2 2 0 1 1 3.414 -1.415a2 2 0 1 1 -1.413 3.414l-1.82 1.821" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M5.904 18.596c2.733 2.734 5.9 4 7.07 2.829c1.172 -1.172 -.094 -4.338 -2.828 -7.071c-2.733 -2.734 -5.9 -4 -7.07 -2.829c-1.172 1.172 .094 4.338 2.828 7.071" />
       <path {...base} stroke={color} strokeWidth={1.4}
-        d="M14 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" />
+        d="M7.5 16l1 1" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M12.975 21.425c3.905 -3.906 4.855 -9.288 2.121 -12.021c-2.733 -2.734 -8.115 -1.784 -12.02 2.121" />
     </svg>
   )
 }
@@ -590,8 +687,12 @@ export function Milk({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M8 2h8l1 4-2 2v12a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V8L7 6l1-4z" />
-      <line stroke={color} strokeWidth={1.4} x1="8" y1="11" x2="16" y2="11" />
+        d="M8 6h8v-2a1 1 0 0 0 -1 -1h-6a1 1 0 0 0 -1 1v2" />
+      <path {...base} stroke={color} strokeWidth={1.8}
+        d="M16 6l1.094 1.759a6 6 0 0 1 .906 3.17v8.071a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-8.071a6 6 0 0 1 .906 -3.17l1.094 -1.759" />
+      <circle stroke={color} strokeWidth={1.8} fill="none" cx="12" cy="16" r="2" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M10 10h4" />
     </svg>
   )
 }
@@ -612,11 +713,13 @@ export function HotDish({ size = 24, color = 'currentColor', style, ...p }) {
 export function Blueberry({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
-      <circle stroke={color} strokeWidth={1.8} fill="none" cx="12" cy="14" r="6" />
-      <path {...base} stroke={color} strokeWidth={1.8}
-        d="M12 8V6M10 6c0-1 1-2 2-2s2 1 2 2" />
+      <circle stroke={color} strokeWidth={1.8} fill="none" cx="8" cy="14" r="4" />
+      <circle stroke={color} strokeWidth={1.8} fill="none" cx="16" cy="14" r="4" />
+      <circle stroke={color} strokeWidth={1.8} fill="none" cx="12" cy="8.5" r="3.5" />
       <path {...base} stroke={color} strokeWidth={1.2}
-        d="M9 14c0-1.7 1.3-3 3-3" />
+        d="M6.5 10.5 L7.5 12 M9.5 10 L8.5 11.5 M14.5 10 L15.5 11.5 M17.5 10.5 L16.5 12" />
+      <path {...base} stroke={color} strokeWidth={1.2}
+        d="M10.5 5.5 L11.5 7 M13.5 5.5 L12.5 7" />
     </svg>
   )
 }
@@ -625,9 +728,12 @@ export function Watermelon({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M3 10a9 9 0 0 1 18 0H3z" />
-      <path {...base} stroke={color} strokeWidth={1.4}
-        d="M5 10l3 8M12 10v8M19 10l-3 8" />
+        d="M12 3 L21 20 L3 20 Z" />
+      <path {...base} stroke={color} strokeWidth={1.2}
+        d="M5.5 20 L12 6.5 L18.5 20" />
+      <circle cx="9.5" cy="15" r="1" stroke="none" fill={color} />
+      <circle cx="13.5" cy="13" r="1" stroke="none" fill={color} />
+      <circle cx="14.5" cy="17" r="1" stroke="none" fill={color} />
     </svg>
   )
 }
@@ -636,9 +742,9 @@ export function Chili({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M17 4c0 0-1 1-1 3 0 3 2 5 2 8a5 5 0 0 1-10 0c0-5 3-7 3-11" />
+        d="M13 11c0 2.21 -2.239 4 -5 4s-5 -1.79 -5 -4a8 8 0 1 0 16 0a3 3 0 0 0 -6 0" />
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M11 4c1-1 3-2 5-2" />
+        d="M16 8c0 -2 2 -4 4 -4" />
     </svg>
   )
 }
@@ -660,15 +766,19 @@ export function Kiwi({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <circle stroke={color} strokeWidth={1.8} fill="none" cx="12" cy="12" r="9" />
-      <circle stroke={color} strokeWidth={1.4} fill="none" cx="12" cy="12" r="3" />
-      <line stroke={color} strokeWidth={1.2} x1="12" y1="3" x2="12" y2="9" />
-      <line stroke={color} strokeWidth={1.2} x1="12" y1="15" x2="12" y2="21" />
-      <line stroke={color} strokeWidth={1.2} x1="3" y1="12" x2="9" y2="12" />
-      <line stroke={color} strokeWidth={1.2} x1="15" y1="12" x2="21" y2="12" />
-      <line stroke={color} strokeWidth={1.2} x1="5.6" y1="5.6" x2="9.9" y2="9.9" />
-      <line stroke={color} strokeWidth={1.2} x1="14.1" y1="14.1" x2="18.4" y2="18.4" />
-      <line stroke={color} strokeWidth={1.2} x1="18.4" y1="5.6" x2="14.1" y2="9.9" />
-      <line stroke={color} strokeWidth={1.2} x1="9.9" y1="14.1" x2="5.6" y2="18.4" />
+      <circle stroke={color} strokeWidth={1.2} fill="none" cx="12" cy="12" r="2.5" />
+      <path {...base} stroke={color} strokeWidth={1.1} d="M12 9.5 L12 3.2" />
+      <path {...base} stroke={color} strokeWidth={1.1} d="M14.5 10.3 L18.5 6.4" />
+      <path {...base} stroke={color} strokeWidth={1.1} d="M14.5 13.7 L18.5 17.6" />
+      <path {...base} stroke={color} strokeWidth={1.1} d="M12 14.5 L12 20.8" />
+      <path {...base} stroke={color} strokeWidth={1.1} d="M9.5 13.7 L5.5 17.6" />
+      <path {...base} stroke={color} strokeWidth={1.1} d="M9.5 10.3 L5.5 6.4" />
+      <circle cx="12" cy="4.2" r="1.1" stroke="none" fill={color} />
+      <circle cx="19" cy="7.5" r="1.1" stroke="none" fill={color} />
+      <circle cx="19" cy="16.5" r="1.1" stroke="none" fill={color} />
+      <circle cx="12" cy="19.8" r="1.1" stroke="none" fill={color} />
+      <circle cx="5" cy="16.5" r="1.1" stroke="none" fill={color} />
+      <circle cx="5" cy="7.5" r="1.1" stroke="none" fill={color} />
     </svg>
   )
 }
@@ -688,9 +798,11 @@ export function Mango({ size = 24, color = 'currentColor', style, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={style} {...p}>
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M12 21a8 8 0 0 0 8-8c0-6-5-11-8-11S4 7 4 13a8 8 0 0 0 8 8z" />
+        d="M8 4 C5 6 4 10 4 13 C4 17.5 7.5 21 12 21 C16.5 21 20 17.5 20 13 C20 9 18 5 15 4 C13.5 3 10 3 8 4 Z" />
       <path {...base} stroke={color} strokeWidth={1.8}
-        d="M12 2c1-1 3-1 4 0" />
+        d="M12 4 L12 2" />
+      <path {...base} stroke={color} strokeWidth={1.4}
+        d="M12 2 C12 1 14 1 14.5 2.5" />
     </svg>
   )
 }
