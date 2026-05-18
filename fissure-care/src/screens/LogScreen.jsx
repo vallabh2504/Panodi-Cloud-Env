@@ -390,6 +390,7 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
   const [saving, setSaving] = useState(false)
   const [avoidWarning, setAvoidWarning] = useState(null)
   const dragStartX = useRef(0)
+  const dragStartY = useRef(0)
 
   // Micro-interaction states
   const [justFilled, setJustFilled] = useState(null)
@@ -1041,11 +1042,19 @@ export default function LogScreen({ onNavigate, onLogSaved, theme: themeProp }) 
 
       {/* Swipeable content area */}
       <div style={{ flex: 1, overflowY: 'auto', position: 'relative', overflowX: 'hidden' }}
-        onTouchStart={e => { dragStartX.current = e.touches[0].clientX }}
+        onTouchStart={e => {
+          dragStartX.current = e.touches[0].clientX
+          dragStartY.current = e.touches[0].clientY
+        }}
         onTouchEnd={e => {
           const dx = e.changedTouches[0].clientX - dragStartX.current
-          if (dx < -60) goNext()
-          else if (dx > 60) goPrev()
+          const dy = e.changedTouches[0].clientY - dragStartY.current
+          // Only fire step navigation when gesture is clearly horizontal:
+          // dx must exceed 110px AND be at least 2× larger than the vertical component
+          if (Math.abs(dx) > 110 && Math.abs(dx) > Math.abs(dy) * 2) {
+            if (dx < 0) goNext()
+            else goPrev()
+          }
         }}
       >
         <AnimatePresence mode="wait" custom={direction}>
