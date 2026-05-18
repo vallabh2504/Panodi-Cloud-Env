@@ -1,3 +1,4 @@
+import { Stethoscope, Clipboard, Microscope, Leaf } from '../components/icons/AppIcons'
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
@@ -84,11 +85,6 @@ const THEME_MAP = {
   },
 }
 
-const FEATURES = [
-  { emoji: '🩺', label: 'Expert', sub: 'Guidance' },
-  { emoji: '📋', label: 'Personal', sub: 'Care Plan' },
-  { emoji: '🔬', label: 'Backed by', sub: 'Science' },
-]
 
 function DropLogo({ fill, inner }) {
   return (
@@ -103,6 +99,12 @@ export default function SplashScreen({ onEnter, theme }) {
   const [ready, setReady] = useState(false)
   const themeId = theme?.id || 'cherry'
   const tc = THEME_MAP[themeId] || THEME_MAP.cherry
+
+  const FEATURES = [
+    { icon: <Stethoscope size={22} color={tc.pillText} />, label: 'Expert',     sub: 'Guidance' },
+    { icon: <Clipboard size={22} color={tc.pillText} />,   label: 'Personal',   sub: 'Care Plan' },
+    { icon: <Microscope size={22} color={tc.pillText} />,  label: 'Backed by',  sub: 'Science' },
+  ]
 
   useEffect(() => {
     const t = setTimeout(() => setReady(true), 60)
@@ -215,7 +217,7 @@ export default function SplashScreen({ onEnter, theme }) {
               padding: '12px 6px', background: tc.pillBg, borderRadius: 16,
               border: `1px solid ${tc.featurePillBorder}`, gap: 5,
             }}>
-              <span style={{ fontSize: 22 }}>{f.emoji}</span>
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{f.icon}</span>
               <p style={{ fontSize: 10.5, fontWeight: 700, color: tc.pillText, margin: 0, textAlign: 'center', lineHeight: 1.2 }}>{f.label}</p>
               <p style={{ fontSize: 9.5, color: tc.subtitle, margin: 0, textAlign: 'center', lineHeight: 1.2 }}>{f.sub}</p>
             </div>
@@ -268,7 +270,7 @@ export default function SplashScreen({ onEnter, theme }) {
           textAlign: 'center', padding: '10px 16px 6px',
           background: tc.reviewBg, borderRadius: 14,
         }}>
-          <p style={{ fontSize: 13, marginBottom: 4 }}>🌿</p>
+          <p style={{ fontSize: 13, marginBottom: 4, display: 'flex', justifyContent: 'center' }}><Leaf size={18} color={tc.accentBar} /></p>
           <p style={{ fontSize: 11.5, color: tc.subtitle, lineHeight: 1.55, margin: 0 }}>
             Built with love for your healing journey. Your data stays private, always.
           </p>

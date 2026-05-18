@@ -1,3 +1,4 @@
+import { WaterDrop, Banana, Bathtub, HeartPulse, Walking, Running, Trophy, Sleep, Flame, BloodDrop, Watch, Battery, CherryBlossom, Wave, Sparkle, Grain, Leaf } from '../components/icons/AppIcons'
 import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
 const HealingGarden3D = lazy(() => import('../components/HealingGarden3D'))
 const NoiseShaderHero = lazy(() => import('../components/NoiseShaderHero'))
@@ -213,17 +214,17 @@ function WellnessRing({ score, theme }) {
             </button>
             <p style={{ fontSize: 12, fontWeight: 700, color: theme.text, marginBottom: 8 }}>Score Breakdown</p>
             {[
-              ['💧 Water', '20 pts'],
-              ['🍌 Fruits', '15 pts'],
-              ['🌾 Fiber', '15 pts'],
-              ['🛁 Sitz Baths', '15 pts'],
+              [<><WaterDrop size={13} color={theme.primary} /> Water</>, '20 pts'],
+              [<><Banana size={13} color={theme.wellnessHigh} /> Fruits</>, '15 pts'],
+              [<><Grain size={13} color={theme.primary} /> Fiber</>, '15 pts'],
+              [<><Bathtub size={13} color={theme.primary} /> Sitz Baths</>, '15 pts'],
               ['😌 Low Pain', '25 pts'],
               ['💩 Good Bristol', '10 pts'],
-              ['🚶 Steps (boAt bonus)', '+ up to 10 pts'],
-              ['😴 Sleep 7h+ (bonus)', '+ up to 5 pts'],
-            ].map(([label, pts]) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 12, color: theme.text }}>{label}</span>
+              [<><Walking size={13} color={theme.primary} /> Steps (boAt bonus)</>, '+ up to 10 pts'],
+              [<><Sleep size={13} color={'#C9A8F5'} /> Sleep 7h+ (bonus)</>, '+ up to 5 pts'],
+            ].map(([label, pts], idx) => (
+              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 12, color: theme.text, display: 'flex', alignItems: 'center', gap: 4 }}>{label}</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: theme.primary }}>{pts}</span>
               </div>
             ))}
@@ -262,8 +263,8 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>
-          🌿 Your Healing Garden
+        <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, display: 'flex', alignItems: 'center', gap: 5 }}>
+          <Leaf size={14} color={theme.primary} /> Your Healing Garden
         </p>
         {showFreezeBtn && (
           <button
@@ -283,7 +284,7 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
       )}
       <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>
         {bloodFreeDays === 0
-          ? 'Log a blood-free day to grow your first flower 🌸'
+          ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Log a blood-free day to grow your first flower <CherryBlossom size={13} color={theme.primary} /></span>
           : `${bloodFreeDays} blood-free ${bloodFreeDays === 1 ? 'day' : 'days'} — each flower is a victory`}
       </p>
       <Suspense fallback={<div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🌱</div>}>
@@ -321,7 +322,7 @@ function FitnessTeaserCard({ today, theme, onNavigate }) {
     >
       <div style={{ padding: '14px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <span style={{ fontSize: 20 }}>⌚</span>
+          <Watch size={20} color={theme.primary} />
           <div>
             <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, lineHeight: 1.2 }}>boAt Fitness</p>
             <p style={{ fontSize: 10, color: theme.textMuted }}>Wave Magma</p>
@@ -337,17 +338,17 @@ function FitnessTeaserCard({ today, theme, onNavigate }) {
       {hasData ? (
         <div style={{ display: 'flex', gap: 8, padding: '0 16px 12px', overflowX: 'auto' }}>
           {[
-            { icon: '🚶', label: 'Steps',    value: steps.toLocaleString(),    color: theme.primary },
-            { icon: '❤️', label: 'HR',       value: hr    ? `${hr} bpm`  : '—', color: '#F48585' },
-            { icon: '😴', label: 'Sleep',    value: sleep ? `${sleep}h`  : '—', color: '#C9A8F5' },
-            { icon: '🔥', label: 'Calories', value: calories || '—',           color: '#F5C67A' },
+            { icon: <Walking size={15} color={theme.primary} />, label: 'Steps',    value: steps.toLocaleString(),    color: theme.primary },
+            { icon: <HeartPulse size={15} color={'#F48585'} />,  label: 'HR',       value: hr    ? `${hr} bpm`  : '—', color: '#F48585' },
+            { icon: <Sleep size={15} color={'#C9A8F5'} />,       label: 'Sleep',    value: sleep ? `${sleep}h`  : '—', color: '#C9A8F5' },
+            { icon: <Flame size={15} color={'#F5C67A'} />,       label: 'Calories', value: calories || '—',           color: '#F5C67A' },
           ].map(stat => (
             <div key={stat.label} style={{
               flex: '0 0 auto', minWidth: 66, background: theme.tipBg,
               borderRadius: 14, padding: '8px 8px', textAlign: 'center',
               border: `1px solid ${theme.tipBorder}`,
             }}>
-              <div style={{ fontSize: 15, marginBottom: 2 }}>{stat.icon}</div>
+              <div style={{ fontSize: 15, marginBottom: 2, display: 'flex', justifyContent: 'center' }}>{stat.icon}</div>
               <div style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Nunito', color: stat.color, lineHeight: 1.1 }}>{stat.value}</div>
               <div style={{ fontSize: 9, color: theme.textMuted, marginTop: 1 }}>{stat.label}</div>
             </div>
@@ -372,7 +373,7 @@ function FitnessTeaserCard({ today, theme, onNavigate }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
           }}
         >
-          {hasData ? '📊 Full Fitness Dashboard →' : '⌚ Open Fitness Tracker →'}
+          {hasData ? <><Watch size={15} color={theme.primary} /> Full Fitness Dashboard →</> : <><Watch size={15} color={theme.primary} /> Open Fitness Tracker →</>}
         </motion.button>
       </div>
     </motion.div>
@@ -531,12 +532,12 @@ function BoatWatchCard({ log, today, theme, onUpdate }) {
   ]
 
   const FIELDS = [
-    { key: 'steps', label: '🚶 Steps', placeholder: 'e.g. 6000', type: 'numeric', quick: [1000, 2000] },
-    { key: 'activeMinutes', label: '⏱️ Active Minutes', placeholder: 'e.g. 30', type: 'numeric' },
-    { key: 'heartRate', label: '❤️ Avg Heart Rate (bpm)', placeholder: 'e.g. 72', type: 'numeric' },
-    { key: 'spO2', label: '🩸 SpO2 (%)', placeholder: 'e.g. 98', note: 'Normal: 95–100%', type: 'decimal' },
-    { key: 'sleepHours', label: '😴 Sleep Last Night (hrs)', placeholder: 'e.g. 7.5', note: '+5 pts if ≥7h', type: 'decimal' },
-    { key: 'calories', label: '🔥 Calories Burned', placeholder: 'e.g. 280', type: 'numeric' },
+    { key: 'steps',        label: <><Walking size={13} color={theme.primary} /> Steps</>,                 placeholder: 'e.g. 6000', type: 'numeric', quick: [1000, 2000] },
+    { key: 'activeMinutes',label: <>⏱️ Active Minutes</>,                                                  placeholder: 'e.g. 30',   type: 'numeric' },
+    { key: 'heartRate',    label: <><HeartPulse size={13} color={'#F48585'} /> Avg Heart Rate (bpm)</>,   placeholder: 'e.g. 72',   type: 'numeric' },
+    { key: 'spO2',         label: <><BloodDrop size={13} color={'#74B8E8'} /> SpO2 (%)</>,                placeholder: 'e.g. 98',   note: 'Normal: 95–100%', type: 'decimal' },
+    { key: 'sleepHours',   label: <><Sleep size={13} color={'#C9A8F5'} /> Sleep Last Night (hrs)</>,      placeholder: 'e.g. 7.5',  note: '+5 pts if ≥7h', type: 'decimal' },
+    { key: 'calories',     label: <><Flame size={13} color={'#F5C67A'} /> Calories Burned</>,             placeholder: 'e.g. 280',  type: 'numeric' },
   ]
 
   return (
@@ -554,7 +555,7 @@ function BoatWatchCard({ log, today, theme, onUpdate }) {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <span style={{ fontSize: 20 }}>⌚</span>
+            <Watch size={20} color={theme.primary} />
             <div>
               <p style={{ fontSize: 13, fontWeight: 700, color: theme.text, lineHeight: 1.2 }}>boAt Fitness</p>
               <p style={{ fontSize: 10, color: theme.textMuted }}>Wave Magma</p>
@@ -564,7 +565,7 @@ function BoatWatchCard({ log, today, theme, onUpdate }) {
             ? <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: theme.successBg, borderRadius: 20, padding: '4px 10px', border: `1px solid ${theme.successBorder}` }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: theme.success }} />
                 <span style={{ fontSize: 11, fontWeight: 700, color: theme.success }}>{bleInfo?.name || 'Connected'}</span>
-                {bleInfo?.battery != null && <span style={{ fontSize: 11, color: theme.success }}>🔋{bleInfo.battery}%</span>}
+                {bleInfo?.battery != null && <span style={{ fontSize: 11, color: theme.success, display: 'flex', alignItems: 'center', gap: 2 }}><Battery size={11} color={theme.textMuted} />{bleInfo.battery}%</span>}
               </div>
             : bleState === 'connecting'
             ? <span style={{ fontSize: 11, color: theme.textMuted }}>Searching…</span>
@@ -589,7 +590,7 @@ function BoatWatchCard({ log, today, theme, onUpdate }) {
                     <span style={{ fontSize: 16, fontWeight: 800, fontFamily: 'Nunito', color: '#F48585', lineHeight: 1 }}>{liveHR}</span>
                     <span style={{ fontSize: 8, color: theme.textMuted }}>bpm</span>
                   </>
-                : <span style={{ fontSize: 22 }}>{steps >= 8000 ? '🏆' : steps >= 4000 ? '🚶' : '🏃'}</span>
+                : <span style={{ fontSize: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{steps >= 8000 ? <Trophy size={22} color={theme.wellnessHigh} /> : steps >= 4000 ? <Walking size={22} color={theme.primary} /> : <Running size={22} color={theme.primary} />}</span>
               }
             </div>
           </div>
@@ -607,17 +608,17 @@ function BoatWatchCard({ log, today, theme, onUpdate }) {
         {/* Health stats pills */}
         <div style={{ display: 'flex', gap: 8, padding: '0 16px 14px', overflowX: 'auto' }}>
           {[
-            { icon: '❤️', label: 'Heart Rate', value: hr ? `${hr} bpm` : '—', color: '#F48585' },
-            { icon: '🩸', label: 'SpO2', value: spO2 ? `${spO2}%` : '—', color: '#74B8E8' },
-            { icon: '😴', label: 'Sleep', value: sleep ? `${sleep}h` : '—', color: '#C9A8F5' },
-            { icon: '🔥', label: 'Calories', value: calories || '—', color: '#F5C67A' },
+            { icon: <HeartPulse size={16} color={'#F48585'} />, label: 'Heart Rate', value: hr ? `${hr} bpm` : '—', color: '#F48585' },
+            { icon: <BloodDrop size={16} color={'#74B8E8'} />,  label: 'SpO2',       value: spO2 ? `${spO2}%` : '—', color: '#74B8E8' },
+            { icon: <Sleep size={16} color={'#C9A8F5'} />,      label: 'Sleep',      value: sleep ? `${sleep}h` : '—', color: '#C9A8F5' },
+            { icon: <Flame size={16} color={'#F5C67A'} />,      label: 'Calories',   value: calories || '—', color: '#F5C67A' },
           ].map(stat => (
             <div key={stat.label} style={{
               flex: '0 0 auto', minWidth: 70, background: theme.tipBg,
               borderRadius: 14, padding: '8px 10px', textAlign: 'center',
               border: `1px solid ${theme.tipBorder}`,
             }}>
-              <div style={{ fontSize: 16, marginBottom: 2 }}>{stat.icon}</div>
+              <div style={{ fontSize: 16, marginBottom: 2, display: 'flex', justifyContent: 'center' }}>{stat.icon}</div>
               <div style={{ fontSize: 13, fontWeight: 800, fontFamily: 'Nunito', color: stat.color, lineHeight: 1.1 }}>{stat.value}</div>
               <div style={{ fontSize: 9, color: theme.textMuted, marginTop: 2 }}>{stat.label}</div>
             </div>
@@ -642,7 +643,7 @@ function BoatWatchCard({ log, today, theme, onUpdate }) {
           >
             {bleState === 'connecting' ? '⏳ Connecting…'
               : bleState === 'connected' ? '● Connected'
-              : '⌚ Connect Watch (BLE)'}
+              : <><Watch size={14} color={theme.primary} /> Connect Watch (BLE)</>}
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -685,7 +686,7 @@ function BoatWatchCard({ log, today, theme, onUpdate }) {
                 <div style={{ width: 36, height: 4, background: theme.cardBorder, borderRadius: 2, margin: '0 auto 18px' }} />
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <p style={{ fontSize: 17, fontWeight: 700, color: theme.text }}>⌚ boAt Watch Data</p>
+                  <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, display: 'flex', alignItems: 'center', gap: 6 }}><Watch size={17} color={theme.primary} /> boAt Watch Data</p>
                   <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: 22, color: theme.textMuted, cursor: 'pointer', lineHeight: 1 }}>×</button>
                 </div>
 
@@ -747,7 +748,7 @@ function BoatWatchCard({ log, today, theme, onUpdate }) {
                     transition: 'background 0.3s ease',
                   }}
                 >
-                  {saved ? '✓ Saved — Score Updated!' : saving ? 'Saving…' : '⌚ Save boAt Data'}
+                  {saved ? '✓ Saved — Score Updated!' : saving ? 'Saving…' : <><Watch size={15} color="#fff" /> Save boAt Data</>}
                 </motion.button>
               </div>
             </motion.div>
@@ -891,7 +892,7 @@ function SitzTimerModal({ onClose, theme }) {
 
         {done ? (
           <div>
-            <p style={{ fontSize: 52, marginBottom: 8 }}>🛁</p>
+            <div style={{ fontSize: 52, marginBottom: 8, display: 'flex', justifyContent: 'center' }}><Bathtub size={52} color={theme.primary} /></div>
             <p style={{ fontSize: 20, fontWeight: 800, color: theme.primary, fontFamily: 'Nunito', marginBottom: 8 }}>
               Great soak!
             </p>
@@ -932,7 +933,7 @@ function SitzTimerModal({ onClose, theme }) {
                   background: `radial-gradient(circle, ${theme.primaryLight}CC, ${theme.primary}44)`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <span style={{ fontSize: 24 }}>🛁</span>
+                  <Bathtub size={24} color={theme.primary} />
                 </div>
               </motion.div>
             </div>
@@ -1024,7 +1025,7 @@ function ReminderBanner({ name, onLog, theme }) {
       <Bell size={20} color={theme.primary} style={{ flexShrink: 0, marginTop: 2 }} />
       <div style={{ flex: 1 }}>
         <p style={{ fontSize: 14, fontWeight: 700, color: theme.text, marginBottom: 4 }}>
-          Hey {name}, we haven't heard from you today 💛
+          Hey {name}, we haven't heard from you today <HeartPulse size={14} color={theme.primary} style={{ display: 'inline', verticalAlign: 'middle' }} />
         </p>
         <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 10 }}>How are you feeling? A quick log helps track your healing.</p>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -1178,9 +1179,13 @@ export default function HomeScreen({ onNavigate, theme }) {
   const today = new Date().toISOString().split('T')[0]
   const hour = new Date().getHours()
 
-  const greetingEmojis = { cherry: '🌸', ocean: '🌊', aurora: '✨' }
-  const greetingEmoji = greetingEmojis[theme.id] || '🌸'
-  const greeting = hour < 12 ? `Good morning ${greetingEmoji}` : hour < 17 ? `Good afternoon ${greetingEmoji}` : `Good evening ${greetingEmoji}`
+  const greetingIconMap = {
+    cherry: <CherryBlossom size={22} color={theme.primary} />,
+    ocean:  <Wave size={22} color={theme.primary} />,
+    aurora: <Sparkle size={22} color={theme.primary} />,
+  }
+  const greetingIcon = greetingIconMap[theme.id] || greetingIconMap.cherry
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   const settings = useMemo(() => {
     try { return JSON.parse(localStorage.getItem('fissurecare_settings') || '{}') } catch { return {} }
@@ -1306,11 +1311,12 @@ export default function HomeScreen({ onNavigate, theme }) {
             <p ref={greetingRef} style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.primary, margin: 0, letterSpacing: '-0.3px' }}>
               {displayedGreeting}
             </p>
+            {greetingIcon}
             {hour < 17 ? <SunIcon size={22} color={theme.primary} /> : <MoonIcon size={22} color={theme.accent || '#C9A8F5'} />}
           </div>
           <p style={{ fontSize: 15, color: theme.textMuted, lineHeight: 1.5 }}>
             {log
-              ? <span>You logged today — <span style={{ fontWeight: 600, color: theme.text }}>you're doing great 💛</span></span>
+              ? <span>You logged today — <span style={{ fontWeight: 600, color: theme.text, display: 'inline-flex', alignItems: 'center', gap: 4 }}>you're doing great <HeartPulse size={15} color={theme.primary} /></span></span>
               : 'How are you feeling today? Take it gently.'
             }
           </p>
@@ -1372,10 +1378,10 @@ export default function HomeScreen({ onNavigate, theme }) {
           margin: '0 16px 16px',
         }}>
           {[
-            { icon: '💧', label: 'Water', value: `${log?.hydration?.waterGlasses || 0}/8`, sub: 'glasses' },
-            { icon: '🍌', label: 'Fruits', value: log?.fruitsEaten?.length || 0, sub: 'eaten' },
-            { icon: '🛁', label: 'Sitz baths', value: log?.sitzBaths?.length || 0, sub: 'today' },
-            { icon: '💛', label: 'Pain', value: log?.bowelMovements?.[0]?.painLevel ?? '–', sub: '/10' },
+            { icon: <WaterDrop size={22} color={theme.primary} />,   label: 'Water',      value: `${log?.hydration?.waterGlasses || 0}/8`, sub: 'glasses' },
+            { icon: <Banana size={22} color={theme.wellnessHigh} />, label: 'Fruits',     value: log?.fruitsEaten?.length || 0,            sub: 'eaten' },
+            { icon: <Bathtub size={22} color={theme.primary} />,     label: 'Sitz baths', value: log?.sitzBaths?.length || 0,              sub: 'today' },
+            { icon: <HeartPulse size={22} color={theme.primary} />,  label: 'Pain',       value: log?.bowelMovements?.[0]?.painLevel ?? '–', sub: '/10' },
           ].map((card, i) => (
             <motion.div
               key={i}
@@ -1387,7 +1393,7 @@ export default function HomeScreen({ onNavigate, theme }) {
                 boxShadow: `0 2px 8px ${theme.cardShadow}`,
               }}
             >
-              <div style={{ fontSize: 22, marginBottom: 2 }}>{card.icon}</div>
+              <div style={{ fontSize: 22, marginBottom: 2, display: 'flex', justifyContent: 'center' }}>{card.icon}</div>
               <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Nunito', color: theme.text, lineHeight: 1.2 }}>{card.value}</div>
               <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 2 }}>{card.sub}</div>
             </motion.div>
@@ -1418,7 +1424,7 @@ export default function HomeScreen({ onNavigate, theme }) {
               >
                 {/* Left: icon + count */}
                 <div style={{ flexShrink: 0, textAlign: 'center', minWidth: 64 }}>
-                  <div style={{ fontSize: 24, marginBottom: 2 }}>🩸</div>
+                  <div style={{ fontSize: 24, marginBottom: 2, display: 'flex', justifyContent: 'center' }}><BloodDrop size={24} color={theme.danger || '#F48585'} /></div>
                   <Suspense fallback={
                     <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Nunito', color: streakColor, lineHeight: 1 }}>
                       {lastBlood >= 90 ? '90+' : lastBlood}
@@ -1488,7 +1494,7 @@ export default function HomeScreen({ onNavigate, theme }) {
                   <RevealCard delay={0.05}>
                     <div style={{ margin: '16px 16px 0', background: theme.tipBg, borderRadius: 18, padding: '14px 16px', border: `1px solid ${theme.tipBorder}` }}>
                       <p style={{ fontSize: 13, color: theme.text, lineHeight: 1.6 }}>
-                        Every setback is part of healing 💛 — you have <strong>{freezesLeft}</strong> streak {freezesLeft === 1 ? 'freeze' : 'freezes'} left this month
+                        Every setback is part of healing <HeartPulse size={13} color={theme.primary} style={{ display: 'inline', verticalAlign: 'middle' }} /> — you have <strong>{freezesLeft}</strong> streak {freezesLeft === 1 ? 'freeze' : 'freezes'} left this month
                       </p>
                     </div>
                   </RevealCard>
@@ -1643,10 +1649,10 @@ export default function HomeScreen({ onNavigate, theme }) {
                   boxShadow: `0 6px 24px ${theme.ctaShadow}`,
                 }}
               >
-                📋 Log today's check-in
+                Log today's check-in
                 {streak > 0 && (
-                  <span style={{ background: 'rgba(255,255,255,0.22)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>
-                    🔥 {streak}
+                  <span style={{ background: 'rgba(255,255,255,0.22)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <Flame size={12} color={'#F5C67A'} /> {streak}
                   </span>
                 )}
               </button>

@@ -3,6 +3,7 @@ import { getAllLogs } from '../lib/storage'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
 import { analyzeFoodOutcomes } from '../lib/correlations'
+import { Seedling, StarIcon, Celebration } from '../components/icons/AppIcons'
 
 const TABS = ['Week', 'Month', '3 Months']
 
@@ -603,7 +604,7 @@ export default function InsightsScreen({ theme }) {
 
       {!logs.length ? (
         <div style={{ textAlign: 'center', padding: '60px 32px' }}>
-          <p style={{ fontSize: 40, marginBottom: 12 }}>🌱</p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Seedling size={40} color={p} /></div>
           <p style={{ fontSize: 16, fontWeight: 600, color: text, marginBottom: 8 }}>No logs yet</p>
           <p style={{ fontSize: 14, color: muted }}>Start logging your daily entries to see insights and trends here.</p>
         </div>
@@ -648,7 +649,7 @@ export default function InsightsScreen({ theme }) {
               <div style={{ marginTop: 10, background: theme?.successBg, borderRadius: 12, padding: '8px 12px' }}>
                 <p style={{ fontSize: 13, color: theme?.success, fontWeight: 600 }}>
                   {bloodFreeCapped ? '90+ days' : `${bloodFreeDays} ${bloodFreeDays === 1 ? 'day' : 'days'}`} without bleeding!{' '}
-                  {bloodFreeDays >= 30 ? '🎉 Incredible healing!' : bloodFreeDays >= 7 ? 'Great progress!' : 'Keep it going!'}
+                  {bloodFreeDays >= 30 ? <><Celebration size={13} color={p} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> Incredible healing!</> : bloodFreeDays >= 7 ? 'Great progress!' : 'Keep it going!'}
                 </p>
               </div>
             )}
@@ -671,7 +672,7 @@ export default function InsightsScreen({ theme }) {
             <AnimatedBarChart data={bloodData} color={theme?.danger || '#F48585'} height={90} />
             <p style={{ fontSize: 12, color: muted, marginTop: 8 }}>
               {bloodFreeDays > 0
-                ? bloodFreeCapped ? 'No bleeding recorded in the last 90 days! 🌟'
+                ? bloodFreeCapped ? <>No bleeding recorded in the last 90 days! <StarIcon size={12} color={theme?.wellnessHigh} style={{ display: 'inline-block', verticalAlign: 'middle' }} /></>
                 : `Last bleeding: ${bloodFreeDays} day${bloodFreeDays !== 1 ? 's' : ''} ago`
                 : 'Log daily to track bleeding patterns.'}
             </p>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Watch, HeartPulse, Running, Walking, Sleep, Flame, BloodDrop, Trophy, Battery, BarChart as BarChartIcon, StarIcon } from '../components/icons/AppIcons'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, ReferenceLine,
@@ -153,8 +154,8 @@ function ConnectCard({ theme, today, onDataSaved }) {
               width: 42, height: 42, borderRadius: 12,
               background: `linear-gradient(135deg, ${theme.primary}22, ${theme.primary}08)`,
               border: `1.5px solid ${theme.primary}40`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
-            }}>⌚</div>
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}><Watch size={20} color={theme.primary} /></div>
             <div>
               <p style={{ fontSize: 15, fontWeight: 700, color: theme.text, lineHeight: 1.2 }}>boAt Wave Magma</p>
               <p style={{ fontSize: 11, color: theme.textMuted }}>Bluetooth Smart Watch</p>
@@ -165,7 +166,7 @@ function ConnectCard({ theme, today, onDataSaved }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: theme.successBg, borderRadius: 20, padding: '5px 12px', border: `1px solid ${theme.successBorder}` }}>
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: theme.success, animation: 'pulse 1.5s ease infinite' }} />
                 <span style={{ fontSize: 12, fontWeight: 700, color: theme.success }}>{bleInfo?.name || 'Connected'}</span>
-                {bleInfo?.battery != null && <span style={{ fontSize: 11, color: theme.success }}>🔋{bleInfo.battery}%</span>}
+                {bleInfo?.battery != null && <span style={{ fontSize: 11, color: theme.success, display: 'flex', alignItems: 'center', gap: 2 }}><Battery size={13} color={theme.success} />{bleInfo.battery}%</span>}
               </div>
             ) : bleState === 'connecting' ? (
               <span style={{ fontSize: 12, color: theme.textMuted }}>Searching…</span>
@@ -180,7 +181,7 @@ function ConnectCard({ theme, today, onDataSaved }) {
         {/* Live HR badge when connected */}
         {liveHR && (
           <div style={{ margin: '0 16px 12px', background: theme.dangerBg, borderRadius: 14, padding: '10px 14px', border: `1px solid ${theme.dangerBorder}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 20 }}>❤️</span>
+            <HeartPulse size={20} color={theme.danger} />
             <div>
               <p style={{ fontSize: 11, color: theme.danger, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Live Heart Rate</p>
               <p style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Nunito', color: theme.danger, lineHeight: 1.1 }}>{liveHR} <span style={{ fontSize: 13, fontWeight: 500 }}>bpm</span></p>
@@ -259,7 +260,7 @@ function ConnectCard({ theme, today, onDataSaved }) {
                 <div style={{ width: 36, height: 4, background: theme.cardBorder, borderRadius: 2, margin: '0 auto 18px' }} />
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <p style={{ fontSize: 17, fontWeight: 700, color: theme.text }}>⌚ boAt Watch Data</p>
+                  <p style={{ fontSize: 17, fontWeight: 700, color: theme.text, display: 'flex', alignItems: 'center', gap: 6 }}><Watch size={17} color={theme.primary} /> boAt Watch Data</p>
                   <button onClick={() => setShowManual(false)} style={{ background: 'none', border: 'none', fontSize: 22, color: theme.textMuted, cursor: 'pointer', lineHeight: 1 }}>×</button>
                 </div>
 
@@ -267,10 +268,10 @@ function ConnectCard({ theme, today, onDataSaved }) {
                 <div style={{ background: theme.tipBg, borderRadius: 14, padding: '11px 14px', marginBottom: 18, border: `1px solid ${theme.tipBorder}` }}>
                   <p style={{ fontSize: 12, fontWeight: 700, color: theme.primary, marginBottom: 5 }}>How to read from boAt Wave Magma</p>
                   <p style={{ fontSize: 12, color: theme.text, lineHeight: 1.7 }}>
-                    📱 Open <b>boAt Connect</b> app on your phone<br />
+                    <Watch size={12} color={theme.primary} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> Open <b>boAt Connect</b> app on your phone<br />
                     → tap <b>Health</b> tab for SpO2 &amp; sleep<br />
                     → tap <b>Activity</b> for steps, calories, active time<br />
-                    → tap the ❤️ icon for heart rate
+                    → tap the <HeartPulse size={12} color={theme.danger} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> icon for heart rate
                   </p>
                 </div>
 
@@ -360,7 +361,11 @@ function TodayStats({ watchData, liveHR, theme }) {
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <ActivityRings steps={steps} activeMinutes={activeMins} calories={calories} theme={theme} />
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <span style={{ fontSize: 26 }}>{steps >= 8000 ? '🏆' : steps >= 4000 ? '🚶' : '🏃'}</span>
+              {steps >= 8000
+                ? <Trophy size={26} color={theme.wellnessHigh} />
+                : steps >= 4000
+                ? <Walking size={26} color={theme.primary} />
+                : <Running size={26} color={theme.primary} />}
             </div>
           </div>
           <div style={{ flex: 1 }}>
@@ -398,10 +403,10 @@ function TodayStats({ watchData, liveHR, theme }) {
       {/* Vitals pills */}
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
         {[
-          { icon: '❤️', label: 'Heart Rate',  value: hr    ? `${hr} bpm`  : '—', color: '#F48585' },
-          { icon: '🩸', label: 'SpO2',        value: spO2  ? `${spO2}%`  : '—', color: '#74B8E8' },
-          { icon: '😴', label: 'Sleep',       value: sleep ? `${sleep}h` : '—', color: '#C9A8F5' },
-          { icon: '🔥', label: 'Calories',    value: calories || '—',            color: '#F5C67A' },
+          { icon: <HeartPulse size={18} color="#F48585" />, label: 'Heart Rate',  value: hr    ? `${hr} bpm`  : '—', color: '#F48585' },
+          { icon: <BloodDrop  size={18} color="#74B8E8" />, label: 'SpO2',        value: spO2  ? `${spO2}%`  : '—', color: '#74B8E8' },
+          { icon: <Sleep      size={18} color="#C9A8F5" />, label: 'Sleep',       value: sleep ? `${sleep}h` : '—', color: '#C9A8F5' },
+          { icon: <Flame      size={18} color="#F5C67A" />, label: 'Calories',    value: calories || '—',            color: '#F5C67A' },
         ].map(stat => (
           <div key={stat.label} style={{
             flex: 1, background: theme.card,
@@ -409,7 +414,7 @@ function TodayStats({ watchData, liveHR, theme }) {
             border: `1px solid ${theme.cardBorder}`,
             boxShadow: `0 1px 6px ${theme.cardShadow}`,
           }}>
-            <div style={{ fontSize: 18, marginBottom: 3 }}>{stat.icon}</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 3 }}>{stat.icon}</div>
             <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'Nunito', color: stat.color, lineHeight: 1.1 }}>{stat.value}</div>
             <div style={{ fontSize: 9, color: theme.textMuted, marginTop: 2 }}>{stat.label}</div>
           </div>
@@ -423,7 +428,7 @@ function TodayStats({ watchData, liveHR, theme }) {
           border: `1px solid ${theme.tipBorder}`,
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <span style={{ fontSize: 20 }}>⭐</span>
+          <StarIcon size={20} color={theme.wellnessHigh} />
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: theme.text, marginBottom: 2 }}>Wellness Score Boost</p>
             <p style={{ fontSize: 11, color: theme.textMuted, lineHeight: 1.5 }}>
@@ -501,7 +506,7 @@ function FitnessCharts({ theme, days }) {
   if (!hasData) {
     return (
       <div style={{ margin: '0 16px 24px', background: cardBg, borderRadius: 20, padding: '36px 20px', textAlign: 'center', border: `1px solid ${border}` }}>
-        <p style={{ fontSize: 36, marginBottom: 10 }}>📊</p>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}><BarChartIcon size={36} color={p} /></div>
         <p style={{ fontSize: 15, fontWeight: 700, color: theme.text, marginBottom: 6 }}>No history yet</p>
         <p style={{ fontSize: 13, color: muted, lineHeight: 1.6 }}>Connect your watch or enter data above — your fitness trends will appear here.</p>
       </div>
@@ -525,16 +530,16 @@ function FitnessCharts({ theme, days }) {
       {/* Summary pills */}
       <div style={{ display: 'flex', gap: 8, padding: '0 16px 14px', overflowX: 'auto' }}>
         {[
-          { label: 'Avg Steps',  value: avgSteps.toLocaleString(),          icon: '🚶', color: p },
-          { label: 'Goal Days',  value: `${goalDays}d`,                     icon: '🏆', color: theme.wellnessHigh || '#A8D5A2', sub: '8k steps' },
-          { label: 'Avg HR',     value: avgHR   ? `${avgHR} bpm` : '—',    icon: '❤️', color: '#F48585' },
-          { label: 'Avg Sleep',  value: avgSleep ? `${avgSleep}h` : '—',   icon: '😴', color: '#C9A8F5' },
+          { label: 'Avg Steps',  value: avgSteps.toLocaleString(),          icon: <Walking    size={18} color={p} />,                           color: p },
+          { label: 'Goal Days',  value: `${goalDays}d`,                     icon: <Trophy     size={18} color={theme.wellnessHigh || '#A8D5A2'} />, color: theme.wellnessHigh || '#A8D5A2', sub: '8k steps' },
+          { label: 'Avg HR',     value: avgHR   ? `${avgHR} bpm` : '—',    icon: <HeartPulse size={18} color="#F48585" />,                     color: '#F48585' },
+          { label: 'Avg Sleep',  value: avgSleep ? `${avgSleep}h` : '—',   icon: <Sleep      size={18} color="#C9A8F5" />,                     color: '#C9A8F5' },
         ].map(stat => (
           <div key={stat.label} style={{
             flex: '0 0 auto', minWidth: 80, background: cardBg, borderRadius: 16,
             padding: '11px 10px', textAlign: 'center', border: `1px solid ${border}`,
           }}>
-            <div style={{ fontSize: 18, marginBottom: 2 }}>{stat.icon}</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>{stat.icon}</div>
             <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'Nunito', color: stat.color, lineHeight: 1.1 }}>{stat.value}</div>
             <div style={{ fontSize: 9, color: muted, marginTop: 2 }}>{stat.sub || stat.label}</div>
           </div>
@@ -648,7 +653,7 @@ export default function FitnessScreen({ theme }) {
       {/* Header */}
       <div style={{ padding: '22px 20px 16px', background: header, borderBottom: `1px solid ${border}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <span style={{ fontSize: 22 }}>⌚</span>
+          <Watch size={22} color={p} />
           <p style={{ fontSize: 20, fontWeight: 700, color: p }}>Fitness Tracker</p>
         </div>
         <p style={{ fontSize: 13, color: muted }}>boAt Wave Magma · Activity, vitals &amp; sleep</p>

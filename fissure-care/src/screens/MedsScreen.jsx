@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getMedications, saveMedications, getLog, saveLog } from '../lib/storage'
 import { Plus, Check } from 'lucide-react'
+import { Pill, Bathtub, CheckCircle } from '../components/icons/AppIcons'
 
 const MED_TYPES = ['laxative', 'topical', 'oral', 'supplement']
 const FREQ_OPTIONS = ['once_daily', 'twice_daily', 'three_times', 'as_needed']
@@ -28,7 +29,7 @@ function AddMedModal({ onSave, onClose, theme }) {
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(61,43,43,0.5)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
       <div style={{ width: '100%', maxWidth: 430, margin: '0 auto', background: card, borderRadius: '24px 24px 0 0', padding: '24px 20px 40px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <p style={{ fontSize: 18, fontWeight: 700, color: text }}>💊 Add Medication</p>
+          <p style={{ fontSize: 18, fontWeight: 700, color: text, display: 'flex', alignItems: 'center', gap: 6 }}><Pill size={18} color={text} /> Add Medication</p>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: muted }}>✕</button>
         </div>
         <p style={{ fontSize: 13, fontWeight: 600, color: muted, marginBottom: 8 }}>Quick add:</p>
@@ -119,7 +120,7 @@ export default function MedsScreen({ theme }) {
   return (
     <div>
       <div style={{ padding: '20px 20px 16px', background: headerGrad, borderBottom: `1px solid ${border}` }}>
-        <p style={{ fontSize: 20, fontWeight: 700, color: p }}>💊 Care Routine</p>
+        <p style={{ fontSize: 20, fontWeight: 700, color: p, display: 'flex', alignItems: 'center', gap: 8 }}><Pill size={22} color={p} /> Care Routine</p>
         <p style={{ fontSize: 13, color: muted }}>Track your medications and treatments</p>
       </div>
 
@@ -128,7 +129,7 @@ export default function MedsScreen({ theme }) {
         <p style={{ fontSize: 11, fontWeight: 700, color: muted, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>TODAY'S CHECKLIST</p>
         {meds.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px', background: card, borderRadius: 20, border: `1px solid ${border}` }}>
-            <p style={{ fontSize: 32, marginBottom: 8 }}>💊</p>
+            <div style={{ fontSize: 32, marginBottom: 8, display: 'flex', justifyContent: 'center' }}><Pill size={32} color={p} /></div>
             <p style={{ fontSize: 14, color: muted }}>No medications added yet. Add your first one below!</p>
           </div>
         ) : (
@@ -154,8 +155,8 @@ export default function MedsScreen({ theme }) {
                 {med.notes && <p style={{ fontSize: 11, color: theme?.accent || '#C9A8F5' }}>{med.notes}</p>}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                <span style={{ fontSize: 12, color: taken[med.id] ? wellHigh : muted, fontWeight: 600 }}>
-                  {taken[med.id] ? '✅ Taken' : 'Not yet'}
+                <span style={{ fontSize: 12, color: taken[med.id] ? wellHigh : muted, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {taken[med.id] ? <><CheckCircle size={14} color={wellHigh} /> Taken</> : 'Not yet'}
                 </span>
                 <button onClick={() => deleteMed(med.id)} style={{
                   background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#F48585'
@@ -177,7 +178,7 @@ export default function MedsScreen({ theme }) {
                 background: i < sitzBaths.length ? wellHigh + '18' : '#FAFAFA',
                 border: `2px solid ${i < sitzBaths.length ? wellHigh : border}`
               }}>
-                <p style={{ fontSize: 20, marginBottom: 4 }}>{i < sitzBaths.length ? '🛁' : '○'}</p>
+                <div style={{ marginBottom: 4, display: 'flex', justifyContent: 'center' }}>{i < sitzBaths.length ? <Bathtub size={20} color={wellHigh} /> : <span style={{ fontSize: 20 }}>○</span>}</div>
                 <p style={{ fontSize: 11, fontWeight: 600, color: i < sitzBaths.length ? wellHigh : muted }}>
                   {i < sitzBaths.length ? sitzBaths[i].time : `Bath ${i + 1}`}
                 </p>
@@ -188,9 +189,10 @@ export default function MedsScreen({ theme }) {
           <button onClick={addSitzBath} style={{
             width: '100%', padding: '12px',
             background: wellHigh + '20', border: `1.5px dashed ${wellHigh}`,
-            borderRadius: 12, color: wellHigh, fontSize: 14, fontWeight: 600, cursor: 'pointer'
+            borderRadius: 12, color: wellHigh, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}>
-            🛁 Log a sitz bath
+            <Bathtub size={18} color={wellHigh} /> Log a sitz bath
           </button>
           <p style={{ fontSize: 11, color: muted, marginTop: 8, textAlign: 'center' }}>
             Aim for 2-3 sitz baths a day for best healing 💛
