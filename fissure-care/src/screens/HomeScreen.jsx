@@ -285,7 +285,22 @@ function HealingGardenFlowers({ bloodFreeDays, theme }) {
       <p style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>
         {bloodFreeDays === 0
           ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Log a blood-free day to grow your first flower <CherryBlossom size={13} color={theme.primary} /></span>
-          : `${bloodFreeDays} blood-free ${bloodFreeDays === 1 ? 'day' : 'days'} — each flower is a victory`}
+          : bloodFreeDays === 1
+            ? '🌱 First flower blooms — keep going!'
+            : bloodFreeDays < 5
+              ? `🌸 ${bloodFreeDays} blood-free days — new flowers are sprouting!`
+              : bloodFreeDays < 7
+                ? `🦋 ${bloodFreeDays} days — butterflies visit your garden!`
+                : bloodFreeDays === 7
+                  ? '🎉 1 week blood-free! A lavender tree has appeared!'
+                  : bloodFreeDays < 10
+                    ? `🌳 ${bloodFreeDays} days strong — your garden is flourishing!`
+                    : bloodFreeDays === 10
+                      ? '✨ 10 days! A golden tree now glows in your garden!'
+                      : bloodFreeDays < 15
+                        ? `🌈 ${bloodFreeDays} days of healing — almost at full garden!`
+                        : `🏆 ${bloodFreeDays} blood-free days — full garden achieved! You are incredible!`
+        }
       </p>
       <Suspense fallback={<div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🌱</div>}>
         <HealingGarden3D bloodFreeDays={bloodFreeDays} theme={theme} />
@@ -1253,20 +1268,22 @@ export default function HomeScreen({ onNavigate, theme }) {
   const [bloodFreeDays, setBloodFreeDays] = useState(0)
 
   useEffect(() => {
-    getAllLogs().then(logs => {
-      let count = 0
-      const todayDate = new Date()
-      for (let i = 1; i <= 90; i++) {
-        const d = new Date(todayDate)
-        d.setDate(d.getDate() - i)
-        const key = d.toISOString().split('T')[0]
-        const entry = logs[key]
-        if (!entry) break
-        if (entry.symptoms?.bleeding) break
-        count++
-      }
-      setBloodFreeDays(count)
-    })
+    const todayDate = new Date()
+    let count = 0
+    for (let i = 0; i <= 90; i++) {
+      const d = new Date(todayDate)
+      d.setDate(d.getDate() - i)
+      const key = d.toISOString().split('T')[0]
+      const stored = localStorage.getItem('fissurecare_log_' + key)
+      if (!stored) break
+      try {
+        const entry = JSON.parse(stored)
+        const hasBlood = entry.bowelMovements?.some(bm => bm.bloodPresent)
+        if (hasBlood) break
+      } catch {}
+      count++
+    }
+    setBloodFreeDays(count)
   }, [today, log])
 
   const lastBlood = bloodFreeDays

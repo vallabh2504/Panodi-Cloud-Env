@@ -5,44 +5,45 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 
 /* ── Palette ── */
-const GRASS_TOP   = '#6DC05E'
-const GRASS_DARK  = '#5AAA4C'
-const EARTH       = '#A0724A'
-const EARTH_DARK  = '#7A5233'
-const TRUNK       = '#7B5A3A'
-const TRUNK_DARK  = '#5C3D20'
-const BLOSSOM_A   = '#FFB7C5'
-const BLOSSOM_B   = '#FF92A5'
-const BLOSSOM_C   = '#FFCCD5'
-const ROCK_COLOR  = '#9E9E9E'
-const ROCK_DARK   = '#757575'
-const PETAL_COLOR = '#FFB7C5'
+const GRASS_TOP  = '#6DC05E'
+const GRASS_DARK = '#5AAA4C'
+const EARTH      = '#A0724A'
+const EARTH_DARK = '#7A5233'
+const TRUNK      = '#7B5A3A'
+const TRUNK_DARK = '#5C3D20'
+const ROCK_COLOR = '#9E9E9E'
+const ROCK_DARK  = '#757575'
+
+/* 5 tree palettes: pink · lavender · golden · sage · peach */
+const PALETTES = [
+  { a: '#FFB7C5', b: '#FF92A5', c: '#FFCCD5' }, // 0 cherry pink
+  { a: '#C8A4DC', b: '#9B6FBF', c: '#DCC0F0' }, // 1 wisteria lavender
+  { a: '#FFD060', b: '#FFAA00', c: '#FFE9A0' }, // 2 golden marigold
+  { a: '#7CC870', b: '#55A84A', c: '#AADE9F' }, // 3 spring sage
+  { a: '#FF9F6A', b: '#FF6B35', c: '#FFBF9C' }, // 4 peach coral
+]
+const PETAL_COLORS = ['#FFB7C5', '#C8A4DC', '#FFD060', '#AADE9F', '#FFBF9C']
 
 /* ── Island platform ── */
 function Island() {
   return (
     <group>
-      {/* Grass top face */}
       <mesh position={[0, 0, 0]} receiveShadow>
         <cylinderGeometry args={[3.2, 3.2, 0.22, 6]} />
         <meshStandardMaterial color={GRASS_TOP} />
       </mesh>
-      {/* Darker grass edge ring */}
       <mesh position={[0, -0.04, 0]}>
         <cylinderGeometry args={[3.25, 3.4, 0.14, 6]} />
         <meshStandardMaterial color={GRASS_DARK} />
       </mesh>
-      {/* Earth side — upper */}
       <mesh position={[0, -0.38, 0]}>
         <cylinderGeometry args={[3.4, 3.1, 0.52, 6]} />
         <meshStandardMaterial color={EARTH} />
       </mesh>
-      {/* Earth side — lower taper */}
       <mesh position={[0, -0.82, 0]}>
         <cylinderGeometry args={[3.1, 2.2, 0.52, 6]} />
         <meshStandardMaterial color={EARTH_DARK} />
       </mesh>
-      {/* Bottom cap */}
       <mesh position={[0, -1.1, 0]}>
         <cylinderGeometry args={[2.2, 2.0, 0.12, 6]} />
         <meshStandardMaterial color={EARTH_DARK} />
@@ -51,61 +52,213 @@ function Island() {
   )
 }
 
-/* ── Single cherry blossom tree ── */
-function BlossomTree({ x, z, scale = 1, variant = 0 }) {
-  const groupRef = useRef()
-  const phase = useMemo(() => Math.random() * Math.PI * 2, [])
-
+/* ── Cherry Blossom (variant 0) — round puffy crown ── */
+function CherryTree({ x, z, scale, phase }) {
+  const ref = useRef()
+  const { a, b, c } = PALETTES[0]
+  const th = 0.7 * scale, tr = 0.09 * scale
+  const r1 = 0.58 * scale, r2 = 0.45 * scale, r3 = 0.38 * scale
   useFrame(({ clock }) => {
-    if (!groupRef.current) return
+    if (!ref.current) return
     const t = clock.elapsedTime
-    // gentle sway
-    groupRef.current.rotation.z = Math.sin(t * 0.6 + phase) * 0.025
-    groupRef.current.rotation.x = Math.cos(t * 0.5 + phase) * 0.015
+    ref.current.rotation.z = Math.sin(t * 0.6 + phase) * 0.025
+    ref.current.rotation.x = Math.cos(t * 0.5 + phase) * 0.015
   })
-
-  const trunkHeight = 0.7 * scale
-  const trunkR = 0.09 * scale
-  const canopyR1 = 0.58 * scale
-  const canopyR2 = 0.45 * scale
-  const canopyR3 = 0.38 * scale
-  const blossomColor = variant % 3 === 0 ? BLOSSOM_A : variant % 3 === 1 ? BLOSSOM_B : BLOSSOM_C
-
   return (
-    <group ref={groupRef} position={[x, 0.11, z]}>
-      {/* Trunk */}
-      <mesh castShadow position={[0, trunkHeight / 2, 0]}>
-        <cylinderGeometry args={[trunkR * 0.7, trunkR, trunkHeight, 5]} />
+    <group ref={ref} position={[x, 0.11, z]}>
+      <mesh castShadow position={[0, th / 2, 0]}>
+        <cylinderGeometry args={[tr * 0.7, tr, th, 5]} />
         <meshStandardMaterial color={TRUNK} />
       </mesh>
-      {/* Trunk dark side */}
-      <mesh position={[trunkR * 0.3, trunkHeight / 2, 0]}>
-        <cylinderGeometry args={[trunkR * 0.35, trunkR * 0.5, trunkHeight, 5]} />
+      <mesh position={[tr * 0.3, th / 2, 0]}>
+        <cylinderGeometry args={[tr * 0.35, tr * 0.5, th, 5]} />
         <meshStandardMaterial color={TRUNK_DARK} />
       </mesh>
-
-      {/* Main canopy sphere */}
-      <mesh castShadow position={[0, trunkHeight + canopyR1 * 0.65, 0]}>
-        <sphereGeometry args={[canopyR1, 7, 5]} />
-        <meshStandardMaterial color={blossomColor} roughness={0.55} metalness={0} emissive={blossomColor} emissiveIntensity={0.22} />
+      <mesh castShadow position={[0, th + r1 * 0.65, 0]}>
+        <sphereGeometry args={[r1, 7, 5]} />
+        <meshStandardMaterial color={a} roughness={0.55} emissive={a} emissiveIntensity={0.22} />
       </mesh>
-      {/* Secondary puff — left */}
-      <mesh castShadow position={[-canopyR1 * 0.55, trunkHeight + canopyR2 * 0.5, canopyR1 * 0.1]}>
-        <sphereGeometry args={[canopyR2, 6, 5]} />
-        <meshStandardMaterial color={variant % 2 === 0 ? BLOSSOM_B : BLOSSOM_A} roughness={0.55} emissive={variant % 2 === 0 ? BLOSSOM_B : BLOSSOM_A} emissiveIntensity={0.18} />
+      <mesh castShadow position={[-r1 * 0.55, th + r2 * 0.5, r1 * 0.1]}>
+        <sphereGeometry args={[r2, 6, 5]} />
+        <meshStandardMaterial color={b} roughness={0.55} emissive={b} emissiveIntensity={0.18} />
       </mesh>
-      {/* Secondary puff — right */}
-      <mesh castShadow position={[canopyR1 * 0.5, trunkHeight + canopyR3 * 0.6, -canopyR1 * 0.2]}>
-        <sphereGeometry args={[canopyR3, 6, 5]} />
-        <meshStandardMaterial color={BLOSSOM_C} roughness={0.55} emissive={BLOSSOM_C} emissiveIntensity={0.18} />
+      <mesh castShadow position={[r1 * 0.5, th + r3 * 0.6, -r1 * 0.2]}>
+        <sphereGeometry args={[r3, 6, 5]} />
+        <meshStandardMaterial color={c} roughness={0.55} emissive={c} emissiveIntensity={0.18} />
       </mesh>
-      {/* Top accent puff */}
-      <mesh position={[0, trunkHeight + canopyR1 * 1.3, 0]}>
-        <sphereGeometry args={[canopyR3 * 0.8, 6, 5]} />
-        <meshStandardMaterial color={BLOSSOM_C} roughness={0.55} emissive={BLOSSOM_C} emissiveIntensity={0.18} />
+      <mesh position={[0, th + r1 * 1.3, 0]}>
+        <sphereGeometry args={[r3 * 0.8, 6, 5]} />
+        <meshStandardMaterial color={c} roughness={0.55} emissive={c} emissiveIntensity={0.18} />
       </mesh>
     </group>
   )
+}
+
+/* ── Wisteria (variant 1) — tall narrow with drooping accent ── */
+function WisteriaTree({ x, z, scale, phase }) {
+  const ref = useRef()
+  const { a, b, c } = PALETTES[1]
+  const th = 0.9 * scale, tr = 0.09 * scale
+  const r1 = 0.5 * scale, r2 = 0.38 * scale, r3 = 0.3 * scale
+  useFrame(({ clock }) => {
+    if (!ref.current) return
+    const t = clock.elapsedTime
+    ref.current.rotation.z = Math.sin(t * 0.55 + phase) * 0.022
+    ref.current.rotation.x = Math.cos(t * 0.45 + phase) * 0.014
+  })
+  return (
+    <group ref={ref} position={[x, 0.11, z]}>
+      <mesh castShadow position={[0, th / 2, 0]}>
+        <cylinderGeometry args={[tr * 0.65, tr, th, 5]} />
+        <meshStandardMaterial color={TRUNK} />
+      </mesh>
+      <mesh castShadow position={[0, th + r1 * 0.55, 0]}>
+        <sphereGeometry args={[r1, 7, 5]} />
+        <meshStandardMaterial color={a} roughness={0.5} emissive={a} emissiveIntensity={0.28} />
+      </mesh>
+      <mesh position={[-r1 * 0.42, th + r2 * 0.25, r1 * 0.3]}>
+        <sphereGeometry args={[r2, 6, 5]} />
+        <meshStandardMaterial color={b} roughness={0.5} emissive={b} emissiveIntensity={0.22} />
+      </mesh>
+      <mesh position={[r1 * 0.38, th + r3 * 0.15, -r1 * 0.28]}>
+        <sphereGeometry args={[r3, 6, 5]} />
+        <meshStandardMaterial color={c} roughness={0.5} emissive={c} emissiveIntensity={0.18} />
+      </mesh>
+      {/* drooping accent below canopy */}
+      <mesh position={[0.05, th - r1 * 0.3, r1 * 0.42]}>
+        <sphereGeometry args={[r3 * 0.85, 6, 5]} />
+        <meshStandardMaterial color={a} roughness={0.5} emissive={a} emissiveIntensity={0.2} transparent opacity={0.88} />
+      </mesh>
+      <mesh position={[0, th + r1 * 1.18, 0]}>
+        <sphereGeometry args={[r3 * 0.65, 6, 5]} />
+        <meshStandardMaterial color={c} roughness={0.5} emissive={c} emissiveIntensity={0.2} />
+      </mesh>
+    </group>
+  )
+}
+
+/* ── Golden Umbrella (variant 2) — wide flat canopy ── */
+function GoldenTree({ x, z, scale, phase }) {
+  const ref = useRef()
+  const { a, b, c } = PALETTES[2]
+  const th = 0.65 * scale, tr = 0.10 * scale
+  const r1 = 0.7 * scale, r2 = 0.5 * scale, r3 = 0.36 * scale
+  useFrame(({ clock }) => {
+    if (!ref.current) return
+    const t = clock.elapsedTime
+    ref.current.rotation.z = Math.sin(t * 0.5 + phase) * 0.02
+    ref.current.rotation.x = Math.cos(t * 0.42 + phase) * 0.012
+  })
+  return (
+    <group ref={ref} position={[x, 0.11, z]}>
+      <mesh castShadow position={[0, th / 2, 0]}>
+        <cylinderGeometry args={[tr * 0.8, tr * 1.1, th, 5]} />
+        <meshStandardMaterial color={TRUNK_DARK} />
+      </mesh>
+      {/* wide flat main canopy */}
+      <mesh castShadow position={[0, th + r1 * 0.38, 0]} scale={[1.45, 0.65, 1.45]}>
+        <sphereGeometry args={[r1, 8, 6]} />
+        <meshStandardMaterial color={a} roughness={0.45} emissive={a} emissiveIntensity={0.32} />
+      </mesh>
+      <mesh position={[-r1 * 0.52, th + r2 * 0.28, 0.1]} scale={[1.3, 0.6, 1.3]}>
+        <sphereGeometry args={[r2, 6, 5]} />
+        <meshStandardMaterial color={b} roughness={0.48} emissive={b} emissiveIntensity={0.26} />
+      </mesh>
+      <mesh position={[r1 * 0.48, th + r3 * 0.28, -r1 * 0.28]} scale={[1.2, 0.6, 1.2]}>
+        <sphereGeometry args={[r3, 6, 5]} />
+        <meshStandardMaterial color={c} roughness={0.48} emissive={c} emissiveIntensity={0.22} />
+      </mesh>
+    </group>
+  )
+}
+
+/* ── Spring Oak (variant 3) — full round leafy canopy ── */
+function OakTree({ x, z, scale, phase }) {
+  const ref = useRef()
+  const { a, b, c } = PALETTES[3]
+  const th = 0.7 * scale, tr = 0.11 * scale
+  const r1 = 0.65 * scale, r2 = 0.5 * scale, r3 = 0.4 * scale
+  useFrame(({ clock }) => {
+    if (!ref.current) return
+    const t = clock.elapsedTime
+    ref.current.rotation.z = Math.sin(t * 0.52 + phase) * 0.018
+    ref.current.rotation.x = Math.cos(t * 0.44 + phase) * 0.012
+  })
+  return (
+    <group ref={ref} position={[x, 0.11, z]}>
+      <mesh castShadow position={[0, th / 2, 0]}>
+        <cylinderGeometry args={[tr * 0.75, tr * 1.05, th, 6]} />
+        <meshStandardMaterial color={TRUNK_DARK} />
+      </mesh>
+      <mesh castShadow position={[0, th + r1 * 0.72, 0]}>
+        <sphereGeometry args={[r1, 8, 6]} />
+        <meshStandardMaterial color={a} roughness={0.65} emissive={a} emissiveIntensity={0.16} />
+      </mesh>
+      <mesh position={[-r1 * 0.48, th + r2 * 0.62, r1 * 0.22]}>
+        <sphereGeometry args={[r2, 7, 5]} />
+        <meshStandardMaterial color={b} roughness={0.65} emissive={b} emissiveIntensity={0.14} />
+      </mesh>
+      <mesh position={[r1 * 0.44, th + r3 * 0.58, -r1 * 0.28]}>
+        <sphereGeometry args={[r3, 7, 5]} />
+        <meshStandardMaterial color={c} roughness={0.65} emissive={c} emissiveIntensity={0.14} />
+      </mesh>
+      <mesh position={[0, th + r1 * 1.42, 0]}>
+        <sphereGeometry args={[r3 * 0.72, 6, 5]} />
+        <meshStandardMaterial color={a} roughness={0.55} emissive={a} emissiveIntensity={0.18} />
+      </mesh>
+    </group>
+  )
+}
+
+/* ── Peach Tower (variant 4) — stacked columnar puffs ── */
+function TowerTree({ x, z, scale, phase }) {
+  const ref = useRef()
+  const { a, b, c } = PALETTES[4]
+  const th = 0.85 * scale, tr = 0.08 * scale
+  const r1 = 0.48 * scale, r2 = 0.38 * scale, r3 = 0.3 * scale
+  useFrame(({ clock }) => {
+    if (!ref.current) return
+    const t = clock.elapsedTime
+    ref.current.rotation.z = Math.sin(t * 0.62 + phase) * 0.02
+    ref.current.rotation.x = Math.cos(t * 0.5 + phase) * 0.013
+  })
+  return (
+    <group ref={ref} position={[x, 0.11, z]}>
+      <mesh castShadow position={[0, th / 2, 0]}>
+        <cylinderGeometry args={[tr * 0.7, tr, th, 5]} />
+        <meshStandardMaterial color={TRUNK} />
+      </mesh>
+      {/* stacked column puffs */}
+      <mesh castShadow position={[0, th + r1 * 0.58, 0]}>
+        <sphereGeometry args={[r1, 7, 5]} />
+        <meshStandardMaterial color={a} roughness={0.5} emissive={a} emissiveIntensity={0.26} />
+      </mesh>
+      <mesh castShadow position={[0.04, th + r1 * 0.58 + r1 + r2 * 0.5, 0]}>
+        <sphereGeometry args={[r2, 7, 5]} />
+        <meshStandardMaterial color={b} roughness={0.5} emissive={b} emissiveIntensity={0.22} />
+      </mesh>
+      <mesh castShadow position={[0, th + r1 * 0.58 + r1 + r2 + r3 * 0.42, 0]}>
+        <sphereGeometry args={[r3, 6, 5]} />
+        <meshStandardMaterial color={c} roughness={0.5} emissive={c} emissiveIntensity={0.18} />
+      </mesh>
+      {/* side accent puff */}
+      <mesh position={[r1 * 0.55, th + r1 * 0.58 + r2 * 0.3, 0.05]}>
+        <sphereGeometry args={[r3 * 0.78, 6, 5]} />
+        <meshStandardMaterial color={a} roughness={0.5} emissive={a} emissiveIntensity={0.2} />
+      </mesh>
+    </group>
+  )
+}
+
+/* ── Dispatch by variant ── */
+function BlossomTree({ x, z, scale = 1, variant = 0 }) {
+  const phase = useMemo(() => Math.random() * Math.PI * 2, [])
+  const v = variant % 5
+  if (v === 1) return <WisteriaTree x={x} z={z} scale={scale} phase={phase} />
+  if (v === 2) return <GoldenTree   x={x} z={z} scale={scale} phase={phase} />
+  if (v === 3) return <OakTree      x={x} z={z} scale={scale} phase={phase} />
+  if (v === 4) return <TowerTree    x={x} z={z} scale={scale} phase={phase} />
+  return <CherryTree x={x} z={z} scale={scale} phase={phase} />
 }
 
 /* ── Small decorative rock ── */
@@ -124,7 +277,7 @@ function Rock({ x, z }) {
   )
 }
 
-/* ── Tiny grass tufts scattered on island ── */
+/* ── Tiny grass tufts ── */
 function GrassTuft({ x, z }) {
   return (
     <group position={[x, 0.14, z]}>
@@ -138,11 +291,11 @@ function GrassTuft({ x, z }) {
   )
 }
 
-/* ── Falling petals ── */
-function FallingPetals({ count }) {
+/* ── Falling petals (color-aware) ── */
+function FallingPetals({ count, color = '#FFB7C5' }) {
   const meshRef = useRef()
   const dummy = useMemo(() => new THREE.Object3D(), [])
-  const petals = useMemo(() => Array.from({ length: count }, (_, i) => ({
+  const petals = useMemo(() => Array.from({ length: count }, () => ({
     x: (Math.random() - 0.5) * 5,
     y: 2 + Math.random() * 3,
     z: (Math.random() - 0.5) * 5,
@@ -174,17 +327,15 @@ function FallingPetals({ count }) {
   return (
     <instancedMesh ref={meshRef} args={[null, null, count]} frustumCulled={false}>
       <circleGeometry args={[1, 5]} />
-      <meshStandardMaterial color={PETAL_COLOR} transparent opacity={0.8} side={THREE.DoubleSide} emissive={PETAL_COLOR} emissiveIntensity={0.15} />
+      <meshStandardMaterial color={color} transparent opacity={0.8} side={THREE.DoubleSide} emissive={color} emissiveIntensity={0.15} />
     </instancedMesh>
   )
 }
 
-/* ── Seedling (0 days) ── */
+/* ── Seedling (day 0) ── */
 function Seedling() {
   const ref = useRef()
-  useFrame(({ clock }) => {
-    if (ref.current) ref.current.rotation.y = clock.elapsedTime * 0.4
-  })
+  useFrame(({ clock }) => { if (ref.current) ref.current.rotation.y = clock.elapsedTime * 0.4 })
   return (
     <group ref={ref} position={[0, 0.11, 0]}>
       <mesh position={[0, 0.15, 0]}>
@@ -193,11 +344,11 @@ function Seedling() {
       </mesh>
       <mesh position={[0, 0.38, 0]}>
         <sphereGeometry args={[0.18, 6, 5]} />
-        <meshStandardMaterial color={BLOSSOM_A} />
+        <meshStandardMaterial color={PALETTES[0].a} />
       </mesh>
       <mesh position={[0.12, 0.34, 0]}>
         <sphereGeometry args={[0.12, 6, 5]} />
-        <meshStandardMaterial color={BLOSSOM_C} roughness={0.55} emissive={BLOSSOM_C} emissiveIntensity={0.18} />
+        <meshStandardMaterial color={PALETTES[0].c} roughness={0.55} emissive={PALETTES[0].c} emissiveIntensity={0.18} />
       </mesh>
     </group>
   )
@@ -207,17 +358,14 @@ function Seedling() {
 function Pond() {
   return (
     <group position={[1.1, 0.12, 0.6]}>
-      {/* water surface */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.38, 10]} />
         <meshStandardMaterial color="#74B8E8" transparent opacity={0.85} roughness={0.1} metalness={0.25} emissive="#74B8E8" emissiveIntensity={0.08} />
       </mesh>
-      {/* pond rim */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -0.01]}>
         <ringGeometry args={[0.38, 0.46, 10]} />
         <meshStandardMaterial color="#5A8FA0" />
       </mesh>
-      {/* water shimmer */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.06, 0.06, 0.01]} scale={[1, 0.6, 1]}>
         <circleGeometry args={[0.1, 8]} />
         <meshStandardMaterial color="#BFDFFF" transparent opacity={0.5} />
@@ -258,7 +406,7 @@ function Cloud({ x, y, z, speed = 0.15, scale = 1 }) {
 }
 
 /* ── Butterfly ── */
-function Butterfly({ radius = 2.2, height = 1.6, speed = 0.5 }) {
+function Butterfly({ radius = 2.2, height = 1.6, speed = 0.5, wingColor = '#FF92A5' }) {
   const ref = useRef()
   const wingRef1 = useRef()
   const wingRef2 = useRef()
@@ -272,61 +420,57 @@ function Butterfly({ radius = 2.2, height = 1.6, speed = 0.5 }) {
       ref.current.position.y = height + Math.sin(t * 1.8) * 0.3
       ref.current.rotation.y = -angle + Math.PI / 2
     }
-    // flap wings
     const flap = Math.abs(Math.sin(t * 6)) * 0.7
     if (wingRef1.current) wingRef1.current.rotation.y = -flap
     if (wingRef2.current) wingRef2.current.rotation.y = flap
   })
   return (
     <group ref={ref}>
-      {/* body */}
       <mesh>
         <cylinderGeometry args={[0.018, 0.025, 0.11, 6]} />
         <meshStandardMaterial color="#3D2B2B" />
       </mesh>
-      {/* left wing */}
       <group ref={wingRef1} position={[-0.02, 0, 0]}>
         <mesh rotation={[0, 0, 0.3]} position={[-0.1, 0.02, 0]} scale={[1.4, 1, 1]}>
           <circleGeometry args={[0.1, 8]} />
-          <meshStandardMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
+          <meshStandardMaterial color={wingColor} transparent opacity={0.85} side={THREE.DoubleSide} />
         </mesh>
         <mesh rotation={[0, 0, 0.5]} position={[-0.08, -0.07, 0]} scale={[1.4, 1, 1]}>
           <circleGeometry args={[0.07, 8]} />
-          <meshStandardMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
+          <meshStandardMaterial color={wingColor} transparent opacity={0.8} side={THREE.DoubleSide} />
         </mesh>
       </group>
-      {/* right wing */}
       <group ref={wingRef2} position={[0.02, 0, 0]}>
         <mesh rotation={[0, 0, -0.3]} position={[0.1, 0.02, 0]} scale={[1.4, 1, 1]}>
           <circleGeometry args={[0.1, 8]} />
-          <meshStandardMaterial color="#FF92A5" transparent opacity={0.85} side={THREE.DoubleSide} />
+          <meshStandardMaterial color={wingColor} transparent opacity={0.85} side={THREE.DoubleSide} />
         </mesh>
         <mesh rotation={[0, 0, -0.5]} position={[0.08, -0.07, 0]} scale={[1.4, 1, 1]}>
           <circleGeometry args={[0.07, 8]} />
-          <meshStandardMaterial color="#FFB7C5" transparent opacity={0.8} side={THREE.DoubleSide} />
+          <meshStandardMaterial color={wingColor} transparent opacity={0.8} side={THREE.DoubleSide} />
         </mesh>
       </group>
     </group>
   )
 }
 
-/* ── Tree layout — deterministic scatter across island ── */
+/* ── Tree layout: 15 positions cycling through all 5 variant types ── */
 const TREE_POSITIONS = [
-  { x: 0,     z: -1.2,  scale: 1.15, variant: 0 },
-  { x: -1.1,  z: -0.5,  scale: 0.95, variant: 1 },
-  { x:  1.2,  z: -0.4,  scale: 1.0,  variant: 2 },
-  { x: -0.4,  z:  0.8,  scale: 1.05, variant: 1 },
-  { x:  0.9,  z:  0.9,  scale: 0.88, variant: 0 },
-  { x: -1.6,  z:  0.4,  scale: 0.78, variant: 2 },
-  { x:  1.8,  z: -1.0,  scale: 0.82, variant: 1 },
-  { x: -0.9,  z: -1.6,  scale: 0.9,  variant: 0 },
-  { x:  0.3,  z:  1.8,  scale: 0.75, variant: 2 },
-  { x:  1.5,  z:  1.5,  scale: 0.7,  variant: 1 },
+  { x: 0,     z: -1.2,  scale: 1.15, variant: 0 }, // cherry
+  { x: -1.1,  z: -0.5,  scale: 0.95, variant: 1 }, // wisteria
+  { x:  1.2,  z: -0.4,  scale: 1.0,  variant: 2 }, // golden
+  { x: -0.4,  z:  0.8,  scale: 1.05, variant: 3 }, // oak
+  { x:  0.9,  z:  0.9,  scale: 0.88, variant: 4 }, // tower
+  { x: -1.6,  z:  0.4,  scale: 0.78, variant: 0 }, // cherry
+  { x:  1.8,  z: -1.0,  scale: 0.82, variant: 1 }, // wisteria
+  { x: -0.9,  z: -1.6,  scale: 0.9,  variant: 2 }, // golden
+  { x:  0.3,  z:  1.8,  scale: 0.75, variant: 3 }, // oak
+  { x:  1.5,  z:  1.5,  scale: 0.7,  variant: 4 }, // tower
   { x: -1.8,  z: -1.2,  scale: 0.72, variant: 0 },
-  { x: -0.2,  z: -2.2,  scale: 0.68, variant: 2 },
-  { x:  2.1,  z:  0.2,  scale: 0.65, variant: 1 },
-  { x: -2.1,  z:  1.0,  scale: 0.62, variant: 0 },
-  { x:  1.0,  z: -2.1,  scale: 0.6,  variant: 2 },
+  { x: -0.2,  z: -2.2,  scale: 0.68, variant: 1 },
+  { x:  2.1,  z:  0.2,  scale: 0.65, variant: 2 },
+  { x: -2.1,  z:  1.0,  scale: 0.62, variant: 3 },
+  { x:  1.0,  z: -2.1,  scale: 0.6,  variant: 4 },
 ]
 
 const GRASS_TUFTS = [
@@ -344,6 +488,9 @@ function GardenScene({ bloodFreeDays }) {
     camera.position.set(5.5, 6.5, 5.5)
     camera.lookAt(0, 0, 0)
   }, [camera])
+
+  // Petal colors scale with unique trees added
+  const petalColors = PETAL_COLORS.filter((_, i) => treeCount > i * 3)
 
   return (
     <>
@@ -375,22 +522,25 @@ function GardenScene({ bloodFreeDays }) {
         ))
       )}
 
-      {GRASS_TUFTS.map((g, i) => (
-        <GrassTuft key={i} x={g.x} z={g.z} />
-      ))}
+      {GRASS_TUFTS.map((g, i) => <GrassTuft key={i} x={g.x} z={g.z} />)}
 
       <Rock x={-0.6} z={0.3} />
       <Rock x={1.7} z={-1.6} />
-
       <Pond />
 
       <Cloud x={-3.5} y={4.2} z={-2.0} speed={0.12} scale={0.9} />
       <Cloud x={3.0}  y={4.8} z={1.5}  speed={0.09} scale={0.7} />
       <Cloud x={0.5}  y={5.2} z={-3.5} speed={0.14} scale={1.1} />
 
-      {bloodFreeDays > 2 && <FallingPetals count={Math.min(bloodFreeDays * 2, 30)} />}
-      {bloodFreeDays > 1 && <Butterfly radius={2.0} height={1.8} speed={0.45} />}
-      {bloodFreeDays > 5 && <Butterfly radius={2.8} height={2.4} speed={0.3} />}
+      {/* Multi-colored petals unlock progressively */}
+      {bloodFreeDays > 1 && <FallingPetals count={Math.min(bloodFreeDays * 2, 18)} color={PETAL_COLORS[0]} />}
+      {bloodFreeDays > 5 && <FallingPetals count={Math.min((bloodFreeDays - 5) * 2, 14)} color={PETAL_COLORS[1]} />}
+      {bloodFreeDays > 10 && <FallingPetals count={Math.min((bloodFreeDays - 10) * 2, 10)} color={PETAL_COLORS[2]} />}
+
+      {/* Butterflies unlock at milestones */}
+      {bloodFreeDays > 1  && <Butterfly radius={2.0} height={1.8} speed={0.45} wingColor={PALETTES[0].b} />}
+      {bloodFreeDays > 5  && <Butterfly radius={2.8} height={2.4} speed={0.3}  wingColor={PALETTES[1].a} />}
+      {bloodFreeDays > 10 && <Butterfly radius={2.2} height={2.0} speed={0.55} wingColor={PALETTES[2].a} />}
 
       <EffectComposer>
         <Bloom luminanceThreshold={0.55} luminanceSmoothing={0.4} intensity={0.6} mipmapBlur />
@@ -430,7 +580,6 @@ export default function HealingGarden3D({ bloodFreeDays = 0, theme = {} }) {
         <GardenScene bloodFreeDays={bloodFreeDays} />
       </Canvas>
 
-      {/* Day counter badge */}
       {bloodFreeDays > 0 && (
         <div style={{
           position: 'absolute', top: 10, right: 10,
@@ -444,7 +593,6 @@ export default function HealingGarden3D({ bloodFreeDays = 0, theme = {} }) {
         </div>
       )}
 
-      {/* Pinch/scroll zoom hint — fades after 2.8s */}
       {showHint && (
         <div style={{
           position: 'absolute', bottom: 10, left: '50%',
@@ -453,8 +601,8 @@ export default function HealingGarden3D({ bloodFreeDays = 0, theme = {} }) {
           color: '#fff', fontSize: 10, fontWeight: 600,
           borderRadius: 12, padding: '4px 12px',
           pointerEvents: 'none', whiteSpace: 'nowrap',
-          transition: 'opacity 0.5s',
           opacity: showHint ? 1 : 0,
+          transition: 'opacity 0.5s',
         }}>
           Pinch or scroll to zoom · drag to rotate
         </div>
